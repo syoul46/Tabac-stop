@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
 import '../core/time/logical_day.dart';
+import '../domain/models/enums.dart';
 import 'database.dart';
 import 'database_provider.dart';
 
@@ -49,6 +50,29 @@ class CigaretteRepository {
       ..where(_db.cigarettes.occurredAtUtc.isBiggerOrEqualValue(startUtc));
     return query.map((row) => row.read(count) ?? 0).watchSingle();
   }
+
+  /// Cigarettes du jour logique courant, triées, en flux (pour la courbe horaire).
+  Stream<List<Cigarette>> watchTodaysCigarettes([DateTime? now]) {
+    final startUtc = LogicalDay.startOf(now ?? DateTime.now()).toUtc();
+    final q = _db.select(_db.cigarettes)
+      ..where((t) => t.occurredAtUtc.isBiggerOrEqualValue(startUtc))
+      ..orderBy([(t) => OrderingTerm.asc(t.occurredAtUtc)]);
+    return q.watch();
+  }
+
+  /// La toute première cigarette (pour l'index du jour d'observation).
+  Stream<Cigarette?> watchFirst() {
+    final q = _db.select(_db.cigarettes)
+      ..orderBy([(t) => OrderingTerm.asc(t.occurredAtUtc)])
+      ..limit(1);
+    return q.watchSingleOrNull();
+  }
+
+  /// Pose (ou change) le contexte optionnel d'une cigarette déjà enregistrée.
+  Future<void> setContext(String id, CigContext ctx) async {
+    await (_db.update(_db.cigarettes)..where((t) => t.id.equals(id)))
+        .write(CigarettesCompanion(contextA: Value(ctx.index)));
+  }
 }
 
 final cigaretteRepositoryProvider = Provider<CigaretteRepository>((ref) {
@@ -63,4 +87,14 @@ final lastCigaretteProvider = StreamProvider<Cigarette?>((ref) {
 /// Compte du jour logique courant.
 final todayCountProvider = StreamProvider<int>((ref) {
   return ref.watch(cigaretteRepositoryProvider).watchTodayCount();
+});
+
+/// Cigarettes du jour logique courant (pour la courbe + le compte).
+final todaysCigarettesProvider = StreamProvider<List<Cigarette>>((ref) {
+  return ref.watch(cigaretteRepositoryProvider).watchTodaysCigarettes();
+});
+
+/// Première cigarette enregistrée (pour l'index du jour d'observation).
+final firstCigaretteProvider = StreamProvider<Cigarette?>((ref) {
+  return ref.watch(cigaretteRepositoryProvider).watchFirst();
 });

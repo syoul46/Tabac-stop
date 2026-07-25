@@ -27,4 +27,9 @@ class LogicalDay {
 
   /// Vrai si [a] et [b] (heures murales locales) tombent le même jour logique.
   static bool sameDay(DateTime a, DateTime b) => dayOf(a) == dayOf(b);
+
+  /// Index (1-based) du jour logique de [now] par rapport à celui de [first].
+  /// Le jour du premier tap = 1.
+  static int indexSince(DateTime firstWall, DateTime nowWall) =>
+      dayOf(nowWall).difference(dayOf(firstWall)).inDays + 1;
 }

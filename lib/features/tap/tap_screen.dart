@@ -5,12 +5,21 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/time/format.dart';
+import '../../core/time/logical_day.dart';
 import '../../data/cigarette_repository.dart';
+import '../../data/database.dart';
+import '../../domain/metrics/hourly.dart';
+import '../observation/hourly_curve.dart';
+import '../observation/observation_banner.dart';
+import 'context_picker.dart';
 import 'tap_stone.dart';
 
-/// Écran 1 / phase d'observation. Au premier lancement : juste le bouton + une
-/// phrase. Dès qu'il y a un historique : chrono « depuis la dernière » + compte
-/// du jour. Le tap enregistre en silence (validation silencieuse).
+/// Fenêtre pendant laquelle les icônes de contexte restent proposées après un tap.
+const _contextWindow = Duration(seconds: 6);
+
+/// Écran 1 / phase d'observation. Au premier lancement : le bouton + une phrase.
+/// Ensuite : bandeau « Jour X sur 3 », chrono, compte du jour, courbe horaire,
+/// et — brièvement après chaque tap — les 3 icônes de contexte.
 class TapScreen extends ConsumerStatefulWidget {
   const TapScreen({super.key});
 
@@ -24,7 +33,6 @@ class _TapScreenState extends ConsumerState<TapScreen> {
   @override
   void initState() {
     super.initState();
-    // Rafraîchit le chrono chaque seconde.
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) setState(() {});
     });
@@ -46,49 +54,82 @@ class _TapScreenState extends ConsumerState<TapScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final onSurface = theme.colorScheme.onSurface;
+
     final last = ref.watch(lastCigaretteProvider).asData?.value;
-    final count = ref.watch(todayCountProvider).asData?.value ?? 0;
-    final hasHistory = last != null;
+    final todays = ref.watch(todaysCigarettesProvider).asData?.value ??
+        const <Cigarette>[];
+    final first = ref.watch(firstCigaretteProvider).asData?.value;
 
-    final since = hasHistory
-        ? DateTime.now().difference(last.occurredAtUtc.toLocal())
-        : Duration.zero;
+    if (last == null) return _firstLaunch(onSurface);
 
+    final now = DateTime.now();
+    final since = now.difference(last.occurredAtUtc.toLocal());
+    final dayIndex = first == null
+        ? 1
+        : LogicalDay.indexSince(wallTimeOf(first), now).clamp(1, 3);
+    final showContext = last.contextA == null && since < _contextWindow;
+
+    return Scaffold(
+      body: SafeArea(
+        child: Column(
+          children: [
+            const SizedBox(height: 14),
+            ObservationBanner(dayIndex: dayIndex),
+            Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _ChronoLabel(since: since),
+                    const SizedBox(height: 24),
+                    TapStone(onTap: _onTap, child: _glyph(onSurface)),
+                    const SizedBox(height: 18),
+                    Text(
+                      '${todays.length} aujourd’hui',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: onSurface.withValues(alpha: 0.6),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    ContextPicker(
+                      visible: showContext,
+                      onSelect: (ctx) => ref
+                          .read(cigaretteRepositoryProvider)
+                          .setContext(last.id, ctx),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            HourlyCurve(counts: hourlyCounts(todays)),
+            const SizedBox(height: 26),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _firstLaunch(Color onSurface) {
     return Scaffold(
       body: SafeArea(
         child: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (hasHistory) ...[
-                _ChronoLabel(since: since),
-                const SizedBox(height: 26),
-              ],
-              TapStone(
-                onTap: _onTap,
-                child: Text(
-                  '✦',
-                  style: TextStyle(
-                    fontSize: 40,
-                    color: onSurface.withValues(alpha: 0.5),
-                  ),
-                ),
-              ),
+              TapStone(onTap: _onTap, child: _glyph(onSurface)),
               const SizedBox(height: 28),
-              if (hasHistory)
-                Text(
-                  '$count aujourd’hui',
-                  style: theme.textTheme.bodyMedium
-                      ?.copyWith(color: onSurface.withValues(alpha: 0.6)),
-                )
-              else
-                _InvitePhrase(color: onSurface),
+              _InvitePhrase(color: onSurface),
             ],
           ),
         ),
       ),
     );
   }
+
+  Widget _glyph(Color onSurface) => Text(
+        '✦',
+        style: TextStyle(fontSize: 40, color: onSurface.withValues(alpha: 0.5)),
+      );
 }
 
 class _ChronoLabel extends StatelessWidget {
