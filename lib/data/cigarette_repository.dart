@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
 import '../core/time/logical_day.dart';
+import '../domain/boss/boss.dart';
 import '../domain/metrics/metrics.dart';
 import '../domain/models/enums.dart';
 import 'database.dart';
@@ -117,4 +118,11 @@ final metricsProvider = Provider<MetricsSummary>((ref) {
   final cigs = ref.watch(allCigarettesProvider).asData?.value ??
       const <Cigarette>[];
   return computeMetrics(cigs);
+});
+
+/// Détection des Boss sur le journal complet.
+final bossReportProvider = Provider<BossReport>((ref) {
+  final cigs = ref.watch(allCigarettesProvider).asData?.value ??
+      const <Cigarette>[];
+  return detectBosses(cigs);
 });

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'core/theme/cairn_theme.dart';
-import 'features/tap/tap_screen.dart';
+import 'features/root/root_screen.dart';
 
 /// Racine de l'app. Le thème suit le système (jour / nuit), les deux étant
 /// dessinés — jamais inversés.
@@ -15,7 +15,7 @@ class CairnApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: buildCairnLightTheme(),
       darkTheme: buildCairnDarkTheme(),
-      home: const TapScreen(),
+      home: const RootScreen(),
     );
   }
 }
