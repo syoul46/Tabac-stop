@@ -1,0 +1,109 @@
+# Journal de développement — Cairn
+
+> App de sevrage tabagique, Flutter, **local-first**. Source de vérité produit : `PLAN.md`.
+> Conventions & règles non-négociables : `CLAUDE.md`. Ce journal = où on en est / comment reprendre.
+
+---
+
+## Point de reprise — 2026-07-25 (fin de session)
+
+**État : Jalons 0 → 5 terminés, testés, commités et poussés. Les 3 écrans clés validés en vrai
+sur émulateur.** Tout est sur `main` (`origin` = `git@github.com:syoul46/Tabac-stop.git`).
+
+### Prochaine étape : **Jalon 6 — machine à états du parcours**
+Câbler les vrais modes choisis à la révélation (réduction / arrêt net / indécis) et ce que chacun
+affiche ensuite. Le choix du mode est déjà persisté (`JourneyRepository`, table `journey_events`) ;
+`RootScreen` route déjà selon le mode. Reste à construire les écrans/états par mode.
+
+---
+
+## Ce qui est fait (commits sur `main`)
+
+| Commit | Contenu |
+|---|---|
+| `754189f` | **Jalon 0** — scaffold Flutter `cairn`, schéma drift (2 tables), thème minéral, enums |
+| `81959bb` | **Jalon 1** — le bouton : tap = poser une pierre, chrono, compte, haptique, validation silencieuse |
+| `d6c8d9d` | **Jalon 2** — observation J1-3 : bandeau « Jour X/3 », courbe horaire, 3 icônes contexte |
+| `aa7b9d1` | **Jalon 3** — moteur de métriques (Dart pur) : moyenne/j, écart médian, créneau chargé |
+| `83254f4` | **Jalon 4** — détection des Boss (DBSCAN 1D) : ancrage + difficulté, « le Café de 7 h 10 » |
+| `a18d4b7` | **Jalon 5** — révélation J+3 : porte de déclenchement, RootScreen, RevealScreen, choix du mode |
+| `9b99e6a` | build(android) : core library desugaring (requis) + outil de seed dev |
+| `56a4e1c` | design : police serif Marcellus bundlée + créneau chargé (égalité → soir) |
+
+**Tests : 23 verts** (`flutter test`). Écrans validés sur émulateur : Écran 1, Observation, Révélation.
+
+---
+
+## Décisions verrouillées (rappel)
+- Stack : Flutter · Riverpod · drift · flutter_local_notifications · export chiffré (à venir).
+- **100 % local, aucun serveur.** Jour logique = **04:00**. Contexte : ☕ café · 🍽️ repas · 🍷 alcool.
+- Révélation : **≥30 taps ET ≥3 jours**. Boss : **nommer le + ancré, attaquer le + facile**.
+- Design : palette minérale (sable/basalte/ocre), **lagon = voix de l'app** (rare), **zéro rouge**.
+  Le **cairn** est la métaphore centrale (invariant « le compteur cumulé ne bouge pas » = pierres
+  qui ne tombent jamais). Cf. `CLAUDE.md` et les maquettes `design/*.html`.
+
+---
+
+## Environnement & commandes de reprise
+
+**Flutter installé hors PATH** → exporter à chaque session :
+```bash
+export PATH="/home/syoul/flutter/bin:/home/syoul/Android/Sdk/platform-tools:/home/syoul/Android/Sdk/emulator:$PATH"
+export ANDROID_HOME=/home/syoul/Android/Sdk ANDROID_SDK_ROOT=/home/syoul/Android/Sdk
+```
+Versions : Flutter 3.44.8 / Dart 3.12.2 (stable), dans `/home/syoul/flutter`.
+
+**Tests**
+```bash
+flutter test test/domain/        # logique pure — ~4 s (à privilégier)
+flutter test                     # suite complète (widgets) — ~10 min à froid !
+flutter analyze                  # ~2 s, compile tout
+```
+
+**Émulateur** (AVD `warren-x86_64`, partagé avec le projet warren) :
+```bash
+emulator -avd warren-x86_64 -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect -no-snapshot -read-only &
+adb wait-for-device && adb shell getprop sys.boot_completed   # attendre "1"
+```
+**Lancer l'app** (build Android ~1-2 min ; le lourd — NDK/SDK — est déjà installé) :
+```bash
+cd /home/syoul/Tabac-stop
+flutter run -d emulator-5554                        # normal
+flutter run -d emulator-5554 --dart-define=SEED=true  # injecte 3 j de faux historique → révélation
+```
+**Capturer un écran** : `adb exec-out screencap -p > screen.png`
+**Réinitialiser les données** : `adb shell pm clear com.syoul.cairn`
+
+---
+
+## Pièges rencontrés (à ne pas refaire)
+- **Widget tests ~10 min à froid** (compilation moteur Flutter). Les tests `test/domain/` (Dart pur)
+  compilent en ~4 s → itérer là quand c'est de la logique.
+- **drift + widget tests** : un flux drift planifie un timer 0 s à sa fermeture → après démontage,
+  `await tester.pump(const Duration(milliseconds: 1))` pour éviter « A Timer is still pending ».
+  Aussi : ne jamais `await` un flux drift *dans* un `testWidgets` (deadlock FakeAsync).
+- **`find.text` ne matche pas les `RichText`** → utiliser des `Text` séparés (valeur + unité).
+- **Android : core library desugaring requis** par flutter_local_notifications (déjà corrigé dans
+  `android/app/build.gradle.kts`).
+- **`pkill -f 'motif'` s'auto-tue** si le motif figure dans sa propre ligne de commande (ex.
+  `SEED=false`) → il emporte le shell parent (exit 144). Mettre le kill **seul** dans sa commande.
+- **`tail` masque le code de sortie** de `flutter test` → capturer `echo "EXIT=$?"` avant le `tail`.
+- Émulateur en GPU logiciel : pop-up « System UI isn't responding » possible → cliquer « Wait ».
+
+---
+
+## TODO connus (non bloquants)
+- Marcellus n'a qu'une graisse (400) : les titres en `w600` rendent en régulier. OK esthétiquement ;
+  bundler une 2ᵉ graisse si on veut du gras sur les titres.
+- Le mode « seed » (`lib/dev/seed.dart`) est un outil dev — à retirer/garder selon besoin plus tard.
+- Émulateur : laissé **allumé** en fin de session (`emulator-5554`) avec un `flutter run --dart-define=SEED=true`
+  attaché. À rebooter demain si éteint entre-temps.
+
+---
+
+## Plan restant
+```
+✅ 0 scaffold  ✅ 1 bouton  ✅ 2 observation  ✅ 3 métriques  ✅ 4 Boss  ✅ 5 révélation
+⏭️ 6 machine à états   ▫️ 7 défi J4-7   ▫️ 8 rechute   ▫️ 9 sauvegarde chiffrée   ▫️ 10 polish
+```
+Détail de chaque jalon : `PLAN.md` §8.
