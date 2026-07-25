@@ -96,6 +96,8 @@ int? busiestHour(List<int> counts) {
 }
 
 /// Fenêtre de largeur [width] heures dont la somme est maximale (non circulaire).
+/// En cas d'égalité, on préfère le créneau **le plus tardif** (le soir, plus
+/// intuitif comme « créneau chargé »). Renvoie null si tout est à zéro.
 (int, int)? busiestWindow(List<int> counts, int width) {
   if (width <= 0 || counts.length < width) return null;
   var bestSum = 0;
@@ -105,9 +107,9 @@ int? busiestHour(List<int> counts) {
     for (var k = 0; k < width; k++) {
       sum += counts[s + k];
     }
-    if (sum > bestSum) {
+    if (sum > 0 && sum >= bestSum) {
       bestSum = sum;
-      bestStart = s;
+      bestStart = s; // >= → la dernière fenêtre à égalité l'emporte
     }
   }
   return bestStart == null ? null : (bestStart, bestStart + width);

@@ -37,6 +37,19 @@ void main() {
     expect(m.busiestWindow, (21, 23));
   });
 
+  test('créneau chargé : à égalité matin/soir, le soir l\'emporte', () {
+    // Autant le matin (7 h+8 h) que le soir (21 h+22 h) sur 2 jours.
+    final cigs = [
+      for (final d in [25, 26]) ...[
+        cigWall(2026, 7, d, 7, 0, id: 'm1$d'),
+        cigWall(2026, 7, d, 8, 0, id: 'm2$d'),
+        cigWall(2026, 7, d, 21, 0, id: 's1$d'),
+        cigWall(2026, 7, d, 22, 0, id: 's2$d'),
+      ],
+    ];
+    expect(computeMetrics(cigs).busiestWindow, (21, 23));
+  });
+
   test('heure la plus chargée = le pic clair', () {
     final cigs = [
       cigWall(2026, 7, 25, 8, 0, id: 'a'),

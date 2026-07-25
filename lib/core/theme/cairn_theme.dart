@@ -52,15 +52,24 @@ ThemeData buildCairnDarkTheme() {
   return _base(scheme, CairnColors.nightGround, CairnColors.nightInk);
 }
 
+/// Serif humaniste bundlée (asset, 100 % offline) pour les grands titres.
+const _displayFont = 'Marcellus';
+
 ThemeData _base(ColorScheme scheme, Color scaffold, Color ink) {
   final base = ThemeData(useMaterial3: true, colorScheme: scheme);
+  final t = base.textTheme.apply(bodyColor: ink, displayColor: ink);
+  // Serif chaleureuse sur les titres ; le corps et l'UI restent en sans (system).
+  final textTheme = t.copyWith(
+    displayLarge: t.displayLarge?.copyWith(fontFamily: _displayFont),
+    displayMedium: t.displayMedium?.copyWith(fontFamily: _displayFont),
+    displaySmall: t.displaySmall?.copyWith(fontFamily: _displayFont),
+    headlineLarge: t.headlineLarge?.copyWith(fontFamily: _displayFont),
+    headlineMedium: t.headlineMedium?.copyWith(fontFamily: _displayFont),
+    headlineSmall: t.headlineSmall?.copyWith(fontFamily: _displayFont),
+    titleLarge: t.titleLarge?.copyWith(fontFamily: _displayFont),
+  );
   return base.copyWith(
     scaffoldBackgroundColor: scaffold,
-    // TODO(Jalon 0): remplacer par une humaniste chaude bundlée en asset
-    // (Fraunces / Marcellus) via google_fonts, pour rester 100 % offline.
-    textTheme: base.textTheme.apply(
-      bodyColor: ink,
-      displayColor: ink,
-    ),
+    textTheme: textTheme,
   );
 }
