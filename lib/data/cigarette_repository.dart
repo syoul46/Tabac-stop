@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
 import '../core/time/logical_day.dart';
+import '../domain/metrics/metrics.dart';
 import '../domain/models/enums.dart';
 import 'database.dart';
 import 'database_provider.dart';
@@ -68,6 +69,13 @@ class CigaretteRepository {
     return q.watchSingleOrNull();
   }
 
+  /// Tout le journal, trié chronologiquement (pour le moteur de métriques).
+  Stream<List<Cigarette>> watchAll() {
+    final q = _db.select(_db.cigarettes)
+      ..orderBy([(t) => OrderingTerm.asc(t.occurredAtUtc)]);
+    return q.watch();
+  }
+
   /// Pose (ou change) le contexte optionnel d'une cigarette déjà enregistrée.
   Future<void> setContext(String id, CigContext ctx) async {
     await (_db.update(_db.cigarettes)..where((t) => t.id.equals(id)))
@@ -97,4 +105,16 @@ final todaysCigarettesProvider = StreamProvider<List<Cigarette>>((ref) {
 /// Première cigarette enregistrée (pour l'index du jour d'observation).
 final firstCigaretteProvider = StreamProvider<Cigarette?>((ref) {
   return ref.watch(cigaretteRepositoryProvider).watchFirst();
+});
+
+/// Tout le journal (pour le moteur de métriques).
+final allCigarettesProvider = StreamProvider<List<Cigarette>>((ref) {
+  return ref.watch(cigaretteRepositoryProvider).watchAll();
+});
+
+/// Portrait chiffré du journal complet (alimente la révélation J+3).
+final metricsProvider = Provider<MetricsSummary>((ref) {
+  final cigs = ref.watch(allCigarettesProvider).asData?.value ??
+      const <Cigarette>[];
+  return computeMetrics(cigs);
 });
