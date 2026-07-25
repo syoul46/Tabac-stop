@@ -1,0 +1,325 @@
+<style>
+  :root {
+    /* ——— Jour : sable sous le soleil ——— */
+    --sand:      #E7D5B6;
+    --sand-2:    #DEC7A0;
+    --screen-1:  #FBF5E9;
+    --screen-2:  #EFDFC1;
+    --tiare:     #FCF7EC;
+    --basalt:    #241F19;
+    --basalt-soft:#6A6154;
+    --palm:      #33543E;
+    --palm-soft: #6E8A6C;
+    --lagoon:    #0E877F;   /* accent — ne parle que rarement */
+    --hibiscus:  #CB5A38;   /* le Boss — très rare */
+    --line:      rgba(36,31,25,.14);
+    --btn-top:   #FDF8EE;
+    --btn-bot:   #E7D3B2;
+    --btn-rim:   rgba(51,84,62,.22);
+    --shadow:    26,20,10;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      /* ——— Nuit : lagon au clair de lune ——— */
+      --sand:      #141D1C;
+      --sand-2:    #0E1615;
+      --screen-1:  #1B2827;
+      --screen-2:  #131F1E;
+      --tiare:     #EFE4CC;
+      --basalt:    #ECE0C8;
+      --basalt-soft:#9E9583;
+      --palm:      #7FA985;
+      --palm-soft: #A9C4A4;
+      --lagoon:    #34C3B4;
+      --hibiscus:  #E0795A;
+      --line:      rgba(236,224,200,.13);
+      --btn-top:   #2C4B44;
+      --btn-bot:   #16302B;
+      --btn-rim:   rgba(52,195,180,.28);
+      --shadow:    0,0,0;
+    }
+  }
+  :root[data-theme="light"] {
+    --sand:#E7D5B6; --sand-2:#DEC7A0; --screen-1:#FBF5E9; --screen-2:#EFDFC1;
+    --tiare:#FCF7EC; --basalt:#241F19; --basalt-soft:#6A6154; --palm:#33543E;
+    --palm-soft:#6E8A6C; --lagoon:#0E877F; --hibiscus:#CB5A38; --line:rgba(36,31,25,.14);
+    --btn-top:#FDF8EE; --btn-bot:#E7D3B2; --btn-rim:rgba(51,84,62,.22); --shadow:26,20,10;
+  }
+  :root[data-theme="dark"] {
+    --sand:#141D1C; --sand-2:#0E1615; --screen-1:#1B2827; --screen-2:#131F1E;
+    --tiare:#EFE4CC; --basalt:#ECE0C8; --basalt-soft:#9E9583; --palm:#7FA985;
+    --palm-soft:#A9C4A4; --lagoon:#34C3B4; --hibiscus:#E0795A; --line:rgba(236,224,200,.13);
+    --btn-top:#2C4B44; --btn-bot:#16302B; --btn-rim:rgba(52,195,180,.28); --shadow:0,0,0;
+  }
+
+  * { box-sizing: border-box; }
+
+  :root {
+    --font-display: "Palatino Linotype","Book Antiqua",Palatino,"URW Palladio L",P052,Georgia,serif;
+    --font-body: system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+
+  .page {
+    min-height: 100%;
+    background:
+      radial-gradient(120% 80% at 80% -10%, color-mix(in srgb, var(--lagoon) 12%, transparent), transparent 60%),
+      linear-gradient(180deg, var(--sand) 0%, var(--sand-2) 100%);
+    color: var(--basalt);
+    font-family: var(--font-body);
+    line-height: 1.55;
+    padding: clamp(28px, 5vw, 64px) clamp(18px, 4vw, 56px) 72px;
+    position: relative;
+    overflow-x: hidden;
+  }
+  /* tapa — motif barkcloth, presque invisible */
+  .tapa {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    opacity: .06; color: var(--basalt);
+    background-image:
+      repeating-linear-gradient(90deg, currentColor 0 1px, transparent 1px 22px),
+      repeating-linear-gradient(0deg,  currentColor 0 1px, transparent 1px 22px);
+    -webkit-mask-image: radial-gradient(120% 100% at 50% 0%, #000 55%, transparent 100%);
+            mask-image: radial-gradient(120% 100% at 50% 0%, #000 55%, transparent 100%);
+  }
+  .wrap { position: relative; z-index: 1; max-width: 1040px; margin: 0 auto; }
+
+  header.intro { max-width: 62ch; }
+  .eyebrow {
+    font-size: .72rem; letter-spacing: .22em; text-transform: uppercase;
+    color: var(--lagoon); font-weight: 600; margin: 0 0 14px;
+  }
+  h1 {
+    font-family: var(--font-display); font-weight: 600;
+    font-size: clamp(2rem, 5vw, 3.15rem); line-height: 1.05; margin: 0 0 16px;
+    text-wrap: balance; letter-spacing: -.01em;
+  }
+  .lede { font-size: 1.06rem; color: var(--basalt-soft); margin: 0; max-width: 54ch; }
+
+  /* —— Maquettes —— */
+  .frames {
+    display: flex; flex-wrap: wrap; gap: clamp(26px, 5vw, 56px);
+    justify-content: center; align-items: flex-start;
+    margin: clamp(38px, 6vw, 64px) 0 8px;
+  }
+  .plate { display: flex; flex-direction: column; align-items: center; gap: 16px; width: 288px; max-width: 100%; }
+  .plate figcaption {
+    font-size: .82rem; color: var(--basalt-soft); text-align: center; max-width: 30ch;
+  }
+  .plate figcaption b { color: var(--basalt); font-weight: 600; }
+
+  .phone {
+    width: 288px; max-width: 100%; aspect-ratio: 9 / 19.2;
+    border-radius: 42px; padding: 11px;
+    background: linear-gradient(160deg, color-mix(in srgb, var(--basalt) 82%, #000), color-mix(in srgb, var(--basalt) 96%, #000));
+    box-shadow: 0 30px 60px -24px rgba(var(--shadow), .55), inset 0 0 0 1px rgba(255,255,255,.05);
+  }
+  .screen {
+    height: 100%; border-radius: 32px; overflow: hidden; position: relative;
+    background: linear-gradient(180deg, var(--screen-1), var(--screen-2));
+    display: flex; flex-direction: column;
+  }
+  .statusbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 22px 0; font-size: .72rem; color: var(--basalt-soft);
+    font-variant-numeric: tabular-nums; font-weight: 600;
+  }
+  .statusbar .dots { letter-spacing: 2px; }
+
+  .stage { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 8px 26px 30px; text-align: center; gap: 22px; }
+
+  /* le bouton — galet chauffé par le soleil */
+  .tap {
+    --d: 176px; width: var(--d); height: var(--d); border-radius: 50%;
+    border: none; cursor: pointer; position: relative; flex: none;
+    background:
+      radial-gradient(120% 120% at 38% 30%, var(--btn-top), var(--btn-bot) 74%);
+    box-shadow:
+      0 20px 34px -14px rgba(var(--shadow), .5),
+      inset 0 2px 3px rgba(255,255,255,.55),
+      inset 0 -14px 26px rgba(var(--shadow), .18),
+      0 0 0 1px var(--btn-rim);
+    display: grid; place-items: center;
+    font-family: var(--font-display); color: var(--palm);
+    transition: transform .18s ease, box-shadow .18s ease;
+  }
+  .tap::before {
+    content: ""; position: absolute; inset: 13px; border-radius: 50%;
+    border: 1px dashed var(--btn-rim);
+  }
+  .tap .glyph { font-size: 2.6rem; line-height: 1; }
+  .tap .word { font-size: .74rem; letter-spacing: .16em; text-transform: uppercase; color: var(--palm-soft); font-family: var(--font-body); margin-top: 6px; }
+  .tap:hover { transform: translateY(-2px); }
+  .tap:active { transform: scale(.97); }
+  .tap:focus-visible { outline: 3px solid var(--lagoon); outline-offset: 5px; }
+
+  .phrase { font-family: var(--font-display); font-size: 1.18rem; line-height: 1.35; color: var(--basalt); max-width: 20ch; text-wrap: balance; }
+  .phrase span { color: var(--basalt-soft); font-size: .92rem; font-family: var(--font-body); }
+
+  /* écran observation */
+  .chip {
+    align-self: center; font-size: .74rem; font-weight: 600; letter-spacing: .04em;
+    color: var(--palm); background: color-mix(in srgb, var(--palm) 14%, transparent);
+    border: 1px solid color-mix(in srgb, var(--palm) 30%, transparent);
+    padding: 6px 14px; border-radius: 999px;
+  }
+  .chrono { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .chrono .big { font-size: 2.9rem; font-weight: 300; font-variant-numeric: tabular-nums; letter-spacing: .01em; line-height: 1; }
+  .chrono .sub { font-size: .74rem; color: var(--basalt-soft); letter-spacing: .04em; }
+  .today { font-size: .82rem; color: var(--basalt-soft); }
+  .today b { color: var(--basalt); font-weight: 700; font-variant-numeric: tabular-nums; }
+
+  .curve { display: flex; align-items: flex-end; gap: 5px; height: 46px; }
+  .curve i {
+    width: 9px; border-radius: 3px 3px 1px 1px; display: block;
+    background: linear-gradient(180deg, var(--palm-soft), var(--palm));
+    opacity: .9;
+  }
+  .ctx { display: flex; gap: 18px; margin-top: 2px; }
+  .ctx svg { width: 22px; height: 22px; stroke: var(--palm-soft); fill: none; stroke-width: 1.6; opacity: .8; }
+
+  /* —— Système de design —— */
+  .system { margin-top: clamp(44px, 7vw, 76px); display: grid; gap: 30px; }
+  .system h2 {
+    font-family: var(--font-display); font-weight: 600; font-size: 1.5rem; margin: 0;
+    padding-bottom: 12px; border-bottom: 1px solid var(--line);
+  }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 22px; }
+  .card {
+    background: color-mix(in srgb, var(--screen-1) 60%, transparent);
+    border: 1px solid var(--line); border-radius: 18px; padding: 20px 22px;
+  }
+  .card h3 { margin: 0 0 4px; font-size: .74rem; text-transform: uppercase; letter-spacing: .16em; color: var(--basalt-soft); font-weight: 600; }
+  .card p { margin: 8px 0 0; font-size: .9rem; color: var(--basalt-soft); }
+
+  .swatches { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+  .sw { display: flex; align-items: center; gap: 12px; font-size: .82rem; }
+  .sw .chipc { width: 30px; height: 30px; border-radius: 9px; border: 1px solid var(--line); flex: none; }
+  .sw .nm { font-weight: 600; }
+  .sw .hx { margin-left: auto; color: var(--basalt-soft); font-variant-numeric: tabular-nums; font-size: .78rem; letter-spacing: .02em; }
+
+  .type-row { display: flex; flex-direction: column; gap: 16px; margin-top: 14px; }
+  .type-row .disp { font-family: var(--font-display); font-size: 1.7rem; line-height: 1.1; }
+  .type-row .bod { font-family: var(--font-body); font-size: 1rem; color: var(--basalt-soft); }
+  .type-row .num { font-variant-numeric: tabular-nums; font-size: 1.7rem; font-weight: 300; letter-spacing: .04em; }
+  .type-row small { display: block; font-size: .7rem; letter-spacing: .14em; text-transform: uppercase; color: var(--basalt-soft); margin-bottom: 2px; }
+
+  .foot { margin-top: 40px; font-size: .82rem; color: var(--basalt-soft); border-top: 1px solid var(--line); padding-top: 18px; }
+  .foot b { color: var(--basalt); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tap { transition: none; }
+  }
+</style>
+
+<div class="page">
+  <div class="tapa" aria-hidden="true"></div>
+  <div class="wrap">
+
+    <header class="intro">
+      <p class="eyebrow">Tabac-stop · direction artistique</p>
+      <h1>Une plage qui se tait</h1>
+      <p class="lede">Sable chaud, bois de cocotier, vert de palme. Le lagon — le seul turquoise —
+        n'apparaît que lorsque l'app a une raison de parler : une victoire, une révélation.
+        Le reste du temps, l'écran respire. C'est un bouton posé sur le sable.</p>
+    </header>
+
+    <div class="frames">
+      <!-- Écran 1 : le premier lancement -->
+      <figure class="plate">
+        <div class="phone">
+          <div class="screen">
+            <div class="statusbar"><span>9:41</span><span class="dots">●●● ▮</span></div>
+            <div class="stage">
+              <button class="tap" type="button" aria-label="Tape quand tu fumes">
+                <span class="glyph" aria-hidden="true">✦</span>
+              </button>
+              <p class="phrase">Tape quand tu fumes.<br><span>C'est tout, pour l'instant.</span></p>
+            </div>
+          </div>
+        </div>
+        <figcaption><b>Écran 1 — premier lancement.</b> Pas de compte, pas d'objectif,
+          pas de « combien par jour ». Juste le bouton, déjà utile.</figcaption>
+      </figure>
+
+      <!-- Observation J1-3 -->
+      <figure class="plate">
+        <div class="phone">
+          <div class="screen">
+            <div class="statusbar"><span>21:07</span><span class="dots">●●● ▮</span></div>
+            <div class="stage" style="gap:18px;">
+              <span class="chip">Jour 2 sur 3 — on observe</span>
+              <button class="tap" type="button" style="--d:150px;" aria-label="Tape quand tu fumes">
+                <span class="chrono">
+                  <span class="big">3 h 42</span>
+                  <span class="sub">depuis la dernière</span>
+                </span>
+              </button>
+              <p class="today"><b>7</b> aujourd'hui</p>
+              <div class="curve" aria-hidden="true">
+                <i style="height:60%"></i><i style="height:38%"></i><i style="height:82%"></i>
+                <i style="height:50%"></i><i style="height:70%"></i><i style="height:34%"></i>
+                <i style="height:92%"></i><i style="height:46%"></i>
+              </div>
+              <div class="ctx" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M4 9h13v4a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V9Z"/><path d="M17 10h2a2 2 0 0 1 0 4h-2"/><path d="M8 3v2M12 3v2"/></svg>
+                <svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z"/></svg>
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>
+              </div>
+            </div>
+          </div>
+        </div>
+        <figcaption><b>Observation, J1–3.</b> L'app ne propose rien. Elle enregistre, et donne
+          la permission de fumer normalement — donc des données vraies.</figcaption>
+      </figure>
+    </div>
+
+    <section class="system">
+      <h2>Le système</h2>
+      <div class="grid">
+
+        <div class="card">
+          <h3>Palette — jour</h3>
+          <div class="swatches">
+            <div class="sw"><span class="chipc" style="background:#E7D5B6"></span><span class="nm">Sable</span><span class="hx">#E7D5B6</span></div>
+            <div class="sw"><span class="chipc" style="background:#33543E"></span><span class="nm">Cocotier</span><span class="hx">#33543E</span></div>
+            <div class="sw"><span class="chipc" style="background:#241F19"></span><span class="nm">Basalte</span><span class="hx">#241F19</span></div>
+            <div class="sw"><span class="chipc" style="background:#0E877F"></span><span class="nm">Lagon</span><span class="hx">#0E877F</span></div>
+            <div class="sw"><span class="chipc" style="background:#CB5A38"></span><span class="nm">Hibiscus</span><span class="hx">#CB5A38</span></div>
+            <div class="sw"><span class="chipc" style="background:#FCF7EC"></span><span class="nm">Tiaré</span><span class="hx">#FCF7EC</span></div>
+          </div>
+          <p><b style="color:var(--lagoon)">Lagon</b> = la voix de l'app : succès, révélation. Rare.
+            <b style="color:var(--hibiscus)">Hibiscus</b> = le Boss. Plus rare encore.</p>
+        </div>
+
+        <div class="card">
+          <h3>Typographie</h3>
+          <div class="type-row">
+            <div><small>Display — Palatino</small><div class="disp">Le Café de 7 h 10</div></div>
+            <div><small>Chrono — tabular</small><div class="num">03 h 42 · 12 j</div></div>
+            <div><small>Texte — system-ui</small><div class="bod">On observe, on ne change rien.</div></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Matière & motif</h3>
+          <p><b>Tapa</b> (barkcloth) en trame quasi invisible, jamais du décor bavard.
+            Le bouton est un <b>galet chauffé par le soleil</b> : dégradé radial, halo doux, anneau tressé en pointillé.</p>
+          <p>Le mouvement suit la marée : lent, discret. Un seul appui, un enfoncement franc.
+            Aucune animation ne commente, jamais.</p>
+        </div>
+
+        <div class="card">
+          <h3>La règle qui gouverne tout</h3>
+          <p>L'app parle le moins possible, et <b>jamais</b> quand l'utilisateur est en difficulté.
+            La couleur suit : le sable domine, le lagon perce seulement au moment juste.</p>
+          <p>Nuit = lagon au clair de lune. Même hiérarchie, même silence.</p>
+        </div>
+
+      </div>
+
+      <p class="foot">Bascule le thème clair / sombre (coin de la fenêtre) pour voir le
+        <b>jour</b> et la <b>nuit</b> — les deux sont dessinés, pas inversés.</p>
+    </section>
+
+  </div>
+</div>

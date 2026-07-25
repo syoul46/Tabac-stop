@@ -1,0 +1,249 @@
+<style>
+  :root {
+    --sand:#E7D5B6; --sand-2:#DEC7A0; --screen-1:#FBF5E9; --screen-2:#EFDFC1;
+    --tiare:#FCF7EC; --basalt:#241F19; --basalt-soft:#6A6154; --palm:#33543E;
+    --palm-soft:#6E8A6C; --lagoon:#0E877F; --lagoon-deep:#0A6B64; --hibiscus:#CB5A38;
+    --line:rgba(36,31,25,.14); --btn-top:#FDF8EE; --btn-bot:#E7D3B2; --shadow:26,20,10;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --sand:#141D1C; --sand-2:#0E1615; --screen-1:#1B2827; --screen-2:#131F1E;
+      --tiare:#EFE4CC; --basalt:#ECE0C8; --basalt-soft:#9E9583; --palm:#7FA985;
+      --palm-soft:#A9C4A4; --lagoon:#34C3B4; --lagoon-deep:#1E9E93; --hibiscus:#E0795A;
+      --line:rgba(236,224,200,.13); --btn-top:#2C4B44; --btn-bot:#16302B; --shadow:0,0,0;
+    }
+  }
+  :root[data-theme="light"] {
+    --sand:#E7D5B6; --sand-2:#DEC7A0; --screen-1:#FBF5E9; --screen-2:#EFDFC1;
+    --tiare:#FCF7EC; --basalt:#241F19; --basalt-soft:#6A6154; --palm:#33543E;
+    --palm-soft:#6E8A6C; --lagoon:#0E877F; --lagoon-deep:#0A6B64; --hibiscus:#CB5A38;
+    --line:rgba(36,31,25,.14); --btn-top:#FDF8EE; --btn-bot:#E7D3B2; --shadow:26,20,10;
+  }
+  :root[data-theme="dark"] {
+    --sand:#141D1C; --sand-2:#0E1615; --screen-1:#1B2827; --screen-2:#131F1E;
+    --tiare:#EFE4CC; --basalt:#ECE0C8; --basalt-soft:#9E9583; --palm:#7FA985;
+    --palm-soft:#A9C4A4; --lagoon:#34C3B4; --lagoon-deep:#1E9E93; --hibiscus:#E0795A;
+    --line:rgba(236,224,200,.13); --btn-top:#2C4B44; --btn-bot:#16302B; --shadow:0,0,0;
+  }
+
+  * { box-sizing: border-box; }
+  :root {
+    --font-display:"Palatino Linotype","Book Antiqua",Palatino,"URW Palladio L",P052,Georgia,serif;
+    --font-body:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+
+  .page {
+    min-height:100%;
+    background:
+      radial-gradient(120% 80% at 82% -10%, color-mix(in srgb, var(--lagoon) 14%, transparent), transparent 60%),
+      linear-gradient(180deg, var(--sand), var(--sand-2));
+    color:var(--basalt); font-family:var(--font-body); line-height:1.55;
+    padding:clamp(28px,5vw,64px) clamp(18px,4vw,56px) 72px; position:relative; overflow-x:hidden;
+  }
+  .tapa {
+    position:fixed; inset:0; pointer-events:none; z-index:0; opacity:.06; color:var(--basalt);
+    background-image:
+      repeating-linear-gradient(90deg, currentColor 0 1px, transparent 1px 22px),
+      repeating-linear-gradient(0deg,  currentColor 0 1px, transparent 1px 22px);
+    -webkit-mask-image:radial-gradient(120% 100% at 50% 0%, #000 55%, transparent 100%);
+            mask-image:radial-gradient(120% 100% at 50% 0%, #000 55%, transparent 100%);
+  }
+  .wrap { position:relative; z-index:1; max-width:1060px; margin:0 auto; }
+
+  .eyebrow { font-size:.72rem; letter-spacing:.22em; text-transform:uppercase; color:var(--lagoon); font-weight:600; margin:0 0 14px; }
+  h1 { font-family:var(--font-display); font-weight:600; font-size:clamp(2rem,5vw,3.1rem); line-height:1.05; margin:0 0 16px; text-wrap:balance; letter-spacing:-.01em; }
+  .lede { font-size:1.06rem; color:var(--basalt-soft); margin:0; max-width:56ch; }
+
+  .cols { display:flex; flex-wrap:wrap; gap:clamp(30px,5vw,60px); align-items:flex-start; justify-content:center; margin-top:clamp(38px,6vw,60px); }
+
+  /* —— téléphone —— */
+  .phone {
+    width:314px; max-width:100%; aspect-ratio:9/19.3; border-radius:44px; padding:11px; flex:none;
+    background:linear-gradient(160deg, color-mix(in srgb, var(--basalt) 82%, #000), color-mix(in srgb, var(--basalt) 96%, #000));
+    box-shadow:0 34px 66px -26px rgba(var(--shadow),.55), inset 0 0 0 1px rgba(255,255,255,.05);
+  }
+  .screen {
+    height:100%; border-radius:33px; overflow:hidden; position:relative;
+    background:linear-gradient(180deg, var(--screen-1), var(--screen-2));
+    display:flex; flex-direction:column;
+  }
+  /* le halo lagon : ici, l'app PARLE pour la première fois */
+  .screen::before {
+    content:""; position:absolute; inset:0 0 auto; height:210px; pointer-events:none;
+    background:radial-gradient(120% 90% at 50% -30%, color-mix(in srgb, var(--lagoon) 30%, transparent), transparent 70%);
+  }
+  .statusbar { display:flex; justify-content:space-between; padding:14px 22px 0; font-size:.72rem; color:var(--basalt-soft); font-variant-numeric:tabular-nums; font-weight:600; position:relative; }
+
+  .reveal { flex:1; overflow-y:auto; padding:14px 22px 24px; display:flex; flex-direction:column; gap:18px; position:relative; scrollbar-width:none; }
+  .reveal::-webkit-scrollbar { display:none; }
+
+  .say-eyebrow { font-size:.68rem; letter-spacing:.2em; text-transform:uppercase; color:var(--lagoon); font-weight:700; margin:2px 0 -6px; }
+  .title { font-family:var(--font-display); font-size:1.72rem; line-height:1.12; margin:0; letter-spacing:-.01em; }
+
+  /* stats */
+  .stats { display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--line); border:1px solid var(--line); border-radius:14px; overflow:hidden; }
+  .stat { background:color-mix(in srgb, var(--screen-1) 78%, transparent); padding:12px 10px; text-align:center; }
+  .stat .n { font-family:var(--font-display); font-size:1.5rem; line-height:1; font-variant-numeric:tabular-nums; }
+  .stat .n small { font-size:.72rem; color:var(--basalt-soft); font-family:var(--font-body); }
+  .stat .l { font-size:.62rem; letter-spacing:.04em; color:var(--basalt-soft); margin-top:5px; text-transform:uppercase; }
+
+  /* histogramme 24 h */
+  .chart { display:flex; flex-direction:column; gap:6px; }
+  .bars { display:flex; align-items:flex-end; gap:2px; height:74px; position:relative; }
+  .bars i { flex:1; border-radius:2px 2px 0 0; background:var(--palm-soft); opacity:.55; min-width:0; }
+  .bars i.eve { background:linear-gradient(180deg,var(--lagoon),var(--lagoon-deep)); opacity:1; }
+  .bars i.boss { background:var(--hibiscus); opacity:1; }
+  .flag { position:absolute; top:-7px; transform:translateX(-50%); font-size:.6rem; font-weight:700; color:var(--hibiscus); white-space:nowrap; }
+  .flag::after { content:""; display:block; width:1px; height:8px; background:var(--hibiscus); margin:2px auto 0; }
+  .axis { display:flex; justify-content:space-between; font-size:.58rem; color:var(--basalt-soft); letter-spacing:.03em; font-variant-numeric:tabular-nums; }
+  .legend { display:flex; gap:14px; font-size:.64rem; color:var(--basalt-soft); }
+  .legend span { display:inline-flex; align-items:center; gap:5px; }
+  .legend b { width:9px; height:9px; border-radius:2px; display:inline-block; }
+
+  /* la carte Boss */
+  .boss {
+    border-radius:16px; padding:16px 18px; position:relative; overflow:hidden;
+    background:color-mix(in srgb, var(--hibiscus) 12%, var(--screen-1));
+    border:1px solid color-mix(in srgb, var(--hibiscus) 40%, transparent);
+  }
+  .boss .k { font-size:.64rem; letter-spacing:.16em; text-transform:uppercase; color:var(--hibiscus); font-weight:700; }
+  .boss .name { font-family:var(--font-display); font-size:1.5rem; line-height:1.1; margin:5px 0 6px; }
+  .boss .desc { font-size:.82rem; color:var(--basalt-soft); margin:0; }
+
+  /* question du mode */
+  .ask { margin-top:2px; }
+  .ask .q { font-family:var(--font-display); font-size:1.12rem; margin:0 0 12px; }
+  .modes { display:flex; flex-direction:column; gap:9px; }
+  .mode {
+    display:flex; align-items:center; gap:12px; width:100%; text-align:left; cursor:pointer;
+    padding:13px 15px; border-radius:13px; font-size:.92rem; font-weight:600; color:var(--basalt);
+    background:transparent; border:1.5px solid color-mix(in srgb, var(--lagoon) 55%, transparent);
+    font-family:var(--font-body); transition:transform .15s ease, background .15s ease;
+  }
+  .mode .ic { width:22px; height:22px; flex:none; stroke:var(--lagoon); fill:none; stroke-width:1.7; }
+  .mode small { display:block; font-weight:400; font-size:.72rem; color:var(--basalt-soft); margin-top:1px; }
+  .mode:hover { transform:translateY(-1px); background:color-mix(in srgb, var(--lagoon) 9%, transparent); }
+  .mode:focus-visible { outline:3px solid var(--lagoon); outline-offset:2px; }
+  /* la 3ᵉ porte : présente, mais volontairement plus discrète — aucune pression */
+  .mode.ghost { border:1px dashed var(--line); }
+  .mode.ghost .ic { stroke:var(--basalt-soft); }
+
+  /* —— notes de design —— */
+  .notes { max-width:360px; flex:1 1 300px; }
+  .notes h2 { font-family:var(--font-display); font-weight:600; font-size:1.4rem; margin:0 0 6px; }
+  .notes > p { color:var(--basalt-soft); font-size:.95rem; margin:0 0 22px; max-width:46ch; }
+  .note { border-left:2px solid var(--lagoon); padding:2px 0 2px 16px; margin-bottom:20px; }
+  .note.coral { border-color:var(--hibiscus); }
+  .note.quiet { border-color:var(--basalt-soft); }
+  .note h3 { margin:0 0 4px; font-size:.72rem; text-transform:uppercase; letter-spacing:.14em; color:var(--basalt-soft); font-weight:600; }
+  .note p { margin:0; font-size:.92rem; color:var(--basalt); }
+  .note p b { color:var(--lagoon); }
+  .note.coral p b { color:var(--hibiscus); }
+
+  @media (prefers-reduced-motion:reduce){ .mode{transition:none;} }
+</style>
+
+<div class="page">
+  <div class="tapa" aria-hidden="true"></div>
+  <div class="wrap">
+
+    <p class="eyebrow">Tabac-stop · l'écran charnière</p>
+    <h1>La révélation du 3ᵉ jour</h1>
+    <p class="lede">Après 72 h d'observation silencieuse, l'app parle pour la première fois — et
+      elle ne parle que de <em>lui</em>. C'est le premier retour sur investissement, impossible à
+      obtenir ailleurs, et le moment où le lagon entre enfin dans l'image.</p>
+
+    <div class="cols">
+
+      <!-- Téléphone : la révélation -->
+      <div class="phone">
+        <div class="screen">
+          <div class="statusbar"><span>7:12</span><span>●●● ▮</span></div>
+          <div class="reveal">
+
+            <p class="say-eyebrow">Voilà tes 3 jours</p>
+            <h2 class="title">On a appris deux ou trois choses sur toi.</h2>
+
+            <div class="stats">
+              <div class="stat"><div class="n">19<small>/j</small></div><div class="l">en moyenne</div></div>
+              <div class="stat"><div class="n">47<small>min</small></div><div class="l">écart moyen</div></div>
+              <div class="stat"><div class="n">21–23<small>h</small></div><div class="l">créneau chargé</div></div>
+            </div>
+
+            <div class="chart">
+              <div class="bars" aria-label="Répartition sur 24 heures">
+                <span class="flag" style="left:31%">7 h 10</span>
+                <i style="height:6%"></i><i style="height:2%"></i><i style="height:2%"></i>
+                <i style="height:2%"></i><i style="height:3%"></i><i style="height:12%"></i>
+                <i style="height:24%"></i><i class="boss" style="height:80%"></i><i style="height:42%"></i>
+                <i style="height:46%"></i><i style="height:52%"></i><i style="height:48%"></i>
+                <i style="height:64%"></i><i style="height:55%"></i><i style="height:40%"></i>
+                <i style="height:36%"></i><i style="height:46%"></i><i style="height:52%"></i>
+                <i style="height:60%"></i><i style="height:66%"></i><i style="height:74%"></i>
+                <i class="eve" style="height:90%"></i><i class="eve" style="height:96%"></i><i class="eve" style="height:82%"></i>
+              </div>
+              <div class="axis"><span>0 h</span><span>6 h</span><span>12 h</span><span>18 h</span><span>23 h</span></div>
+              <div class="legend">
+                <span><b style="background:var(--hibiscus)"></b>ta plus régulière</span>
+                <span><b style="background:var(--lagoon)"></b>ton créneau chargé</span>
+              </div>
+            </div>
+
+            <div class="boss">
+              <div class="k">Ton premier adversaire</div>
+              <div class="name">Le Café de 7 h 10</div>
+              <p class="desc">Une cigarette qui revient chaque jour à 7 h 10, avec le café.
+                C'est la plus ancrée — alors on lui donne un nom. On s'y attaquera ensemble.</p>
+            </div>
+
+            <div class="ask">
+              <p class="q">Comment tu veux t'y prendre ?</p>
+              <div class="modes">
+                <button class="mode" type="button">
+                  <svg class="ic" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14" opacity=".35"/><circle cx="12" cy="12" r="9"/></svg>
+                  <span>Arrêt net<small>j'arrête, on tient le compteur</small></span>
+                </button>
+                <button class="mode" type="button">
+                  <svg class="ic" viewBox="0 0 24 24"><path d="M4 18 20 6"/><path d="M4 12h5M4 6h9"/></svg>
+                  <span>Réduction progressive<small>on attaque les Boss un par un</small></span>
+                </button>
+                <button class="mode ghost" type="button">
+                  <svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg>
+                  <span>Je ne sais pas encore<small>continue à observer, sans pression</small></span>
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Notes de design -->
+      <div class="notes">
+        <h2>Trois choix délibérés</h2>
+        <p>Cet écran porte toute la thèse du produit. Chaque détail visuel encode une règle.</p>
+
+        <div class="note">
+          <h3>Le lagon fait ses débuts</h3>
+          <p>Pendant 72 h, le turquoise était absent. Ici il entre par un <b>halo en haut de
+            l'écran</b> et colore les deux vrais modes : la couleur elle-même annonce que
+            <b>l'app parle enfin</b>.</p>
+        </div>
+
+        <div class="note coral">
+          <h3>Le Boss est en hibiscus</h3>
+          <p>La couleur la plus rare de la palette est réservée à <b>l'adversaire</b>. La barre de
+            7 h 10 et la carte du Boss sont les seuls points corail — impossible de les manquer,
+            jamais galvaudés.</p>
+        </div>
+
+        <div class="note quiet">
+          <h3>La 3ᵉ porte reste ouverte</h3>
+          <p>« Je ne sais pas encore » n'est pas caché, mais dessiné en pointillé discret : présent,
+            sans pression. <b>On ne bloque jamais</b> l'utilisateur sur la question du mode.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
