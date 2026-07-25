@@ -1,4 +1,5 @@
 import 'package:cairn/data/database.dart';
+import 'package:cairn/domain/models/enums.dart';
 
 /// Construit une cigarette dont l'heure MURALE locale est [y-mo-d h:mi], avec le
 /// décalage [offsetMin]. On stocke l'instant UTC correspondant, de sorte que
@@ -11,12 +12,14 @@ Cigarette cigWall(
   int mi, {
   int offsetMin = 0,
   String id = 'c',
+  CigContext? context,
 }) {
   final wall = DateTime.utc(y, mo, d, h, mi);
   return Cigarette(
     id: id,
     occurredAtUtc: wall.subtract(Duration(minutes: offsetMin)),
     tzOffsetMin: offsetMin,
+    contextA: context?.index,
     wasBoss: false,
     duringDelay: false,
   );
