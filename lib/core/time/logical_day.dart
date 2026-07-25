@@ -19,6 +19,12 @@ class LogicalDay {
     return DateTime(shifted.year, shifted.month, shifted.day);
   }
 
+  /// Instant local (04:00) de début du jour logique contenant [local].
+  static DateTime startOf(DateTime local) {
+    final d = dayOf(local);
+    return DateTime(d.year, d.month, d.day, startHour);
+  }
+
   /// Vrai si [a] et [b] (heures murales locales) tombent le même jour logique.
   static bool sameDay(DateTime a, DateTime b) => dayOf(a) == dayOf(b);
 }
