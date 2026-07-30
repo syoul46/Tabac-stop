@@ -5,15 +5,18 @@
 
 ---
 
-## Point de reprise — 2026-07-25 (fin de session)
+## Point de reprise — 2026-07-30 (fin de session)
 
-**État : Jalons 0 → 5 terminés, testés, commités et poussés. Les 3 écrans clés validés en vrai
-sur émulateur.** Tout est sur `main` (`origin` = `git@github.com:syoul46/Tabac-stop.git`).
+**État : Jalons 0 → 6 terminés, testés (28 verts), commités et poussés. Les 5 écrans (Écran 1,
+observation, révélation, arrêt net, réduction) validés en vrai sur émulateur.** Tout est sur `main`
+(`origin` = `git@github.com:syoul46/Tabac-stop.git`).
 
-### Prochaine étape : **Jalon 6 — machine à états du parcours**
-Câbler les vrais modes choisis à la révélation (réduction / arrêt net / indécis) et ce que chacun
-affiche ensuite. Le choix du mode est déjà persisté (`JourneyRepository`, table `journey_events`) ;
-`RootScreen` route déjà selon le mode. Reste à construire les écrans/états par mode.
+### Prochaine étape : **Jalon 7 — boucle de défi (J4-7)**
+En mode réduction : proposer **1 délai/jour (10 min max)** sur le Boss cible, **1ᵉʳ badge au 1ᵉʳ
+délai tenu**, notification locale à T+10, validation silencieuse. Si les 4 premiers jours ratent →
+J8 propose un Boss encore plus facile, sans dire que le précédent a échoué. Cf. `PLAN.md` §8 (jalon 7).
+Bases prêtes : `ReductionHome` affiche déjà la cible (`bossReportProvider.easiestTarget`) ;
+`journey_events` peut journaliser `delay_started/held/broken` et `badge_earned`.
 
 ---
 
@@ -29,8 +32,11 @@ affiche ensuite. Le choix du mode est déjà persisté (`JourneyRepository`, tab
 | `a18d4b7` | **Jalon 5** — révélation J+3 : porte de déclenchement, RootScreen, RevealScreen, choix du mode |
 | `9b99e6a` | build(android) : core library desugaring (requis) + outil de seed dev |
 | `56a4e1c` | design : police serif Marcellus bundlée + créneau chargé (égalité → soir) |
+| `21dd568` | docs : journal de développement |
+| `795ce47` | **Jalon 6** — machine à états : resolvePhase + RootScreen + ColdTurkeyHome + ReductionHome |
 
-**Tests : 23 verts** (`flutter test`). Écrans validés sur émulateur : Écran 1, Observation, Révélation.
+**Tests : 28 verts** (`flutter test`). Écrans validés sur émulateur : Écran 1, Observation,
+Révélation, Arrêt net, Réduction.
 
 ---
 
@@ -104,6 +110,6 @@ flutter run -d emulator-5554 --dart-define=SEED=true  # injecte 3 j de faux hist
 ## Plan restant
 ```
 ✅ 0 scaffold  ✅ 1 bouton  ✅ 2 observation  ✅ 3 métriques  ✅ 4 Boss  ✅ 5 révélation
-⏭️ 6 machine à états   ▫️ 7 défi J4-7   ▫️ 8 rechute   ▫️ 9 sauvegarde chiffrée   ▫️ 10 polish
+✅ 6 machine à états   ⏭️ 7 défi J4-7   ▫️ 8 rechute   ▫️ 9 sauvegarde chiffrée   ▫️ 10 polish
 ```
 Détail de chaque jalon : `PLAN.md` §8.
