@@ -7,18 +7,16 @@
 
 ## Point de reprise — 2026-07-30 (fin de session 2)
 
-**État : Jalons 0 → 7 terminés, testés (35 verts), commités et poussés. La boucle de défi
-(délai + notification T+10) validée en vrai sur émulateur.** Tout est sur `main`
+**État : Jalons 0 → 8 terminés, testés (40 verts), commités et poussés. Rechute (arrêt net)
+validée en vrai : streak → 0, record intact, porte réduction.** Tout est sur `main`
 (`origin` = `git@github.com:syoul46/Tabac-stop.git`).
 
-### Prochaine étape : **Jalon 8 — rechute (mode arrêt net)**
-Prévoir la rechute *by design*. Quand on tape en arrêt net après N jours :
-- le **streak** repart à 0 (honnête) ;
-- mais **jours-propres cumulés** et **record d'écart max** ne bougent JAMAIS (invariant = le cairn
-  ne perd pas ses pierres) ;
-- proposer sans insister de repasser en réduction quelques jours.
-Cf. `PLAN.md` §4-5. Bases prêtes : `JourneyRepository` (event `relapse`), `ColdTurkeyHome` (squelette
-du streak à enrichir). À ajouter : métriques cumul + record (domaine pur, testable vite).
+### Prochaine étape : **Jalon 9 — sauvegarde chiffrée**
+Remplace le « compte au J4 ». Export/import manuel du journal, chiffré côté client
+(Argon2id + XChaCha20-Poly1305, paquet `cryptography` déjà en dépendance). Fichier `.enc` opaque,
+rien ne quitte l'appareil sans action explicite. Proposé au J4 (« tu as 3 jours d'historique »).
+Cf. `PLAN.md` §6. À faire : service de crypto (domaine testable : round-trip, mauvaise passphrase)
++ sérialisation du journal + écran export/import.
 
 ### Note émulateur
 Relancé cette fois **avec fenêtre** (`emulator -avd warren-x86_64 ... -gpu swiftshader_indirect`,
@@ -43,9 +41,10 @@ la permission `POST_NOTIFICATIONS` (demandée au 1ᵉʳ délai).
 | `795ce47` | **Jalon 6** — machine à états : resolvePhase + RootScreen + ColdTurkeyHome + ReductionHome |
 | `294f096` | **Jalon 7a** — boucle de délai : resolveDelay + startDelay/held/broken + badge + pierres |
 | `e511a8c` | **Jalon 7b** — notification locale T+10 (NotificationService), planif/annulation |
+| `acee8ba` | **Jalon 8** — rechute : cumulativeCleanDays + recordGap (invariant) + offre réduction |
 
-**Tests : 35 verts** (`flutter test`). Écrans validés sur émulateur : Écran 1, Observation,
-Révélation, Arrêt net, Réduction (+ délai : disponible/en cours/rupture, permission, alarme).
+**Tests : 40 verts** (`flutter test`). Écrans validés sur émulateur : Écran 1, Observation,
+Révélation, Arrêt net (+ rechute : record intact, offre), Réduction (+ délai, permission, alarme).
 
 ---
 
@@ -119,6 +118,6 @@ flutter run -d emulator-5554 --dart-define=SEED=true  # injecte 3 j de faux hist
 ## Plan restant
 ```
 ✅ 0 scaffold  ✅ 1 bouton  ✅ 2 observation  ✅ 3 métriques  ✅ 4 Boss  ✅ 5 révélation
-✅ 6 machine à états   ✅ 7 défi J4-7 (délai + notif)   ⏭️ 8 rechute   ▫️ 9 sauvegarde chiffrée   ▫️ 10 polish
+✅ 6 machine à états   ✅ 7 défi J4-7 (délai + notif)   ✅ 8 rechute   ⏭️ 9 sauvegarde chiffrée   ▫️ 10 polish
 ```
 Détail de chaque jalon : `PLAN.md` §8.
