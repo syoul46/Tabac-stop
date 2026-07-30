@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/notifications/notification_service.dart';
 import '../../core/time/format.dart';
 import '../../data/cigarette_repository.dart';
 import '../../data/journey_repository.dart';
@@ -58,12 +59,25 @@ class _ReductionHomeState extends ConsumerState<ReductionHome> {
     unawaited(HapticFeedback.mediumImpact());
     final repo = ref.read(cigaretteRepositoryProvider);
     if (status == DelayStatus.running) {
-      // « Je fume quand même » : on enregistre, on romp le délai. Rien d'autre.
+      // « Je fume quand même » : on enregistre, on romp le délai, on annule le
+      // rappel. Rien d'autre — aucune consolation.
       await repo.logSmoke(wasBoss: true, duringDelay: true);
       await ref.read(journeyRepositoryProvider).markDelayBroken();
+      await ref.read(notificationServiceProvider).cancelDelayEnd();
     } else {
       await repo.logSmoke();
     }
+  }
+
+  /// Lance le délai du jour et planifie le rappel de fin à T+10.
+  Future<void> _startDelay() async {
+    unawaited(HapticFeedback.selectionClick());
+    await ref.read(journeyRepositoryProvider).startDelay();
+    final bossName = ref.read(bossReportProvider).easiestTarget?.name ?? 'le Boss';
+    await ref.read(notificationServiceProvider).scheduleDelayEnd(
+          DateTime.now().add(kDelayLength),
+          bossName: bossName,
+        );
   }
 
   @override
@@ -107,8 +121,7 @@ class _ReductionHomeState extends ConsumerState<ReductionHome> {
                     _Action(
                       delay: delay,
                       todayCount: todays.length,
-                      onStart: () =>
-                          ref.read(journeyRepositoryProvider).startDelay(),
+                      onStart: _startDelay,
                     ),
                   ],
                 ),
