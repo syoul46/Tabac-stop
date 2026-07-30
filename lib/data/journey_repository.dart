@@ -45,6 +45,40 @@ class JourneyRepository {
     }
     return null;
   }
+
+  Future<void> _log(JourneyEventKind kind) async {
+    await _db.into(_db.journeyEvents).insert(
+          JourneyEventsCompanion.insert(
+            id: _uuid.v4(),
+            occurredAtUtc: DateTime.now().toUtc(),
+            kind: kind.name,
+          ),
+        );
+  }
+
+  /// Lance le délai du jour sur le Boss.
+  Future<void> startDelay() => _log(JourneyEventKind.delayStarted);
+
+  /// Le délai a été rompu (« je fume quand même ») — silencieux.
+  Future<void> markDelayBroken() => _log(JourneyEventKind.delayBroken);
+
+  /// Le délai a été tenu → une pierre. Au tout premier, on décroche un badge.
+  Future<void> markDelayHeld() async {
+    final priorHeld = await (_db.select(_db.journeyEvents)
+          ..where((t) => t.kind.equals(JourneyEventKind.delayHeld.name)))
+        .get();
+    await _log(JourneyEventKind.delayHeld);
+    if (priorHeld.isEmpty) {
+      await _log(JourneyEventKind.badgeEarned); // premier délai tenu
+    }
+  }
+
+  /// Tout le journal de parcours, trié (pour l'état du délai et le compte de pierres).
+  Stream<List<JourneyEvent>> watchAll() {
+    final q = _db.select(_db.journeyEvents)
+      ..orderBy([(t) => OrderingTerm.asc(t.occurredAtUtc)]);
+    return q.watch();
+  }
 }
 
 final journeyRepositoryProvider = Provider<JourneyRepository>((ref) {
@@ -54,4 +88,9 @@ final journeyRepositoryProvider = Provider<JourneyRepository>((ref) {
 /// Mode courant du parcours (null tant qu'aucun mode n'a été choisi).
 final currentModeProvider = StreamProvider<JourneyMode?>((ref) {
   return ref.watch(journeyRepositoryProvider).watchCurrentMode();
+});
+
+/// Tout le journal de parcours (pour l'état du délai et le compte de pierres).
+final journeyEventsProvider = StreamProvider<List<JourneyEvent>>((ref) {
+  return ref.watch(journeyRepositoryProvider).watchAll();
 });
