@@ -4,13 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/cigarette_repository.dart';
 import '../../data/database.dart';
 import '../../data/journey_repository.dart';
-import '../../domain/journey/reveal_gate.dart';
+import '../../domain/journey/journey_state.dart';
+import '../coldturkey/cold_turkey_home.dart';
+import '../reduction/reduction_home.dart';
 import '../reveal/reveal_screen.dart';
 import '../tap/tap_screen.dart';
 
-/// Choisit l'écran selon l'état du journal :
-/// - aucun tap ou observation en cours → l'écran du bouton ;
-/// - seuil atteint et aucun mode encore choisi → la révélation J+3.
+/// Point d'entrée : résout la phase du parcours (machine à états pure) et montre
+/// l'écran correspondant.
 class RootScreen extends ConsumerWidget {
   const RootScreen({super.key});
 
@@ -20,9 +21,17 @@ class RootScreen extends ConsumerWidget {
         ref.watch(allCigarettesProvider).asData?.value ?? const <Cigarette>[];
     final mode = ref.watch(currentModeProvider).asData?.value;
 
-    if (cigs.isNotEmpty && mode == null && shouldReveal(cigs)) {
-      return const RevealScreen();
+    switch (resolvePhase(cigs: cigs, mode: mode)) {
+      case JourneyPhase.revealReady:
+        return const RevealScreen();
+      case JourneyPhase.reduction:
+        return const ReductionHome();
+      case JourneyPhase.coldTurkey:
+        return const ColdTurkeyHome();
+      case JourneyPhase.firstLaunch:
+      case JourneyPhase.observing:
+      case JourneyPhase.undecided:
+        return const TapScreen();
     }
-    return const TapScreen();
   }
 }
