@@ -13,6 +13,7 @@ enum JourneyEventKind {
   badgeEarned,
   relapse,
   revealShown,
+  backupPromptSeen,
 }
 
 /// Mode courant du parcours. `undecided` = 3ᵉ porte de la révélation : on ne

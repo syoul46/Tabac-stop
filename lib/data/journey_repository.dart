@@ -66,6 +66,9 @@ class JourneyRepository {
   /// l'historique ; les compteurs cumulés et le record, eux, ne bougent pas.
   Future<void> markRelapse() => _log(JourneyEventKind.relapse);
 
+  /// Mémorise que le prompt de sauvegarde a été proposé (pour ne pas re-proposer).
+  Future<void> markBackupPromptSeen() => _log(JourneyEventKind.backupPromptSeen);
+
   /// Le délai a été tenu → une pierre. Au tout premier, on décroche un badge.
   Future<void> markDelayHeld() async {
     final priorHeld = await (_db.select(_db.journeyEvents)

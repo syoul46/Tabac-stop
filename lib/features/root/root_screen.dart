@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/cigarette_repository.dart';
 import '../../data/database.dart';
 import '../../data/journey_repository.dart';
+import '../../domain/journey/backup_prompt.dart';
 import '../../domain/journey/journey_state.dart';
 import '../backup/backup_screen.dart';
 import '../coldturkey/cold_turkey_home.dart';
@@ -38,14 +39,25 @@ class RootScreen extends ConsumerWidget {
   }
 }
 
-/// Ajoute un accès discret à la sauvegarde (coin haut-droit) — pas sur l'Écran 1
-/// ni la révélation, qui restent purs.
-class _WithBackupAccess extends StatelessWidget {
+/// Ajoute un accès discret à la sauvegarde (coin haut-droit) et, une seule fois
+/// (≥ 3 jours de données), un bandeau doux proposant de sauvegarder. Pas sur
+/// l'Écran 1 ni la révélation, qui restent purs.
+class _WithBackupAccess extends ConsumerWidget {
   const _WithBackupAccess({required this.child});
   final Widget child;
 
+  void _openBackup(BuildContext context) => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const BackupScreen()),
+      );
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final cigs =
+        ref.watch(allCigarettesProvider).asData?.value ?? const <Cigarette>[];
+    final events =
+        ref.watch(journeyEventsProvider).asData?.value ?? const <JourneyEvent>[];
+    final offer = shouldOfferBackup(cigs, events);
+
     return Stack(
       children: [
         child,
@@ -56,16 +68,83 @@ class _WithBackupAccess extends StatelessWidget {
             child: IconButton(
               icon: Icon(
                 Icons.shield_outlined,
-                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.35),
+                color:
+                    Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.35),
               ),
               tooltip: 'Sauvegarde',
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const BackupScreen()),
-              ),
+              onPressed: () => _openBackup(context),
             ),
           ),
         ),
+        if (offer)
+          Positioned(
+            left: 16,
+            right: 16,
+            bottom: 0,
+            child: SafeArea(
+              child: _BackupPrompt(
+                onLater: () =>
+                    ref.read(journeyRepositoryProvider).markBackupPromptSeen(),
+                onSave: () {
+                  ref.read(journeyRepositoryProvider).markBackupPromptSeen();
+                  _openBackup(context);
+                },
+              ),
+            ),
+          ),
       ],
+    );
+  }
+}
+
+/// Bandeau du J4 : proposé une seule fois. Factuel, pas culpabilisant.
+class _BackupPrompt extends StatelessWidget {
+  const _BackupPrompt({required this.onLater, required this.onSave});
+  final VoidCallback onLater;
+  final VoidCallback onSave;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 14, 12, 8),
+      decoration: BoxDecoration(
+        color: c.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: c.primary.withValues(alpha: 0.35)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'Tu as 3 jours d’historique. Sauvegarde-les — chiffré, '
+            'sur ton téléphone.',
+            style: TextStyle(
+                fontSize: 13.5,
+                height: 1.35,
+                color: c.onSurface.withValues(alpha: 0.85)),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                onPressed: onLater,
+                style: TextButton.styleFrom(
+                    foregroundColor: c.onSurface.withValues(alpha: 0.6)),
+                child: const Text('Plus tard'),
+              ),
+              const SizedBox(width: 4),
+              FilledButton(
+                onPressed: onSave,
+                style: FilledButton.styleFrom(
+                    backgroundColor: c.primary, foregroundColor: c.onPrimary),
+                child: const Text('Sauvegarder'),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
