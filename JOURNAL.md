@@ -7,18 +7,17 @@
 
 ## Point de reprise — 2026-07-30 (fin de session 2)
 
-**État : Jalons 0 → 9 terminés, testés (46 verts), commités et poussés. Sauvegarde chiffrée
-validée en vrai : fichier `.enc` opaque (Argon2id + XChaCha20-Poly1305).** Tout est sur `main`
-(`origin` = `git@github.com:syoul46/Tabac-stop.git`).
+**État : ✅ LES 10 JALONS SONT FAITS. Testés (49 verts), commités et poussés. MVP complet du
+parcours (Écran 1 → observation → révélation → réduction/arrêt net → défi/rechute → sauvegarde).**
+Tout est sur `main` (`origin` = `git@github.com:syoul46/Tabac-stop.git`).
 
-### Prochaine étape : **Jalon 10 — polish (le dernier)**
-Audit « l'app se tait », copie, empty states, accessibilité, haptique. Points connus à traiter :
-- **prompt J4** de sauvegarde (« tu as 3 jours d'historique — sauvegarde-les ») : bandeau doux à
-  afficher quand `distinctLogicalDays >= 3`, avec un flag « déjà proposé » persisté (choisir le
-  mécanisme : nouveau kind d'event ou réglage).
-- Marcellus n'a qu'une graisse (titres w600 rendus en régulier) — ok, sinon bundler une 2ᵉ graisse.
-- passe finale sur les couleurs/espacements des écrans, thème sombre (nuit) à revérifier en vrai.
-Cf. `PLAN.md` §8 (jalon 10).
+### Pistes pour la suite (post-MVP, non planifiées)
+- Beta réelle : tuner les seuils de détection des Boss sur de vraies données.
+- iOS : config Xcode + notifications iOS (permission, catégories) + tester le partage.
+- Onboarding badges/altitudes (paliers santé du cairn), historique/stats détaillés.
+- CI (le repo n'a pas de pipeline) ; signature release Android ; icône & splash de marque.
+- Vérifier sur vrai device : la police (Marcellus 1 graisse), le partage/sélection de fichier,
+  et l'artefact de spellcheck vu sur l'émulateur (le `Text` n'a aucune décoration côté code).
 
 ### Note émulateur
 Relancé cette fois **avec fenêtre** (`emulator -avd warren-x86_64 ... -gpu swiftshader_indirect`,
@@ -46,6 +45,7 @@ la permission `POST_NOTIFICATIONS` (demandée au 1ᵉʳ délai).
 | `acee8ba` | **Jalon 8** — rechute : cumulativeCleanDays + recordGap (invariant) + offre réduction |
 | `5644a98` | **Jalon 9a** — coffre chiffré (Vault Argon2id + XChaCha20) + BackupService |
 | `4397d6a` | **Jalon 9b** — BackupScreen + I/O fichier (share_plus/file_picker), accès discret |
+| `73be1a0` | **Jalon 10** — polish : prompt sauvegarde J4 (shouldOfferBackup) + thème sombre vérifié |
 
 **Tests : 46 verts** (`flutter test`). Écrans validés sur émulateur : Écran 1, Observation,
 Révélation, Arrêt net (+ rechute), Réduction (+ délai/notif), Sauvegarde (+ export .enc opaque).
@@ -128,6 +128,6 @@ flutter run -d emulator-5554 --dart-define=SEED=true  # injecte 3 j de faux hist
 ## Plan restant
 ```
 ✅ 0 scaffold  ✅ 1 bouton  ✅ 2 observation  ✅ 3 métriques  ✅ 4 Boss  ✅ 5 révélation
-✅ 6 machine à états   ✅ 7 défi J4-7 (délai + notif)   ✅ 8 rechute   ✅ 9 sauvegarde chiffrée   ⏭️ 10 polish
+✅ 6 machine à états   ✅ 7 défi J4-7 (délai + notif)   ✅ 8 rechute   ✅ 9 sauvegarde chiffrée   ✅ 10 polish
 ```
 Détail de chaque jalon : `PLAN.md` §8.
