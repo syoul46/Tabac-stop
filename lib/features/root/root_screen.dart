@@ -34,7 +34,9 @@ class RootScreen extends ConsumerWidget {
         return const TapScreen();
       case JourneyPhase.observing:
       case JourneyPhase.undecided:
-        return const _WithBackupAccess(child: TapScreen());
+        // Le prompt de sauvegarde (J4) n'apparaît qu'en observation — jamais
+        // dans un mode, où il s'empilerait avec les bandeaux contextuels.
+        return const _WithBackupAccess(showPrompt: true, child: TapScreen());
     }
   }
 }
@@ -43,8 +45,12 @@ class RootScreen extends ConsumerWidget {
 /// (≥ 3 jours de données), un bandeau doux proposant de sauvegarder. Pas sur
 /// l'Écran 1 ni la révélation, qui restent purs.
 class _WithBackupAccess extends ConsumerWidget {
-  const _WithBackupAccess({required this.child});
+  const _WithBackupAccess({required this.child, this.showPrompt = false});
   final Widget child;
+
+  /// N'affiche le bandeau de sauvegarde que si demandé (phase d'observation),
+  /// pour ne jamais l'empiler avec un bandeau contextuel d'un mode.
+  final bool showPrompt;
 
   void _openBackup(BuildContext context) => Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => const BackupScreen()),
@@ -56,7 +62,7 @@ class _WithBackupAccess extends ConsumerWidget {
         ref.watch(allCigarettesProvider).asData?.value ?? const <Cigarette>[];
     final events =
         ref.watch(journeyEventsProvider).asData?.value ?? const <JourneyEvent>[];
-    final offer = shouldOfferBackup(cigs, events);
+    final offer = showPrompt && shouldOfferBackup(cigs, events);
 
     return Stack(
       children: [
