@@ -115,6 +115,49 @@ int? busiestHour(List<int> counts) {
   return bestStart == null ? null : (bestStart, bestStart + width);
 }
 
+/// **Jours-propres cumulés** : nombre de jours logiques *terminés* (avant
+/// aujourd'hui) sans aucune cigarette, depuis le tout premier tap. Ne décroît
+/// JAMAIS avec le temps — c'est le compteur qui empêche l'effondrement « tout
+/// est foutu » après une rechute (le cairn ne perd pas ses pierres).
+int cumulativeCleanDays(Iterable<Cigarette> cigs, DateTime now) {
+  final list = cigs.toList();
+  if (list.isEmpty) return 0;
+
+  final smoky = <DateTime>{};
+  DateTime? firstDay;
+  for (final c in list) {
+    final d = LogicalDay.dayOf(wallTimeOf(c));
+    smoky.add(d);
+    if (firstDay == null || d.isBefore(firstDay)) firstDay = d;
+  }
+
+  final today = LogicalDay.dayOf(now);
+  var clean = 0;
+  for (var d = firstDay!;
+      d.isBefore(today);
+      d = DateTime(d.year, d.month, d.day + 1)) {
+    if (!smoky.contains(d)) clean++;
+  }
+  return clean;
+}
+
+/// **Record d'écart max** : le plus long intervalle jamais atteint entre deux
+/// cigarettes, en incluant l'abstinence en cours ([now] − dernière). Ne décroît
+/// jamais : une rechute remet le streak à zéro mais laisse ce record intact.
+Duration recordGap(Iterable<Cigarette> cigs, DateTime now) {
+  final list = [...cigs]
+    ..sort((a, b) => a.occurredAtUtc.compareTo(b.occurredAtUtc));
+  var maxG = Duration.zero;
+  for (final g in gapsOf(list)) {
+    if (g > maxG) maxG = g;
+  }
+  if (list.isNotEmpty) {
+    final current = now.difference(list.last.occurredAtUtc.toLocal());
+    if (current > maxG) maxG = current;
+  }
+  return maxG;
+}
+
 /// Calcule le portrait chiffré. [windowWidth] = largeur du créneau chargé (h).
 MetricsSummary computeMetrics(Iterable<Cigarette> input, {int windowWidth = 2}) {
   final cigs = [...input]

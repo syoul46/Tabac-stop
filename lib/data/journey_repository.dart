@@ -62,6 +62,10 @@ class JourneyRepository {
   /// Le délai a été rompu (« je fume quand même ») — silencieux.
   Future<void> markDelayBroken() => _log(JourneyEventKind.delayBroken);
 
+  /// Une rechute en arrêt net (le streak repart à zéro). Journalisé pour
+  /// l'historique ; les compteurs cumulés et le record, eux, ne bougent pas.
+  Future<void> markRelapse() => _log(JourneyEventKind.relapse);
+
   /// Le délai a été tenu → une pierre. Au tout premier, on décroche un badge.
   Future<void> markDelayHeld() async {
     final priorHeld = await (_db.select(_db.journeyEvents)
