@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.syoul.cairn"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 36 // requis par file_picker/flutter_plugin_android_lifecycle
     ndkVersion = flutter.ndkVersion
 
     compileOptions {

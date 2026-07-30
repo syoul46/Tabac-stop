@@ -45,6 +45,8 @@ dependencies:
   uuid: ^4.6.0
   google_fonts: ^8.2.0
   intl: ^0.20.3
+  share_plus: ^10.1.4
+  file_picker: ^8.3.3
 
 dev_dependencies:
   flutter_test:

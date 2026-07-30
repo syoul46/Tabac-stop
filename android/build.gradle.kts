@@ -1,7 +1,19 @@
+import com.android.build.gradle.LibraryExtension
+
 allprojects {
     repositories {
         google()
         mavenCentral()
+    }
+}
+
+// Certains plugins (ex. file_picker) figent leur compileSdk à une vieille version,
+// alors qu'un plugin transitif exige 36. On force tous les modules de lib à 36.
+subprojects {
+    afterEvaluate {
+        extensions.findByType(LibraryExtension::class.java)?.let { ext ->
+            ext.compileSdk = 36
+        }
     }
 }
 
