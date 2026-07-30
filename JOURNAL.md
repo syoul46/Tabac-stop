@@ -7,16 +7,18 @@
 
 ## Point de reprise — 2026-07-30 (fin de session 2)
 
-**État : Jalons 0 → 8 terminés, testés (40 verts), commités et poussés. Rechute (arrêt net)
-validée en vrai : streak → 0, record intact, porte réduction.** Tout est sur `main`
+**État : Jalons 0 → 9 terminés, testés (46 verts), commités et poussés. Sauvegarde chiffrée
+validée en vrai : fichier `.enc` opaque (Argon2id + XChaCha20-Poly1305).** Tout est sur `main`
 (`origin` = `git@github.com:syoul46/Tabac-stop.git`).
 
-### Prochaine étape : **Jalon 9 — sauvegarde chiffrée**
-Remplace le « compte au J4 ». Export/import manuel du journal, chiffré côté client
-(Argon2id + XChaCha20-Poly1305, paquet `cryptography` déjà en dépendance). Fichier `.enc` opaque,
-rien ne quitte l'appareil sans action explicite. Proposé au J4 (« tu as 3 jours d'historique »).
-Cf. `PLAN.md` §6. À faire : service de crypto (domaine testable : round-trip, mauvaise passphrase)
-+ sérialisation du journal + écran export/import.
+### Prochaine étape : **Jalon 10 — polish (le dernier)**
+Audit « l'app se tait », copie, empty states, accessibilité, haptique. Points connus à traiter :
+- **prompt J4** de sauvegarde (« tu as 3 jours d'historique — sauvegarde-les ») : bandeau doux à
+  afficher quand `distinctLogicalDays >= 3`, avec un flag « déjà proposé » persisté (choisir le
+  mécanisme : nouveau kind d'event ou réglage).
+- Marcellus n'a qu'une graisse (titres w600 rendus en régulier) — ok, sinon bundler une 2ᵉ graisse.
+- passe finale sur les couleurs/espacements des écrans, thème sombre (nuit) à revérifier en vrai.
+Cf. `PLAN.md` §8 (jalon 10).
 
 ### Note émulateur
 Relancé cette fois **avec fenêtre** (`emulator -avd warren-x86_64 ... -gpu swiftshader_indirect`,
@@ -42,9 +44,17 @@ la permission `POST_NOTIFICATIONS` (demandée au 1ᵉʳ délai).
 | `294f096` | **Jalon 7a** — boucle de délai : resolveDelay + startDelay/held/broken + badge + pierres |
 | `e511a8c` | **Jalon 7b** — notification locale T+10 (NotificationService), planif/annulation |
 | `acee8ba` | **Jalon 8** — rechute : cumulativeCleanDays + recordGap (invariant) + offre réduction |
+| `5644a98` | **Jalon 9a** — coffre chiffré (Vault Argon2id + XChaCha20) + BackupService |
+| `4397d6a` | **Jalon 9b** — BackupScreen + I/O fichier (share_plus/file_picker), accès discret |
 
-**Tests : 40 verts** (`flutter test`). Écrans validés sur émulateur : Écran 1, Observation,
-Révélation, Arrêt net (+ rechute : record intact, offre), Réduction (+ délai, permission, alarme).
+**Tests : 46 verts** (`flutter test`). Écrans validés sur émulateur : Écran 1, Observation,
+Révélation, Arrêt net (+ rechute), Réduction (+ délai/notif), Sauvegarde (+ export .enc opaque).
+
+### Build Android — notes
+- `compileSdk = 36` dans `android/app/build.gradle.kts` **et** forcé sur tous les modules de
+  plugin via `subprojects { afterEvaluate { LibraryExtension.compileSdk = 36 } }` dans
+  `android/build.gradle.kts` (file_picker figeait 34, un plugin transitif exigeait 36).
+- `share_plus ^10.1.4` + `file_picker ^8.3.3` alignés sur `win32 5.x` (share_plus 13 exigeait win32 6).
 
 ---
 
@@ -118,6 +128,6 @@ flutter run -d emulator-5554 --dart-define=SEED=true  # injecte 3 j de faux hist
 ## Plan restant
 ```
 ✅ 0 scaffold  ✅ 1 bouton  ✅ 2 observation  ✅ 3 métriques  ✅ 4 Boss  ✅ 5 révélation
-✅ 6 machine à états   ✅ 7 défi J4-7 (délai + notif)   ✅ 8 rechute   ⏭️ 9 sauvegarde chiffrée   ▫️ 10 polish
+✅ 6 machine à états   ✅ 7 défi J4-7 (délai + notif)   ✅ 8 rechute   ✅ 9 sauvegarde chiffrée   ⏭️ 10 polish
 ```
 Détail de chaque jalon : `PLAN.md` §8.
