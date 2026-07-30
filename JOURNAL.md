@@ -5,18 +5,25 @@
 
 ---
 
-## Point de reprise — 2026-07-30 (fin de session)
+## Point de reprise — 2026-07-30 (fin de session 2)
 
-**État : Jalons 0 → 6 terminés, testés (28 verts), commités et poussés. Les 5 écrans (Écran 1,
-observation, révélation, arrêt net, réduction) validés en vrai sur émulateur.** Tout est sur `main`
+**État : Jalons 0 → 7 terminés, testés (35 verts), commités et poussés. La boucle de défi
+(délai + notification T+10) validée en vrai sur émulateur.** Tout est sur `main`
 (`origin` = `git@github.com:syoul46/Tabac-stop.git`).
 
-### Prochaine étape : **Jalon 7 — boucle de défi (J4-7)**
-En mode réduction : proposer **1 délai/jour (10 min max)** sur le Boss cible, **1ᵉʳ badge au 1ᵉʳ
-délai tenu**, notification locale à T+10, validation silencieuse. Si les 4 premiers jours ratent →
-J8 propose un Boss encore plus facile, sans dire que le précédent a échoué. Cf. `PLAN.md` §8 (jalon 7).
-Bases prêtes : `ReductionHome` affiche déjà la cible (`bossReportProvider.easiestTarget`) ;
-`journey_events` peut journaliser `delay_started/held/broken` et `badge_earned`.
+### Prochaine étape : **Jalon 8 — rechute (mode arrêt net)**
+Prévoir la rechute *by design*. Quand on tape en arrêt net après N jours :
+- le **streak** repart à 0 (honnête) ;
+- mais **jours-propres cumulés** et **record d'écart max** ne bougent JAMAIS (invariant = le cairn
+  ne perd pas ses pierres) ;
+- proposer sans insister de repasser en réduction quelques jours.
+Cf. `PLAN.md` §4-5. Bases prêtes : `JourneyRepository` (event `relapse`), `ColdTurkeyHome` (squelette
+du streak à enrichir). À ajouter : métriques cumul + record (domaine pur, testable vite).
+
+### Note émulateur
+Relancé cette fois **avec fenêtre** (`emulator -avd warren-x86_64 ... -gpu swiftshader_indirect`,
+sans `-no-window`, `DISPLAY=:0`) pour visualisation directe. `flutter_local_notifications` nécessite
+la permission `POST_NOTIFICATIONS` (demandée au 1ᵉʳ délai).
 
 ---
 
@@ -34,9 +41,11 @@ Bases prêtes : `ReductionHome` affiche déjà la cible (`bossReportProvider.eas
 | `56a4e1c` | design : police serif Marcellus bundlée + créneau chargé (égalité → soir) |
 | `21dd568` | docs : journal de développement |
 | `795ce47` | **Jalon 6** — machine à états : resolvePhase + RootScreen + ColdTurkeyHome + ReductionHome |
+| `294f096` | **Jalon 7a** — boucle de délai : resolveDelay + startDelay/held/broken + badge + pierres |
+| `e511a8c` | **Jalon 7b** — notification locale T+10 (NotificationService), planif/annulation |
 
-**Tests : 28 verts** (`flutter test`). Écrans validés sur émulateur : Écran 1, Observation,
-Révélation, Arrêt net, Réduction.
+**Tests : 35 verts** (`flutter test`). Écrans validés sur émulateur : Écran 1, Observation,
+Révélation, Arrêt net, Réduction (+ délai : disponible/en cours/rupture, permission, alarme).
 
 ---
 
@@ -110,6 +119,6 @@ flutter run -d emulator-5554 --dart-define=SEED=true  # injecte 3 j de faux hist
 ## Plan restant
 ```
 ✅ 0 scaffold  ✅ 1 bouton  ✅ 2 observation  ✅ 3 métriques  ✅ 4 Boss  ✅ 5 révélation
-✅ 6 machine à états   ⏭️ 7 défi J4-7   ▫️ 8 rechute   ▫️ 9 sauvegarde chiffrée   ▫️ 10 polish
+✅ 6 machine à états   ✅ 7 défi J4-7 (délai + notif)   ⏭️ 8 rechute   ▫️ 9 sauvegarde chiffrée   ▫️ 10 polish
 ```
 Détail de chaque jalon : `PLAN.md` §8.
