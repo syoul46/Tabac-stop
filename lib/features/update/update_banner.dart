@@ -15,7 +15,9 @@ class UpdateBanner extends ConsumerStatefulWidget {
 }
 
 class _UpdateBannerState extends ConsumerState<UpdateBanner> {
-  bool _dismissed = false;
+  // Version ignorée par l'utilisateur : une version encore plus récente, détectée
+  // plus tard (au retour au premier plan), réapparaîtra donc.
+  String? _dismissedVersion;
   bool _busy = false;
   double _progress = 0;
 
@@ -32,7 +34,7 @@ class _UpdateBannerState extends ConsumerState<UpdateBanner> {
         },
       );
       // L'installeur système prend le relais ; on efface le bandeau.
-      if (mounted) setState(() => _dismissed = true);
+      if (mounted) setState(() => _dismissedVersion = info.version);
     } on UpdateException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -52,9 +54,9 @@ class _UpdateBannerState extends ConsumerState<UpdateBanner> {
 
   @override
   Widget build(BuildContext context) {
-    if (_dismissed) return const SizedBox.shrink();
     final info = ref.watch(updateCheckProvider).asData?.value;
     if (info == null) return const SizedBox.shrink();
+    if (info.version == _dismissedVersion) return const SizedBox.shrink();
 
     final c = Theme.of(context).colorScheme;
     return Positioned(
@@ -115,7 +117,8 @@ class _UpdateBannerState extends ConsumerState<UpdateBanner> {
                         icon: Icon(Icons.close,
                             size: 18,
                             color: c.onSurface.withValues(alpha: 0.5)),
-                        onPressed: () => setState(() => _dismissed = true),
+                        onPressed: () =>
+                            setState(() => _dismissedVersion = info.version),
                       ),
                     ],
                   ),

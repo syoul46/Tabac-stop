@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'core/theme/cairn_theme.dart';
+import 'core/update/update_on_resume.dart';
 import 'features/root/root_screen.dart';
 
 /// Racine de l'app. Le thème suit le système (jour / nuit), les deux étant
@@ -15,7 +16,7 @@ class CairnApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: buildCairnLightTheme(),
       darkTheme: buildCairnDarkTheme(),
-      home: const RootScreen(),
+      home: const UpdateOnResume(child: RootScreen()),
     );
   }
 }
