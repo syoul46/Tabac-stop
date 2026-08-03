@@ -5,6 +5,58 @@
 
 ---
 
+## Point de reprise — 2026-08-03 (session 3, suite : contenu produit & polish, v1.3.0)
+
+**État : le produit décrit par le PLAN est intégralement codé (jalons 0→13). Dernière release
+publiée : `v1.3.0`.** Seul vrai écart au plan restant : **iOS** (jalon 0 disait « build iOS+Android » ;
+seul Android est configuré/signé/testé).
+
+### Ce qui a été ajouté après l'auto-update
+- **Jalon 11 — paliers santé** (`domain/health/milestones.dart`, testé) : altitudes = faits
+  physiologiques (NHS/CDC) déclenchés par l'abstinence continue ; reveal **une-fois** via event
+  `milestoneRevealed` (une rechute ne re-révèle pas). Altitude affichée sous le streak (arrêt net).
+- **Jalon 12 — cairn dessiné + victoire de Boss** :
+  - `features/cairn/cairn_view.dart` = **CustomPainter** (galets Bézier bruités de façon
+    déterministe, dégradé minéral, ombres). Visuel héros en arrêt net (1 pierre de fondation + 1 par
+    palier) et en réduction (1 par délai tenu).
+  - `domain/boss/victory.dart` (testé) : tenir **3 délais** sur un Boss (`kBossVictoryHolds`) le
+    **vainc** ; délai tenu tagué `bossKey` sur `delayHeld` ; cible = `nextTarget` (plus fragile non
+    vaincu). Reveal `bossDefeated` **une-fois** (`BossVictoryReveal`), rocher **hibiscus** hissé au
+    sommet — visible en arrêt net **et** réduction, ne retombe jamais.
+- **Jalon 13 — vie & stats** :
+  - **Animations** : la pierre **tombe** (easeOutBack + fondu, ~560 ms) ; le **rocher de Boss est
+    hissé depuis le bas** ; **poussière** sable à l'atterrissage (pas pour le rocher).
+  - **Haptique** : `lightImpact` au calage d'une pierre (`CairnView`, flag `haptics`), `heavyImpact`
+    au rocher de Boss (via le reveal, pour éviter le double). Coupée en observation.
+  - **Mini-cairn en observation** : silencieux, 1 pierre par jour (`TapScreen`).
+  - **Écran stats** (`features/stats/stats_screen.dart`), ouvert par l'icône `bar_chart` (haut-gauche,
+    dans `_WithBackupAccess`) : rythme, cumul (dont « plus haut cairn », Boss vaincus), altitude,
+    courbe horaire, liste des Boss (le vaincu barré). **Tout dérivé, rien stocké.**
+
+### Vérif visuelle (émulateur `warren-x86_64`, GPU logiciel)
+Previews dev pratiques (overrides Riverpod, pas besoin de vraies données ni de navigation) :
+```bash
+flutter run -t lib/dev/cairn_preview.dart                              # cairn interactif (pose)
+flutter run -t lib/dev/screens_preview.dart --dart-define=SCREEN=stats # écran stats
+flutter run -t lib/dev/screens_preview.dart --dart-define=SCREEN=obs   # mini-cairn observation
+flutter run -t lib/dev/screens_preview.dart --dart-define=SCREEN=dust  # poussière (auto-chute)
+```
+⚠️ L'émulateur en GPU logiciel jette des ANR (« System UI isn't responding » → *Wait*) et **ignore
+parfois le tactile** ; pour capturer un écran précis, l'afficher direct via `--dart-define` plutôt que
+naviguer au tap. Filmer : `adb shell screenrecord --time-limit N /sdcard/x.mp4`.
+
+### Releases de cette session
+`v1.0.0` → `v1.3.0`. Cadence : v1.0.x = signature + itérations auto-update ; v1.1.x = paliers +
+cairn dessiné ; v1.2.x = victoire de Boss + animations + haptique ; **v1.3.0 = stats + mini-cairn +
+poussière**. Upload d'assets via `gh` : si `gh release create` timeoute pendant l'upload, créer la
+release puis `gh release upload v<x> <apk> --clobber` séparément.
+
+### Pistes restantes
+**iOS** (le seul écart au plan) · CI · sauvegarder le keystore hors machine · tuning réel des seuils
+Boss (vraie beta) · rendre l'auto-update **manuel** (option) · son discret optionnel.
+
+---
+
 ## Point de reprise — 2026-08-03 (session 3 : signature, public, auto-update)
 
 **État : app publiée et diffusable.** Repo GitHub **passé public**, releases **v1.0.0 → v1.0.5**
