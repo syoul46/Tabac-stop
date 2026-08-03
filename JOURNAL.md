@@ -5,10 +5,10 @@
 
 ---
 
-## Point de reprise — 2026-08-03 (session 3, suite : contenu produit & polish, v1.3.0)
+## Point de reprise — 2026-08-03 (session 3, suite : contenu produit & polish, v1.4.0)
 
-**État : le produit décrit par le PLAN est intégralement codé (jalons 0→13). Dernière release
-publiée : `v1.3.0`.** Seul vrai écart au plan restant : **iOS** (jalon 0 disait « build iOS+Android » ;
+**État : le produit décrit par le PLAN est intégralement codé (jalons 0→14). Dernière release
+publiée : `v1.4.0`.** Seul vrai écart au plan restant : **iOS** (jalon 0 disait « build iOS+Android » ;
 seul Android est configuré/signé/testé).
 
 ### Ce qui a été ajouté après l'auto-update
@@ -32,6 +32,10 @@ seul Android est configuré/signé/testé).
   - **Écran stats** (`features/stats/stats_screen.dart`), ouvert par l'icône `bar_chart` (haut-gauche,
     dans `_WithBackupAccess`) : rythme, cumul (dont « plus haut cairn », Boss vaincus), altitude,
     courbe horaire, liste des Boss (le vaincu barré). **Tout dérivé, rien stocké.**
+- **Jalon 14 — aide / règle du jeu** (`features/help/how_it_works_screen.dart`) : écran ouvert par
+  l'utilisateur qui explique tout (silence, bouton, observation, révélation, cairn, Boss, altitudes,
+  confidentialité). Accès : lien « Comment ça marche ? » sur l'Écran 1 + icône `?` (haut-gauche, à
+  côté des stats). Bandeau MAJ décalé à `left:100` pour laisser la place aux deux icônes de gauche.
 
 ### Vérif visuelle (émulateur `warren-x86_64`, GPU logiciel)
 Previews dev pratiques (overrides Riverpod, pas besoin de vraies données ni de navigation) :
@@ -40,16 +44,17 @@ flutter run -t lib/dev/cairn_preview.dart                              # cairn i
 flutter run -t lib/dev/screens_preview.dart --dart-define=SCREEN=stats # écran stats
 flutter run -t lib/dev/screens_preview.dart --dart-define=SCREEN=obs   # mini-cairn observation
 flutter run -t lib/dev/screens_preview.dart --dart-define=SCREEN=dust  # poussière (auto-chute)
+flutter run -t lib/dev/screens_preview.dart --dart-define=SCREEN=help  # écran « règle du jeu »
 ```
 ⚠️ L'émulateur en GPU logiciel jette des ANR (« System UI isn't responding » → *Wait*) et **ignore
 parfois le tactile** ; pour capturer un écran précis, l'afficher direct via `--dart-define` plutôt que
 naviguer au tap. Filmer : `adb shell screenrecord --time-limit N /sdcard/x.mp4`.
 
 ### Releases de cette session
-`v1.0.0` → `v1.3.0`. Cadence : v1.0.x = signature + itérations auto-update ; v1.1.x = paliers +
-cairn dessiné ; v1.2.x = victoire de Boss + animations + haptique ; **v1.3.0 = stats + mini-cairn +
-poussière**. Upload d'assets via `gh` : si `gh release create` timeoute pendant l'upload, créer la
-release puis `gh release upload v<x> <apk> --clobber` séparément.
+`v1.0.0` → `v1.4.0`. Cadence : v1.0.x = signature + itérations auto-update ; v1.1.x = paliers +
+cairn dessiné ; v1.2.x = victoire de Boss + animations + haptique ; v1.3.0 = stats + mini-cairn +
+poussière ; **v1.4.0 = écran « règle du jeu »**. Upload d'assets via `gh` : si `gh release create`
+timeoute pendant l'upload, créer la release puis `gh release upload v<x> <apk> --clobber` séparément.
 
 ### Pistes restantes
 **iOS** (le seul écart au plan) · CI · sauvegarder le keystore hors machine · tuning réel des seuils
