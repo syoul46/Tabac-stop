@@ -9,6 +9,7 @@ import '../data/database.dart';
 import '../data/journey_repository.dart';
 import '../domain/models/enums.dart';
 import '../features/cairn/cairn_view.dart';
+import '../features/help/how_it_works_screen.dart';
 import '../features/stats/stats_screen.dart';
 import '../features/tap/tap_screen.dart';
 
@@ -80,6 +81,7 @@ class _App extends StatelessWidget {
       home: switch (screen) {
         'obs' => const TapScreen(),
         'dust' => const _AutoDrop(),
+        'help' => const HowItWorksScreen(),
         _ => const StatsScreen(),
       },
     );

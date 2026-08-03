@@ -61,8 +61,8 @@ class _UpdateBannerState extends ConsumerState<UpdateBanner> {
     final c = Theme.of(context).colorScheme;
     return Positioned(
       top: 0,
-      // laisse la place aux icônes (stats à gauche, bouclier à droite)
-      left: 52,
+      // laisse la place aux icônes (stats + aide à gauche, bouclier à droite)
+      left: 100,
       right: 52,
       child: SafeArea(
         child: Material(

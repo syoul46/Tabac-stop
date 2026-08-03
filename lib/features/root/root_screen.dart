@@ -10,6 +10,7 @@ import '../backup/backup_screen.dart';
 import '../boss/boss_victory_reveal.dart';
 import '../coldturkey/cold_turkey_home.dart';
 import '../health/milestone_reveal.dart';
+import '../help/how_it_works_screen.dart';
 import '../reduction/reduction_home.dart';
 import '../reveal/reveal_screen.dart';
 import '../stats/stats_screen.dart';
@@ -86,6 +87,10 @@ class _WithBackupAccess extends ConsumerWidget {
         MaterialPageRoute(builder: (_) => const StatsScreen()),
       );
 
+  void _openHelp(BuildContext context) => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const HowItWorksScreen()),
+      );
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cigs =
@@ -101,16 +106,31 @@ class _WithBackupAccess extends ConsumerWidget {
           top: 0,
           left: 4,
           child: SafeArea(
-            child: IconButton(
-              icon: Icon(
-                Icons.bar_chart,
-                color: Theme.of(context)
-                    .colorScheme
-                    .onSurface
-                    .withValues(alpha: 0.35),
-              ),
-              tooltip: 'Tes chiffres',
-              onPressed: () => _openStats(context),
+            child: Row(
+              children: [
+                IconButton(
+                  icon: Icon(
+                    Icons.bar_chart,
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withValues(alpha: 0.35),
+                  ),
+                  tooltip: 'Tes chiffres',
+                  onPressed: () => _openStats(context),
+                ),
+                IconButton(
+                  icon: Icon(
+                    Icons.help_outline,
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withValues(alpha: 0.35),
+                  ),
+                  tooltip: 'La règle du jeu',
+                  onPressed: () => _openHelp(context),
+                ),
+              ],
             ),
           ),
         ),

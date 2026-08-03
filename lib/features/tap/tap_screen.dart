@@ -10,6 +10,7 @@ import '../../data/cigarette_repository.dart';
 import '../../data/database.dart';
 import '../../domain/metrics/hourly.dart';
 import '../cairn/cairn_view.dart';
+import '../help/how_it_works_screen.dart';
 import '../observation/hourly_curve.dart';
 import '../observation/observation_banner.dart';
 import 'context_picker.dart';
@@ -129,6 +130,14 @@ class _TapScreenState extends ConsumerState<TapScreen> {
               TapStone(onTap: _onTap, child: _glyph(onSurface)),
               const SizedBox(height: 28),
               _InvitePhrase(color: onSurface),
+              const SizedBox(height: 18),
+              TextButton(
+                onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => const HowItWorksScreen())),
+                style: TextButton.styleFrom(
+                    foregroundColor: onSurface.withValues(alpha: 0.5)),
+                child: const Text('Comment ça marche ?'),
+              ),
             ],
           ),
         ),
