@@ -9,6 +9,7 @@ import '../../core/time/format.dart';
 import '../../data/cigarette_repository.dart';
 import '../../data/journey_repository.dart';
 import '../../domain/journey/delay.dart';
+import '../cairn/cairn_view.dart';
 import '../tap/tap_stone.dart';
 
 /// Mode réduction. On annonce la première cible (le Boss le plus fragile) et on
@@ -291,12 +292,15 @@ class _StonesFooter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = Theme.of(context).colorScheme;
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(Icons.landscape_outlined,
-            size: 18, color: c.onSurface.withValues(alpha: 0.5)),
-        const SizedBox(width: 8),
+        if (count > 0)
+          CairnView(stones: count, width: 150, height: 118)
+        else
+          Icon(Icons.landscape_outlined,
+              size: 22, color: c.onSurface.withValues(alpha: 0.4)),
+        const SizedBox(height: 6),
         Text(
           count == 0
               ? 'aucune pierre encore'
