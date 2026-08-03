@@ -24,21 +24,32 @@ class RootScreen extends ConsumerWidget {
         ref.watch(allCigarettesProvider).asData?.value ?? const <Cigarette>[];
     final mode = ref.watch(currentModeProvider).asData?.value;
 
+    final Widget screen;
     switch (resolvePhase(cigs: cigs, mode: mode)) {
       case JourneyPhase.revealReady:
-        return const RevealScreen();
+        screen = const RevealScreen();
       case JourneyPhase.reduction:
-        return const _WithBackupAccess(child: ReductionHome());
+        screen = const _WithBackupAccess(child: ReductionHome());
       case JourneyPhase.coldTurkey:
-        return const _WithBackupAccess(child: ColdTurkeyHome());
+        screen = const _WithBackupAccess(child: ColdTurkeyHome());
       case JourneyPhase.firstLaunch:
-        return const TapScreen();
+        screen = const TapScreen();
       case JourneyPhase.observing:
       case JourneyPhase.undecided:
         // Le prompt de sauvegarde (J4) n'apparaît qu'en observation — jamais
         // dans un mode, où il s'empilerait avec les bandeaux contextuels.
-        return const _WithBackupAccess(showPrompt: true, child: TapScreen());
+        screen = const _WithBackupAccess(showPrompt: true, child: TapScreen());
     }
+
+    // Le bandeau de mise à jour est global : une release dispo est un « fait à
+    // révéler » (raison légitime de parler), et doit s'afficher quelle que soit
+    // la phase — y compris l'Écran 1 d'un install neuf sans données.
+    return Stack(
+      children: [
+        Positioned.fill(child: screen),
+        const UpdateBanner(),
+      ],
+    );
   }
 }
 
@@ -68,7 +79,6 @@ class _WithBackupAccess extends ConsumerWidget {
     return Stack(
       children: [
         child,
-        const UpdateBanner(),
         Positioned(
           top: 0,
           right: 4,
