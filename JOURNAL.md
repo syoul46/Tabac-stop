@@ -5,6 +5,37 @@
 
 ---
 
+## Point de reprise — 2026-08-03 (session 3 : signature, public, auto-update)
+
+**État : app publiée et diffusable.** Repo GitHub **passé public**, releases **v1.0.0 → v1.0.5**
+(APK signés avec un keystore de release). **Auto-update depuis les releases GitHub validé sur vrai
+appareil** (bandeau au lancement + au retour au premier plan, download + install signé).
+
+### Ce qui a été fait cette session
+- **Signature release** : keystore `android/cairn-release.jks` (RSA 4096, alias `cairn`), chargé via
+  `android/key.properties` dans `android/app/build.gradle.kts` (repli debug si absent). Keystore,
+  `key.properties` et `SIGNING-SECRETS.txt` **gitignored**. ⚠️ **Sauvegarder le keystore hors machine**
+  (le perdre = plus aucune MAJ publiable). Empreinte SHA-256 `9D:D9:0A:…:90:3A`.
+- **Repo public** + releases via `gh` (installé dans `~/.local/bin`, authentifié `syoul46`).
+- **README** réécrit (présentation, philosophie, install, lien release).
+- **Auto-update** (`lib/core/update/`, `lib/features/update/`) : `checkForUpdate()` interroge
+  l'API GitHub `releases/latest`, compare via `domain/update/version.dart` (testé), choisit l'APK
+  selon l'ABI, `downloadAndInstall` (open_filex + `REQUEST_INSTALL_PACKAGES`). Bandeau global
+  (`UpdateBanner`) + re-check au retour au premier plan (`UpdateOnResume`, throttle 2 min) + rejet
+  par-version. Filigrane `vX.Y.Z` en bas (`VersionTag`). Manifest : `INTERNET` + `REQUEST_INSTALL_PACKAGES`.
+  ⚠️ **C'est la seule connexion réseau de l'app** — le « 100 % offline » d'origine est nuancé (README à jour).
+- Deps ajoutées : `http`, `package_info_plus`, `device_info_plus`, `open_filex`, `permission_handler`.
+
+### Amorçage de l'auto-update (piège à retenir)
+Une version déjà installée ne peut détecter une MAJ que si **elle-même contient le checker** (≥ 1.0.1)
+**et** qu'une release **plus récente** existe. D'où la série v1.0.2→1.0.5 pour tester chaque maillon.
+
+### Pistes restantes (inchangées)
+iOS, CI, keystore sauvegardé hors machine, tuning seuils Boss, paliers santé. Rendre l'update
+**manuel** (bouton) au lieu d'auto reste une option (un flag).
+
+---
+
 ## Point de reprise — 2026-07-30 (fin de session 2)
 
 **État : ✅ LES 10 JALONS SONT FAITS. Testés (49 verts), commités et poussés. MVP complet du
