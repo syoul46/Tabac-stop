@@ -24,6 +24,7 @@ class CairnView extends StatefulWidget {
     required this.stones,
     this.progress = 0,
     this.bossRocks = 0,
+    this.haptics = true,
     this.width = 190,
     this.height = 210,
   });
@@ -31,6 +32,10 @@ class CairnView extends StatefulWidget {
   final int stones;
   final double progress;
   final int bossRocks;
+
+  /// Retour haptique au calage d'une pierre. Coupé en observation (silence).
+  final bool haptics;
+
   final double width;
   final double height;
 
@@ -66,6 +71,7 @@ class _CairnViewState extends State<CairnView>
 
   /// Petit « tac » au moment où la pierre se cale (≈ fin de la chute).
   void _hapticOnLanding() {
+    if (!widget.haptics) return;
     Future.delayed(const Duration(milliseconds: 320), () {
       if (mounted) HapticFeedback.lightImpact();
     });
@@ -241,6 +247,39 @@ class _CairnPainter extends CustomPainter {
 
       if (needsLayer) canvas.restore();
       canvas.restore();
+
+      // Poussière à l'impact : seulement pour une pierre qui tombe (pas le
+      // rocher hissé), dans la 2ᵉ moitié de la chute, à la base au repos.
+      if (type == _kStone && i == animIndex && entranceT > 0.5 && entranceT < 1) {
+        final dustT = ((entranceT - 0.5) / 0.5).clamp(0.0, 1.0);
+        _drawDust(canvas, Offset(cx + dx, centerY + sh / 2), w, sh, dustT, i);
+      }
+    }
+  }
+
+  /// Petit nuage de poussière qui s'écarte et retombe au calage d'une pierre.
+  void _drawDust(
+      Canvas canvas, Offset base, double w, double sh, double t, int seed) {
+    final spread = w * (0.30 + 0.65 * t);
+    final rise = sh * 0.6 * t;
+    final baseAlpha = (1 - t) * (dark ? 0.34 : 0.42);
+    final dust = dark ? const Color(0xFF8E887E) : const Color(0xFFBFA271);
+    const nP = 8;
+    for (var k = 0; k < nP; k++) {
+      final f = k / (nP - 1);
+      final side = (f - 0.5) * 2; // -1 .. 1
+      final jr = _noise(seed * 7.3 + k * 5.1);
+      final px = base.dx + side * spread * (0.6 + 0.5 * jr);
+      final py = base.dy - rise * (0.3 + 0.7 * _noise(seed * 3.7 + k)) - sh * 0.05;
+      final r = (1 - t) * sh * 0.24 * (0.55 + 0.7 * jr);
+      if (r <= 0.2) continue;
+      canvas.drawCircle(
+        Offset(px, py),
+        r,
+        Paint()
+          ..color = dust.withValues(
+              alpha: (baseAlpha * (0.6 + 0.6 * jr)).clamp(0.0, 1.0)),
+      );
     }
   }
 

@@ -9,6 +9,7 @@ import '../../core/time/logical_day.dart';
 import '../../data/cigarette_repository.dart';
 import '../../data/database.dart';
 import '../../domain/metrics/hourly.dart';
+import '../cairn/cairn_view.dart';
 import '../observation/hourly_curve.dart';
 import '../observation/observation_banner.dart';
 import 'context_picker.dart';
@@ -75,6 +76,15 @@ class _TapScreenState extends ConsumerState<TapScreen> {
           children: [
             const SizedBox(height: 14),
             ObservationBanner(dayIndex: dayIndex),
+            const SizedBox(height: 4),
+            // Mini-cairn silencieux : il se forme au fil des jours d'observation
+            // (une pierre par jour), sans un mot — l'app ne parle pas en J1-3.
+            CairnView(
+              stones: dayIndex,
+              haptics: false,
+              width: 132,
+              height: 96,
+            ),
             Expanded(
               child: Center(
                 child: Column(

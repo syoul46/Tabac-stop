@@ -12,6 +12,7 @@ import '../coldturkey/cold_turkey_home.dart';
 import '../health/milestone_reveal.dart';
 import '../reduction/reduction_home.dart';
 import '../reveal/reveal_screen.dart';
+import '../stats/stats_screen.dart';
 import '../tap/tap_screen.dart';
 import '../update/update_banner.dart';
 import '../update/version_tag.dart';
@@ -81,6 +82,10 @@ class _WithBackupAccess extends ConsumerWidget {
         MaterialPageRoute(builder: (_) => const BackupScreen()),
       );
 
+  void _openStats(BuildContext context) => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const StatsScreen()),
+      );
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cigs =
@@ -92,6 +97,23 @@ class _WithBackupAccess extends ConsumerWidget {
     return Stack(
       children: [
         child,
+        Positioned(
+          top: 0,
+          left: 4,
+          child: SafeArea(
+            child: IconButton(
+              icon: Icon(
+                Icons.bar_chart,
+                color: Theme.of(context)
+                    .colorScheme
+                    .onSurface
+                    .withValues(alpha: 0.35),
+              ),
+              tooltip: 'Tes chiffres',
+              onPressed: () => _openStats(context),
+            ),
+          ),
+        ),
         Positioned(
           top: 0,
           right: 4,

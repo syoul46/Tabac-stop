@@ -408,3 +408,4 @@ hissé au sommet*, en **hibiscus** (seul écart chaud autorisé) :
 | # | Jalon | Contenu | Sortie vérifiable |
 |---|---|---|---|
 | **12** | **Cairn dessiné + victoire de Boss** | CairnPainter (galets + rocher Boss), `victory.dart` (testé), reveal `bossDefeated`, cible = prochain Boss non vaincu | tenir 3 délais sur un Boss le vainc, hisse un rocher hibiscus, une seule célébration |
+| **13** | **Vie & stats** | animations de pose (chute + poussière) et de hissage, haptique, mini-cairn silencieux en observation, **écran stats** (`features/stats/`, tout dérivé) | la pierre tombe/le rocher se hisse ; les chiffres s'affichent (rythme, cumul, altitude, heures, Boss) |
