@@ -10,6 +10,7 @@ import '../../data/database.dart';
 import '../../data/journey_repository.dart';
 import '../../domain/metrics/metrics.dart';
 import '../../domain/models/enums.dart';
+import '../health/altitude_view.dart';
 import '../tap/tap_stone.dart';
 
 /// Au-delà de ce streak rompu, on propose (sans insister) de souffler en réduction.
@@ -100,10 +101,12 @@ class _ColdTurkeyHomeState extends ConsumerState<ColdTurkeyHome> {
                     label: cleanDays <= 1 ? 'jour propre' : 'jours propres',
                   ),
                   const SizedBox(width: 40),
-                  _MiniStat(value: formatStreak(record), label: 'record'),
+                  _MiniStat(value: formatStreak(record), label: 'plus haut cairn'),
                 ],
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 20),
+              AltitudeView(abstinence: streak),
+              const SizedBox(height: 28),
               TapStone(
                 onTap: _onTap,
                 child: Text('✦',

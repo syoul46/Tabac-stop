@@ -69,6 +69,19 @@ class JourneyRepository {
   /// Mémorise que le prompt de sauvegarde a été proposé (pour ne pas re-proposer).
   Future<void> markBackupPromptSeen() => _log(JourneyEventKind.backupPromptSeen);
 
+  /// Journalise qu'un palier santé a été révélé (seuil en minutes), pour ne le
+  /// montrer qu'une seule fois — même après une rechute.
+  Future<void> markMilestoneRevealed(int afterMinutes) async {
+    await _db.into(_db.journeyEvents).insert(
+          JourneyEventsCompanion.insert(
+            id: _uuid.v4(),
+            occurredAtUtc: DateTime.now().toUtc(),
+            kind: JourneyEventKind.milestoneRevealed.name,
+            payload: Value(jsonEncode({'afterMinutes': afterMinutes})),
+          ),
+        );
+  }
+
   /// Le délai a été tenu → une pierre. Au tout premier, on décroche un badge.
   Future<void> markDelayHeld() async {
     final priorHeld = await (_db.select(_db.journeyEvents)

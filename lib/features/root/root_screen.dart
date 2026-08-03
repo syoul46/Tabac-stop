@@ -8,6 +8,7 @@ import '../../domain/journey/backup_prompt.dart';
 import '../../domain/journey/journey_state.dart';
 import '../backup/backup_screen.dart';
 import '../coldturkey/cold_turkey_home.dart';
+import '../health/milestone_reveal.dart';
 import '../reduction/reduction_home.dart';
 import '../reveal/reveal_screen.dart';
 import '../tap/tap_screen.dart';
@@ -25,8 +26,9 @@ class RootScreen extends ConsumerWidget {
         ref.watch(allCigarettesProvider).asData?.value ?? const <Cigarette>[];
     final mode = ref.watch(currentModeProvider).asData?.value;
 
+    final phase = resolvePhase(cigs: cigs, mode: mode);
     final Widget screen;
-    switch (resolvePhase(cigs: cigs, mode: mode)) {
+    switch (phase) {
       case JourneyPhase.revealReady:
         screen = const RevealScreen();
       case JourneyPhase.reduction:
@@ -42,12 +44,18 @@ class RootScreen extends ConsumerWidget {
         screen = const _WithBackupAccess(showPrompt: true, child: TapScreen());
     }
 
+    // Les paliers santé ne se révèlent qu'en mode (arrêt net / réduction) —
+    // jamais pendant l'observation J1-3 (silence) ni sur l'Écran 1.
+    final inMode =
+        phase == JourneyPhase.coldTurkey || phase == JourneyPhase.reduction;
+
     // Le bandeau de mise à jour est global : une release dispo est un « fait à
     // révéler » (raison légitime de parler), et doit s'afficher quelle que soit
     // la phase — y compris l'Écran 1 d'un install neuf sans données.
     return Stack(
       children: [
         Positioned.fill(child: screen),
+        if (inMode) const MilestoneReveal(),
         const UpdateBanner(),
         const VersionTag(),
       ],

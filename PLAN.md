@@ -331,3 +331,57 @@ immédiat) avant tout le reste : c'est le service rendu gratuitement dès la 1�
 - **Widget** : tap → événement enregistré ; « je fume quand même » → écran zéro, aucun texte.
 - **Crypto** : round-trip export→import, mauvaise passphrase = échec propre.
 ```
+
+---
+
+## 11. Paliers santé — les altitudes du cairn (v1.1)
+
+**But** : donner une *échelle* au cairn. Aujourd'hui il monte « dans le vide ». Chaque durée
+d'abstinence continue franchie fait gagner de l'**altitude** et **révèle un fait physiologique
+vrai** sur la récupération après l'arrêt du tabac. C'est le 2ᵉ cas — et le seul ajouté ici — où
+l'app a le droit de parler : *elle a un fait à révéler*. Entre deux paliers, **silence total**.
+
+### Ce qui pilote l'altitude
+- **Altitude courante = abstinence continue** = `now − dernière cigarette` (le `streak` déjà calculé).
+  C'est honnête : physiologiquement, fumer relance l'horloge du monoxyde de carbone.
+- **« Ton plus haut cairn » = `recordGap`** (record d'écart max, déjà là) → **ne redescend jamais**.
+  Une rechute remet l'altitude *courante* à zéro **sans faire tomber de pierre** : le plus haut
+  cairn reste acquis, et **aucun palier déjà révélé n'est re-révélé** (voir plus bas).
+
+### Table des paliers (fonction pure, `domain/health/`)
+| Abstinence | Altitude | Fait révélé |
+|---|---|---|
+| 20 min | 300 m | le pouls et la tension redescendent |
+| 8 h | 800 m | le monoxyde de carbone reflue, l'oxygène remonte |
+| 24 h | 1 000 m | le corps est débarrassé du monoxyde de carbone |
+| 48 h | 1 500 m | le goût et l'odorat reviennent |
+| 72 h | 2 000 m | les bronches se détendent, respirer est plus facile |
+| 2 semaines | 3 000 m | la circulation s'améliore |
+| 1 mois | 3 500 m | les poumons se nettoient, moins d'essoufflement |
+| 3 mois | 4 000 m | la fonction pulmonaire remonte nettement |
+| 1 an | 5 000 m | le risque de maladie cardiaque est divisé par deux |
+
+Repères classiques (NHS/CDC). Table figée v1, extensible.
+
+### Règles de révélation (non-culpabilisantes)
+- **Chaque palier n'est révélé qu'une fois « pour toujours »** — journalisé via un `journey_event`
+  `milestoneRevealed` (payload = seuil en minutes). Après une rechute, re-grimper **ne re-révèle
+  pas** (l'app resterait bavarde). On ne suit que le **plus haut seuil déjà révélé**.
+- Le reveal ne s'affiche **qu'en mode** (arrêt net / réduction) — **jamais** pendant l'observation
+  J1-3 (silence) ni sur l'Écran 1.
+- Que des **gains**, jamais de perte affichée. Voix **lagon**, sobre, une carte, un bouton.
+
+### Dérivés (jamais stockés comme vérité)
+`currentAbstinence`, `milestoneAt(d)`, `nextMilestoneAfter(d)`, `reachedIndex(d)`,
+`pendingMilestoneReveal(abstinence, highestRevealedIndex)` — tous purs, testés sur des durées
+(comme le reste du domaine). Le seul écrit = l'événement `milestoneRevealed`.
+
+### Surfaces
+- **Sous le streak (arrêt net)** : ligne d'**altitude courante** + **prochain palier** comme objectif.
+- **Reveal de palier** : carte plein-écran discrète au franchissement (recalcul périodique léger,
+  pas de service background).
+
+### Jalon
+| # | Jalon | Contenu | Sortie vérifiable |
+|---|---|---|---|
+| **11** | **Paliers santé** | table + fonctions pures (testées), event `milestoneRevealed`, altitude sous le streak, reveal au franchissement | franchir un seuil révèle le fait une seule fois ; rechute ne re-révèle pas |

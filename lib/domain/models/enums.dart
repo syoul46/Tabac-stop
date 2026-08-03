@@ -14,6 +14,10 @@ enum JourneyEventKind {
   relapse,
   revealShown,
   backupPromptSeen,
+
+  /// Un palier santé (altitude du cairn) a été révélé. Payload
+  /// `{afterMinutes}` = le seuil du palier, pour ne le révéler qu'une fois.
+  milestoneRevealed,
 }
 
 /// Mode courant du parcours. `undecided` = 3ᵉ porte de la révélation : on ne
