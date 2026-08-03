@@ -8,6 +8,7 @@ import '../../core/time/format.dart';
 import '../../data/cigarette_repository.dart';
 import '../../data/database.dart';
 import '../../data/journey_repository.dart';
+import '../../domain/boss/victory.dart';
 import '../../domain/health/milestones.dart';
 import '../../domain/metrics/metrics.dart';
 import '../../domain/models/enums.dart';
@@ -73,6 +74,8 @@ class _ColdTurkeyHomeState extends ConsumerState<ColdTurkeyHome> {
     final last = ref.watch(lastCigaretteProvider).asData?.value;
     final cigs =
         ref.watch(allCigarettesProvider).asData?.value ?? const <Cigarette>[];
+    final events = ref.watch(journeyEventsProvider).asData?.value ?? const [];
+    final bossRocks = defeatedBossKeys(events).length;
 
     final streak = last == null
         ? Duration.zero
@@ -102,7 +105,8 @@ class _ColdTurkeyHomeState extends ConsumerState<ColdTurkeyHome> {
                 children: [
                   const SizedBox(height: 12),
                   // Le cairn : l'écran principal, c'est lui qui grandit.
-                  CairnView(stones: stones, progress: progress),
+                  CairnView(
+                      stones: stones, progress: progress, bossRocks: bossRocks),
                   const SizedBox(height: 14),
                   Text(
                     formatStreak(streak),

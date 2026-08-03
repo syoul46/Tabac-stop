@@ -83,14 +83,36 @@ class JourneyRepository {
   }
 
   /// Le délai a été tenu → une pierre. Au tout premier, on décroche un badge.
-  Future<void> markDelayHeld() async {
+  /// [bossKey] attribue le délai au Boss visé (pour la victoire de Boss).
+  Future<void> markDelayHeld({String? bossKey}) async {
     final priorHeld = await (_db.select(_db.journeyEvents)
           ..where((t) => t.kind.equals(JourneyEventKind.delayHeld.name)))
         .get();
-    await _log(JourneyEventKind.delayHeld);
+    await _db.into(_db.journeyEvents).insert(
+          JourneyEventsCompanion.insert(
+            id: _uuid.v4(),
+            occurredAtUtc: DateTime.now().toUtc(),
+            kind: JourneyEventKind.delayHeld.name,
+            payload: bossKey == null
+                ? const Value.absent()
+                : Value(jsonEncode({'bossKey': bossKey})),
+          ),
+        );
     if (priorHeld.isEmpty) {
       await _log(JourneyEventKind.badgeEarned); // premier délai tenu
     }
+  }
+
+  /// Journalise la victoire sur un Boss (pour ne la célébrer qu'une fois).
+  Future<void> markBossDefeated(String bossKey) async {
+    await _db.into(_db.journeyEvents).insert(
+          JourneyEventsCompanion.insert(
+            id: _uuid.v4(),
+            occurredAtUtc: DateTime.now().toUtc(),
+            kind: JourneyEventKind.bossDefeated.name,
+            payload: Value(jsonEncode({'bossKey': bossKey})),
+          ),
+        );
   }
 
   /// Tout le journal de parcours, trié (pour l'état du délai et le compte de pierres).

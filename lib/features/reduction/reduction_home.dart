@@ -8,6 +8,7 @@ import '../../core/notifications/notification_service.dart';
 import '../../core/time/format.dart';
 import '../../data/cigarette_repository.dart';
 import '../../data/journey_repository.dart';
+import '../../domain/boss/victory.dart';
 import '../../domain/journey/delay.dart';
 import '../cairn/cairn_view.dart';
 import '../tap/tap_stone.dart';
@@ -43,15 +44,18 @@ class _ReductionHomeState extends ConsumerState<ReductionHome> {
     super.dispose();
   }
 
-  /// Quand le délai s'est écoulé sans rupture, on l'enregistre comme tenu.
+  /// Quand le délai s'est écoulé sans rupture, on l'enregistre comme tenu —
+  /// attribué au Boss visé du jour (pour la victoire de Boss).
   void _maybeFinalize() {
     final events = ref.read(journeyEventsProvider).asData?.value ?? const [];
     final st = resolveDelay(events, DateTime.now());
     if (st.status == DelayStatus.elapsed && !_finalizing) {
       _finalizing = true;
+      final report = ref.read(bossReportProvider);
+      final target = nextTarget(report, defeatedBossKeys(events));
       ref
           .read(journeyRepositoryProvider)
-          .markDelayHeld()
+          .markDelayHeld(bossKey: target == null ? null : bossKey(target))
           .whenComplete(() => _finalizing = false);
     }
   }
@@ -74,7 +78,10 @@ class _ReductionHomeState extends ConsumerState<ReductionHome> {
   Future<void> _startDelay() async {
     unawaited(HapticFeedback.selectionClick());
     await ref.read(journeyRepositoryProvider).startDelay();
-    final bossName = ref.read(bossReportProvider).easiestTarget?.name ?? 'le Boss';
+    final events = ref.read(journeyEventsProvider).asData?.value ?? const [];
+    final target =
+        nextTarget(ref.read(bossReportProvider), defeatedBossKeys(events));
+    final bossName = target?.name ?? 'le Boss';
     await ref.read(notificationServiceProvider).scheduleDelayEnd(
           DateTime.now().add(kDelayLength),
           bossName: bossName,
@@ -87,11 +94,13 @@ class _ReductionHomeState extends ConsumerState<ReductionHome> {
     final c = theme.colorScheme;
     final now = DateTime.now();
 
-    final target = ref.watch(bossReportProvider).easiestTarget;
     final todays = ref.watch(todaysCigarettesProvider).asData?.value ?? const [];
     final last = ref.watch(lastCigaretteProvider).asData?.value;
     final events = ref.watch(journeyEventsProvider).asData?.value ?? const [];
 
+    final defeated = defeatedBossKeys(events);
+    // La cible = le Boss le plus fragile pas encore vaincu.
+    final target = nextTarget(ref.watch(bossReportProvider), defeated);
     final delay = resolveDelay(events, now);
     final stones = stonesPlaced(events);
     final since = last == null
@@ -128,7 +137,7 @@ class _ReductionHomeState extends ConsumerState<ReductionHome> {
                 ),
               ),
             ),
-            _StonesFooter(count: stones),
+            _StonesFooter(count: stones, bossRocks: defeated.length),
             const SizedBox(height: 22),
           ],
         ),
@@ -286,8 +295,9 @@ class _TargetBanner extends StatelessWidget {
 
 /// Le cairn qui monte : une pierre par délai tenu.
 class _StonesFooter extends StatelessWidget {
-  const _StonesFooter({required this.count});
+  const _StonesFooter({required this.count, this.bossRocks = 0});
   final int count;
+  final int bossRocks;
 
   @override
   Widget build(BuildContext context) {
@@ -295,8 +305,9 @@ class _StonesFooter extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (count > 0)
-          CairnView(stones: count, width: 150, height: 118)
+        if (count > 0 || bossRocks > 0)
+          CairnView(
+              stones: count, bossRocks: bossRocks, width: 150, height: 132)
         else
           Icon(Icons.landscape_outlined,
               size: 22, color: c.onSurface.withValues(alpha: 0.4)),

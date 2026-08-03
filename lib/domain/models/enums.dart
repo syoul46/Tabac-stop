@@ -18,6 +18,10 @@ enum JourneyEventKind {
   /// Un palier santé (altitude du cairn) a été révélé. Payload
   /// `{afterMinutes}` = le seuil du palier, pour ne le révéler qu'une fois.
   milestoneRevealed,
+
+  /// Un Boss a été vaincu (un gros rocher hissé au sommet). Payload
+  /// `{bossKey}`, pour ne célébrer la victoire qu'une fois.
+  bossDefeated,
 }
 
 /// Mode courant du parcours. `undecided` = 3ᵉ porte de la révélation : on ne

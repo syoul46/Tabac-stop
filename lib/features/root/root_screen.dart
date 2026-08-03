@@ -7,6 +7,7 @@ import '../../data/journey_repository.dart';
 import '../../domain/journey/backup_prompt.dart';
 import '../../domain/journey/journey_state.dart';
 import '../backup/backup_screen.dart';
+import '../boss/boss_victory_reveal.dart';
 import '../coldturkey/cold_turkey_home.dart';
 import '../health/milestone_reveal.dart';
 import '../reduction/reduction_home.dart';
@@ -56,6 +57,8 @@ class RootScreen extends ConsumerWidget {
       children: [
         Positioned.fill(child: screen),
         if (inMode) const MilestoneReveal(),
+        // La victoire de Boss prime sur le palier santé si les deux tombent.
+        if (inMode) const BossVictoryReveal(),
         const UpdateBanner(),
         const VersionTag(),
       ],

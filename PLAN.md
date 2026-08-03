@@ -385,3 +385,26 @@ Repères classiques (NHS/CDC). Table figée v1, extensible.
 | # | Jalon | Contenu | Sortie vérifiable |
 |---|---|---|---|
 | **11** | **Paliers santé** | table + fonctions pures (testées), event `milestoneRevealed`, altitude sous le streak, reveal au franchissement | franchir un seuil révèle le fait une seule fois ; rechute ne re-révèle pas |
+
+---
+
+## 12. Le cairn dessiné & la victoire de Boss (v1.1+)
+
+**Le cairn dessiné** (`features/cairn/cairn_view.dart`) est le visuel héros : pierres empilées
+organiques (blobs Bézier bruités de façon déterministe → rendu stable), dégradé minéral + ombres.
+Il monte avec la progression :
+- **Arrêt net** : 1 pierre de fondation + 1 par palier santé atteint ; une pierre « en formation »
+  (opacité = progression) vise le prochain palier.
+- **Réduction** : 1 pierre par délai tenu (`stonesPlaced`).
+
+**La victoire de Boss** (`domain/boss/victory.dart`, testé) — *un Boss vaincu = un gros rocher
+hissé au sommet*, en **hibiscus** (seul écart chaud autorisé) :
+- On **attaque** en réduction le Boss le plus fragile (`nextTarget`, hors Boss déjà vaincus).
+- Chaque **délai tenu** est attribué au Boss visé (payload `bossKey` sur `delayHeld`).
+- **≥ `kBossVictoryHolds` (3) délais tenus** sur un Boss ⇒ vaincu. `pendingBossVictory` déclenche
+  un reveal **une seule fois** (event `bossDefeated`), puis le rocher reste sur le cairn (arrêt net
+  **et** réduction). Fidèle à l'invariant : le rocher ne retombe jamais.
+
+| # | Jalon | Contenu | Sortie vérifiable |
+|---|---|---|---|
+| **12** | **Cairn dessiné + victoire de Boss** | CairnPainter (galets + rocher Boss), `victory.dart` (testé), reveal `bossDefeated`, cible = prochain Boss non vaincu | tenir 3 délais sur un Boss le vainc, hisse un rocher hibiscus, une seule célébration |
