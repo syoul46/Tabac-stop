@@ -185,9 +185,14 @@ class _CairnPainter extends CustomPainter {
       final angle = 0.06 * math.sin(i * 2.7 + 1.1);
       final path = _pebble(w, sh, i);
 
-      // Pierre en train de se poser : chute (avec rebond) + fondu.
+      // Entrée de l'unité : une pierre **tombe d'en haut**, un rocher de Boss
+      // est **hissé depuis le bas** (l'effort qu'on fournit pour le monter).
       final landing = i == animIndex && entranceT < 1;
-      final drop = landing ? -(1 - _easeOutBack(entranceT)) * sh * 2.2 : 0.0;
+      double drop = 0;
+      if (landing) {
+        final over = 1 - _easeOutBack(entranceT); // ~1 → 0 (avec léger dépassement)
+        drop = type == _kBoss ? over * sh * 3.0 : -over * sh * 2.2;
+      }
       final fade = landing ? _easeOut(entranceT).clamp(0.0, 1.0) : 1.0;
 
       canvas.save();
