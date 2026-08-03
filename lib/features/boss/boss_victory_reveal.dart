@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/cigarette_repository.dart';
@@ -29,6 +30,10 @@ class _BossVictoryRevealState extends ConsumerState<BossVictoryReveal> {
     // Laisse la carte apparaître, puis hisse le rocher.
     Future.delayed(const Duration(milliseconds: 350), () {
       if (mounted) setState(() => _rocks = 1);
+    });
+    // Buzz plus marqué au calage du rocher (fin du hissage).
+    Future.delayed(const Duration(milliseconds: 720), () {
+      if (mounted) HapticFeedback.heavyImpact();
     });
   }
 

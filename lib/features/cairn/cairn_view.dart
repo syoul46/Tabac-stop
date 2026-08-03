@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../core/theme/cairn_theme.dart';
 
@@ -53,10 +55,20 @@ class _CairnViewState extends State<CairnView>
     if (widget.bossRocks > old.bossRocks) {
       _animIndex = widget.stones + widget.bossRocks - 1; // le rocher du sommet
       _ctrl.forward(from: 0);
+      // Pas d'haptique ici : le rocher de Boss est déjà accompagné d'un buzz
+      // par son reveal de victoire (éviter le double).
     } else if (widget.stones > old.stones) {
       _animIndex = widget.stones - 1; // la nouvelle pierre du sommet
       _ctrl.forward(from: 0);
+      _hapticOnLanding();
     }
+  }
+
+  /// Petit « tac » au moment où la pierre se cale (≈ fin de la chute).
+  void _hapticOnLanding() {
+    Future.delayed(const Duration(milliseconds: 320), () {
+      if (mounted) HapticFeedback.lightImpact();
+    });
   }
 
   @override
