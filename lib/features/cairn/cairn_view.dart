@@ -13,9 +13,10 @@ const _hibiscusNight = Color(0xFFE07050);
 /// apparaître une pierre « en formation » au sommet, vers le prochain palier ;
 /// [bossRocks] = gros rochers hibiscus hissés au sommet (Boss vaincus).
 ///
-/// Rendu **stable** entre deux reconstructions (les variations organiques sont
-/// dérivées de l'index de la pierre, pas d'un aléatoire).
-class CairnView extends StatelessWidget {
+/// Quand [stones] ou [bossRocks] **augmente**, la nouvelle pierre **tombe et se
+/// pose** (chute + fondu + léger rebond). Le reste du rendu est stable (les
+/// variations organiques sont dérivées de l'index, pas d'un aléatoire).
+class CairnView extends StatefulWidget {
   const CairnView({
     super.key,
     required this.stones,
@@ -30,6 +31,39 @@ class CairnView extends StatelessWidget {
   final int bossRocks;
   final double width;
   final double height;
+
+  @override
+  State<CairnView> createState() => _CairnViewState();
+}
+
+class _CairnViewState extends State<CairnView>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 560),
+    value: 1, // au montage, tout est déjà posé (pas d'animation d'entrée)
+  );
+
+  // Index (dans la pile de bas en haut) de l'unité qui se pose, -1 si aucune.
+  int _animIndex = -1;
+
+  @override
+  void didUpdateWidget(CairnView old) {
+    super.didUpdateWidget(old);
+    if (widget.bossRocks > old.bossRocks) {
+      _animIndex = widget.stones + widget.bossRocks - 1; // le rocher du sommet
+      _ctrl.forward(from: 0);
+    } else if (widget.stones > old.stones) {
+      _animIndex = widget.stones - 1; // la nouvelle pierre du sommet
+      _ctrl.forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,16 +82,21 @@ class CairnView extends StatelessWidget {
             CairnColors.vert,
           ];
     return SizedBox(
-      width: width,
-      height: height,
-      child: CustomPaint(
-        painter: _CairnPainter(
-          stones: stones.clamp(0, 40),
-          progress: progress.clamp(0.0, 1.0),
-          bossRocks: bossRocks.clamp(0, 8),
-          palette: palette,
-          boss: dark ? _hibiscusNight : _hibiscus,
-          dark: dark,
+      width: widget.width,
+      height: widget.height,
+      child: AnimatedBuilder(
+        animation: _ctrl,
+        builder: (context, _) => CustomPaint(
+          painter: _CairnPainter(
+            stones: widget.stones.clamp(0, 40),
+            progress: widget.progress.clamp(0.0, 1.0),
+            bossRocks: widget.bossRocks.clamp(0, 8),
+            palette: palette,
+            boss: dark ? _hibiscusNight : _hibiscus,
+            dark: dark,
+            entranceT: _ctrl.value,
+            animIndex: _ctrl.isAnimating ? _animIndex : -1,
+          ),
         ),
       ),
     );
@@ -77,6 +116,8 @@ class _CairnPainter extends CustomPainter {
     required this.palette,
     required this.boss,
     required this.dark,
+    required this.entranceT,
+    required this.animIndex,
   });
 
   final int stones;
@@ -86,10 +127,14 @@ class _CairnPainter extends CustomPainter {
   final Color boss;
   final bool dark;
 
+  /// Progression (0..1) de la pierre qui se pose.
+  final double entranceT;
+
+  /// Index de l'unité en train de se poser (-1 = aucune).
+  final int animIndex;
+
   @override
   void paint(Canvas canvas, Size size) {
-    // Composition de bas en haut : pierres, puis rochers de Boss au sommet ;
-    // la pierre en formation n'apparaît que s'il n'y a pas de rocher à couronner.
     final types = <int>[
       for (var i = 0; i < stones; i++) _kStone,
       if (bossRocks > 0)
@@ -122,11 +167,11 @@ class _CairnPainter extends CustomPainter {
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
     );
 
-    var acc = 0.0; // hauteur cumulée depuis le sol
+    var acc = 0.0;
     for (var i = 0; i < n; i++) {
       final type = types[i];
       final wgt = weight(type);
-      final sh = baseStep * wgt; // hauteur de la pierre
+      final sh = baseStep * wgt;
       final centerY = groundY - acc - sh / 2;
       acc += sh * overlap;
 
@@ -134,15 +179,28 @@ class _CairnPainter extends CustomPainter {
       final taper = 1 - 0.52 * _easeOut(t);
       final wobble = 1 + 0.05 * math.sin(i * 1.9 + 0.7);
       var w = maxW * taper * wobble;
-      if (type == _kBoss) w = math.max(w, maxW * 0.62); // le rocher est imposant
+      if (type == _kBoss) w = math.max(w, maxW * 0.62);
 
       final dx = maxW * 0.06 * math.sin(i * 1.7 + 0.3);
       final angle = 0.06 * math.sin(i * 2.7 + 1.1);
       final path = _pebble(w, sh, i);
 
+      // Pierre en train de se poser : chute (avec rebond) + fondu.
+      final landing = i == animIndex && entranceT < 1;
+      final drop = landing ? -(1 - _easeOutBack(entranceT)) * sh * 2.2 : 0.0;
+      final fade = landing ? _easeOut(entranceT).clamp(0.0, 1.0) : 1.0;
+
       canvas.save();
-      canvas.translate(cx + dx, centerY);
+      canvas.translate(cx + dx, centerY + drop);
       canvas.rotate(angle);
+
+      final needsLayer = landing && fade < 1;
+      if (needsLayer) {
+        canvas.saveLayer(
+          Rect.fromCenter(center: Offset.zero, width: w * 1.6, height: sh * 3),
+          Paint()..color = Colors.white.withValues(alpha: fade),
+        );
+      }
 
       if (type == _kGhost) {
         final base = palette[i % palette.length];
@@ -155,16 +213,22 @@ class _CairnPainter extends CustomPainter {
         );
       } else {
         final base = type == _kBoss ? boss : palette[i % palette.length];
-        _drawStone(canvas, path, Rect.fromCenter(
-            center: Offset.zero, width: w, height: sh), base, boss: type == _kBoss);
+        _drawStone(
+          canvas,
+          path,
+          Rect.fromCenter(center: Offset.zero, width: w, height: sh),
+          base,
+          boss: type == _kBoss,
+        );
       }
+
+      if (needsLayer) canvas.restore();
       canvas.restore();
     }
   }
 
   void _drawStone(Canvas canvas, Path path, Rect rect, Color base,
       {required bool boss}) {
-    // Ombre portée.
     canvas.save();
     canvas.translate(0, boss ? 3 : 2.5);
     canvas.drawPath(
@@ -175,7 +239,6 @@ class _CairnPainter extends CustomPainter {
     );
     canvas.restore();
 
-    // Corps dégradé.
     canvas.drawPath(
       path,
       Paint()
@@ -189,7 +252,6 @@ class _CairnPainter extends CustomPainter {
         ).createShader(rect),
     );
 
-    // Filet de lumière au sommet (clippé).
     canvas.save();
     canvas.clipPath(path);
     canvas.drawOval(
@@ -203,7 +265,6 @@ class _CairnPainter extends CustomPainter {
     );
     canvas.restore();
 
-    // Un rocher de Boss porte un liseré discret pour se distinguer.
     if (boss) {
       canvas.drawPath(
         path,
@@ -215,7 +276,6 @@ class _CairnPainter extends CustomPainter {
     }
   }
 
-  /// Galet organique : blob fermé lissé passant par des points bruités.
   Path _pebble(double w, double h, int seed) {
     const n = 11;
     final rx = w / 2, ry = h / 2;
@@ -240,6 +300,14 @@ class _CairnPainter extends CustomPainter {
 
   double _easeOut(double t) => 1 - math.pow(1 - t, 2).toDouble();
 
+  /// easeOutBack : léger dépassement à l'atterrissage (petit rebond).
+  double _easeOutBack(double t) {
+    const c1 = 1.70158;
+    const c3 = c1 + 1;
+    final x = t - 1;
+    return 1 + c3 * x * x * x + c1 * x * x;
+  }
+
   double _noise(double x) {
     final s = math.sin(x * 91.7 + 0.13) * 43758.5453;
     return s - s.floorToDouble();
@@ -254,5 +322,7 @@ class _CairnPainter extends CustomPainter {
       old.stones != stones ||
       old.progress != progress ||
       old.bossRocks != bossRocks ||
-      old.dark != dark;
+      old.dark != dark ||
+      old.entranceT != entranceT ||
+      old.animIndex != animIndex;
 }
