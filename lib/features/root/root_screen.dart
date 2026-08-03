@@ -12,6 +12,7 @@ import '../reduction/reduction_home.dart';
 import '../reveal/reveal_screen.dart';
 import '../tap/tap_screen.dart';
 import '../update/update_banner.dart';
+import '../update/version_tag.dart';
 
 /// Point d'entrée : résout la phase du parcours (machine à états pure) et montre
 /// l'écran correspondant.
@@ -48,6 +49,7 @@ class RootScreen extends ConsumerWidget {
       children: [
         Positioned.fill(child: screen),
         const UpdateBanner(),
+        const VersionTag(),
       ],
     );
   }
