@@ -11,6 +11,7 @@ import '../coldturkey/cold_turkey_home.dart';
 import '../reduction/reduction_home.dart';
 import '../reveal/reveal_screen.dart';
 import '../tap/tap_screen.dart';
+import '../update/update_banner.dart';
 
 /// Point d'entrée : résout la phase du parcours (machine à états pure) et montre
 /// l'écran correspondant.
@@ -67,6 +68,7 @@ class _WithBackupAccess extends ConsumerWidget {
     return Stack(
       children: [
         child,
+        const UpdateBanner(),
         Positioned(
           top: 0,
           right: 4,

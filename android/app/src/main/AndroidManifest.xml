@@ -1,4 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Vérification et téléchargement des mises à jour (API GitHub). -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Installer l'APK de mise à jour téléchargé (Android 8+). -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
     <application
         android:label="cairn"
         android:name="${applicationName}"
