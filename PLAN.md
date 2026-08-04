@@ -410,3 +410,53 @@ hissé au sommet*, en **hibiscus** (seul écart chaud autorisé) :
 | **12** | **Cairn dessiné + victoire de Boss** | CairnPainter (galets + rocher Boss), `victory.dart` (testé), reveal `bossDefeated`, cible = prochain Boss non vaincu | tenir 3 délais sur un Boss le vainc, hisse un rocher hibiscus, une seule célébration |
 | **13** | **Vie & stats** | animations de pose (chute + poussière) et de hissage, haptique, mini-cairn silencieux en observation, **écran stats** (`features/stats/`, tout dérivé) | la pierre tombe/le rocher se hisse ; les chiffres s'affichent (rythme, cumul, altitude, heures, Boss) |
 | **14** | **Aide / règle du jeu** | écran « La règle du jeu » (`features/help/how_it_works_screen.dart`), ouvert par l'utilisateur ; accès lien Écran 1 + icône « ? » | l'utilisateur comprend tout le fonctionnement d'un seul écran |
+
+---
+
+## 15. Combat de Boss — PV, délais multiples, personnage (spec v1.5.0, **à coder**)
+
+Refonte du combat en réduction, décidée avec le user. **Deux règles verrouillées changent** — voir
+« Impacts » plus bas.
+
+### Décisions verrouillées
+- **Fumer soigne le Boss (+1 PV)** — assumé, mais **silencieux** (aucun texte/reproche/rouge) et le
+  **cairn ne recule jamais** (aucune pierre ne tombe : c'est l'ennemi qui récupère, pas l'utilisateur
+  qui perd). Une fois vaincu (rocher hissé), refumer **ne ressuscite pas** le Boss.
+- **Délais illimités** : relançables immédiatement — on retire « 1 délai / jour ».
+- **PV par difficulté** : fragile **3** · tenace **4** · coriace **5**.
+- **Boss = rocher grognon minéral** (hibiscus, sourcils froncés / rictus), pas cartoon.
+
+### Mécanique (pure, dérivée du journal, testable)
+- `PV = clamp(PVmax − dégâts + soins, 0, PVmax)`
+  - **dégâts** = nb de `delayHeld` sur ce Boss → chaque délai tenu : **−1 PV + 1 pierre**.
+  - **soins** = nb de cigarettes fumées face à ce Boss (via `delayBroken`/heal tagué `bossKey`) → **+1 PV** (plafonné).
+- **Vaincu** = PV à 0 → rocher hissé + `bossDefeated` (une fois) → **définitif**.
+- **Cible** = le plus fragile non vaincu (`nextTarget`) ; quand il tombe, on passe au suivant.
+- **Délai « par manche »** : `resolveDelay` ne raisonne plus par jour logique mais par manche
+  (dernier `delayStarted` → terminal `delayHeld`/`delayBroken` → relançable).
+
+### Revoir la révélation (option A)
+- `RevealScreen` ré-ouvrable, titre adouci **« Où tu en es »** ; choisir un mode = changer d'approche
+  (le mode n'est qu'un filtre, rien n'est perdu). Accès : bouton dans l'écran **stats**. Corrige
+  l'impasse « Je ne sais pas encore » (aujourd'hui sans retour possible au choix).
+
+### UI
+- **Tête du Boss** (`features/boss/boss_face.dart`, CustomPainter) + **barre de PV** sobre à côté du
+  nom : révélation, bandeau cible en réduction, victoire.
+- Réduction : action délai **relançable** · galet « je fume » (soigne le Boss, silencieux).
+
+### Fichiers
+`domain/boss/victory.dart` (→ `bossMaxHp`, `bossHp`, `isDefeated`, signatures `…(report, events)`) ·
+`domain/journey/delay.dart` (par manche) · nouveau `features/boss/boss_face.dart` ·
+`features/reduction/*` · `reveal_screen.dart` · `stats_screen.dart` · `cold_turkey_home.dart` ·
+`boss_victory_reveal.dart` · `journey_repository.dart` · tests `delay_test` + `boss_combat`.
+
+### Impacts (règles qui changent)
+- **PLAN §12 / §5** : « 1 délai par jour » → **délais multiples** ; « ≥ 3 délais tenus » → **PV à 0**.
+- **CLAUDE.md** : nuancer l'invariant — un **setback scopé au combat de Boss** est désormais assumé
+  (le Boss se resoigne), MAIS le cairn/les pierres/jours-propres/plus-haut-cairn **ne reculent jamais**
+  et l'app reste **silencieuse** quand on fume.
+
+| # | Jalon | Contenu | Sortie vérifiable |
+|---|---|---|---|
+| **15** | **Combat de Boss (PV)** | PV par difficulté, délais illimités, fumer soigne (silencieux), tête de Boss + barre de PV, « revoir ma révélation » | vaincre un Boss demande + de délais tenus que de cigarettes ; on peut changer d'approche |
