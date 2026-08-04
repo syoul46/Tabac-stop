@@ -70,7 +70,7 @@ class JourneyRepository {
   Future<void> markBackupPromptSeen() => _log(JourneyEventKind.backupPromptSeen);
 
   /// Journalise qu'un palier santé a été révélé (seuil en minutes), pour ne le
-  /// montrer qu'une seule fois — même après une rechute.
+  /// remontrer qu'une fois par montée (une rechute réinitialise, il rejouera).
   Future<void> markMilestoneRevealed(int afterMinutes) async {
     await _db.into(_db.journeyEvents).insert(
           JourneyEventsCompanion.insert(

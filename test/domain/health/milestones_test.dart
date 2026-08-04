@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:cairn/data/database.dart';
 import 'package:cairn/domain/health/milestones.dart';
+import 'package:cairn/domain/models/enums.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Cigarette _cigAt(DateTime utc) => Cigarette(
@@ -55,6 +58,12 @@ void main() {
       expect(milestoneAt(d), isNull);
       expect(nextMilestoneAfter(d)!.after, const Duration(minutes: 20));
     });
+    test('paliers ajoutés entre 20 min et 72 h', () {
+      expect(nextMilestoneAfter(const Duration(minutes: 20))!.title, '2 heures');
+      expect(milestoneAt(const Duration(hours: 2))!.altitudeMeters, 400);
+      expect(milestoneAt(const Duration(hours: 12))!.title, '12 heures');
+      expect(milestoneAt(const Duration(hours: 12))!.altitudeMeters, 800);
+    });
     test('pile sur un palier (borne incluse)', () {
       expect(milestoneAt(const Duration(hours: 24))!.title, '24 heures');
     });
@@ -69,25 +78,17 @@ void main() {
     });
   });
 
-  group('pendingMilestoneReveal (révélation une fois pour toutes)', () {
+  group('pendingMilestoneReveal', () {
     test('révèle le plus haut atteint non encore révélé', () {
       final m = pendingMilestoneReveal(
-        abstinence: const Duration(hours: 30), // atteint 24 h (index 2)
-        highestRevealed: 1, // 8 h déjà révélé
+        abstinence: const Duration(hours: 30), // atteint 24 h (index 4)
+        highestRevealed: 1, // 2 h déjà révélé
       );
       expect(m!.title, '24 heures');
     });
     test('rien à révéler si déjà au niveau', () {
       final m = pendingMilestoneReveal(
-        abstinence: const Duration(hours: 30),
-        highestRevealed: 2,
-      );
-      expect(m, isNull);
-    });
-    test('rechute puis re-montée ne re-révèle pas', () {
-      // Déjà révélé jusqu'à 72 h (index 4). Re-montée à 25 h → rien.
-      final m = pendingMilestoneReveal(
-        abstinence: const Duration(hours: 25),
+        abstinence: const Duration(hours: 30), // 24 h = index 4
         highestRevealed: 4,
       );
       expect(m, isNull);
@@ -100,10 +101,42 @@ void main() {
         const Duration(hours: 8).inMinutes,
         const Duration(hours: 24).inMinutes,
       };
-      expect(highestRevealedIndex(set), 2); // index de 24 h
+      expect(highestRevealedIndex(set), 4); // index de 24 h
     });
     test('vide → -1', () {
       expect(highestRevealedIndex(const {}), -1);
+    });
+  });
+
+  group('revealedMinutesSince (rejoue après une rechute)', () {
+    JourneyEvent revealed(int afterMinutes, DateTime at) => JourneyEvent(
+          id: 'r$afterMinutes${at.millisecondsSinceEpoch}',
+          occurredAtUtc: at,
+          kind: JourneyEventKind.milestoneRevealed.name,
+          payload: jsonEncode({'afterMinutes': afterMinutes}),
+        );
+
+    test('ne garde que les paliers révélés après la dernière cigarette', () {
+      final lastCig = DateTime.utc(2026, 1, 2, 10);
+      final events = [
+        // Montée précédente (avant la dernière cigarette) → ignorée.
+        revealed(20, DateTime.utc(2026, 1, 1, 8)),
+        revealed(120, DateTime.utc(2026, 1, 1, 10)),
+        // Montée en cours (après la dernière cigarette) → comptée.
+        revealed(20, DateTime.utc(2026, 1, 2, 11)),
+      ];
+      final since = revealedMinutesSince(events, lastCig);
+      expect(since, {20});
+      // Donc, à 25 h d'abstinence, tout est de nouveau à révéler à partir de 2 h.
+      expect(highestRevealedIndex(since), 0); // seul 20 min (index 0) est vu
+    });
+
+    test('sans cigarette (since null) : tout compte', () {
+      final events = [
+        revealed(20, DateTime.utc(2026, 1, 1, 8)),
+        revealed(480, DateTime.utc(2026, 1, 1, 16)),
+      ];
+      expect(revealedMinutesSince(events, null), {20, 480});
     });
   });
 }

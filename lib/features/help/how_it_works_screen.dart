@@ -57,11 +57,13 @@ class HowItWorksScreen extends StatelessWidget {
             icon: Icons.auto_awesome_outlined,
             iconColor: c.primary,
             title: 'La révélation',
-            body: 'Après 3 jours (et assez de données), Cairn parle pour la '
-                'première fois : il te montre ton rythme et te nomme ton Boss — '
-                'la cigarette la plus ancrée, « le Café de 7 h 10 ». Puis tu '
-                'choisis : arrêt net, réduction en douceur, ou « je ne sais pas '
-                'encore ». Aucune porte n’est jamais fermée.',
+            body: 'Elle se déclenche après **3 jours** ET **au moins 30 '
+                'cigarettes** enregistrées. En dessous, Cairn préfère continuer '
+                'd’observer en silence plutôt que de sortir une analyse bancale. '
+                'Là, il parle pour la première fois : ton rythme, et le nom de '
+                'ton Boss — la cigarette la plus ancrée, « le Café de 7 h 10 ». '
+                'Puis tu choisis : arrêt net, réduction en douceur, ou « je ne '
+                'sais pas encore ». Aucune porte n’est jamais fermée.',
           ),
           _Rule(
             icon: Icons.terrain_outlined,
@@ -85,9 +87,10 @@ class HowItWorksScreen extends StatelessWidget {
             iconColor: c.primary,
             title: 'Les altitudes',
             body: 'Plus tu tiens sans fumer, plus le cairn prend de l’altitude — '
-                'et chaque palier te révèle un fait vrai sur ton corps : 24 h '
-                'sans monoxyde de carbone, 48 h le goût revient, 1 an le risque '
-                'cardiaque divisé par deux.',
+                'et chaque palier te révèle un fait vrai sur ton corps : 12 h le '
+                'monoxyde de carbone repart, 48 h le goût revient, 1 an le risque '
+                'cardiaque divisé par deux. Après une rechute, la montée les '
+                'rejoue — ta récupération repart vraiment de zéro.',
           ),
           _Rule(
             icon: Icons.lock_outline,
@@ -108,6 +111,20 @@ class HowItWorksScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Rend un texte où les segments entre `**` sont mis en gras.
+TextSpan _emphasize(String text, TextStyle base) {
+  final spans = <TextSpan>[];
+  final parts = text.split('**');
+  for (var i = 0; i < parts.length; i++) {
+    if (parts[i].isEmpty) continue;
+    spans.add(TextSpan(
+      text: parts[i],
+      style: i.isOdd ? base.copyWith(fontWeight: FontWeight.w700) : base,
+    ));
+  }
+  return TextSpan(style: base, children: spans);
 }
 
 class _Rule extends StatelessWidget {
@@ -141,11 +158,15 @@ class _Rule extends StatelessWidget {
                     style: const TextStyle(
                         fontSize: 16, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 4),
-                Text(body,
-                    style: TextStyle(
+                Text.rich(
+                  _emphasize(
+                    body,
+                    TextStyle(
                         fontSize: 14,
                         height: 1.4,
-                        color: c.onSurface.withValues(alpha: 0.75))),
+                        color: c.onSurface.withValues(alpha: 0.75)),
+                  ),
+                ),
               ],
             ),
           ),

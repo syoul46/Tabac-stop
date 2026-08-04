@@ -16,7 +16,8 @@ enum JourneyEventKind {
   backupPromptSeen,
 
   /// Un palier santé (altitude du cairn) a été révélé. Payload
-  /// `{afterMinutes}` = le seuil du palier, pour ne le révéler qu'une fois.
+  /// `{afterMinutes}` = le seuil du palier ; on ne compte que ceux journalisés
+  /// depuis la dernière cigarette (une rechute rejoue les paliers).
   milestoneRevealed,
 
   /// Un Boss a été vaincu (un gros rocher hissé au sommet). Payload

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,12 +7,12 @@ import '../../data/cigarette_repository.dart';
 import '../../data/database.dart';
 import '../../data/journey_repository.dart';
 import '../../domain/health/milestones.dart';
-import '../../domain/models/enums.dart';
 
-/// Overlay qui, au franchissement d'un palier santé, révèle le fait **une seule
-/// fois**. Monté uniquement dans un mode (arrêt net / réduction), jamais pendant
-/// l'observation ni sur l'Écran 1. Un léger ticker rattrape les franchissements
-/// « par le temps qui passe » (sans aucun service en arrière-plan).
+/// Overlay qui, au franchissement d'un palier santé, révèle le fait — **une fois
+/// par montée** : après une rechute, remonter les rejoue (la récupération repart
+/// vraiment de zéro). Monté uniquement dans un mode (arrêt net / réduction),
+/// jamais pendant l'observation ni sur l'Écran 1. Un léger ticker rattrape les
+/// franchissements « par le temps qui passe » (sans service en arrière-plan).
 class MilestoneReveal extends ConsumerStatefulWidget {
   const MilestoneReveal({super.key});
 
@@ -39,18 +38,6 @@ class _MilestoneRevealState extends ConsumerState<MilestoneReveal> {
     super.dispose();
   }
 
-  Set<int> _revealedMinutes(List<JourneyEvent> events) {
-    final out = <int>{};
-    for (final e in events) {
-      if (e.kind != JourneyEventKind.milestoneRevealed.name) continue;
-      final p = e.payload;
-      if (p == null) continue;
-      final m = (jsonDecode(p) as Map)['afterMinutes'];
-      if (m is int) out.add(m);
-    }
-    return out;
-  }
-
   @override
   Widget build(BuildContext context) {
     final cigs =
@@ -58,8 +45,13 @@ class _MilestoneRevealState extends ConsumerState<MilestoneReveal> {
     final events =
         ref.watch(journeyEventsProvider).asData?.value ?? const <JourneyEvent>[];
 
-    final abstinence = currentAbstinence(cigs, DateTime.now());
-    final revealed = highestRevealedIndex(_revealedMinutes(events));
+    final now = DateTime.now();
+    final lastCig = lastCigaretteAt(cigs);
+    final abstinence = currentAbstinence(cigs, now);
+    // On ne regarde que les paliers révélés DEPUIS la dernière cigarette : une
+    // nouvelle montée rejoue donc les paliers.
+    final revealed =
+        highestRevealedIndex(revealedMinutesSince(events, lastCig));
     final pending = pendingMilestoneReveal(
       abstinence: abstinence,
       highestRevealed: revealed,

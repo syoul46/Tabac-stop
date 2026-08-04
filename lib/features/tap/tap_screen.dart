@@ -75,22 +75,25 @@ class _TapScreenState extends ConsumerState<TapScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            const SizedBox(height: 14),
+            // Laisse passer la rangée d'icônes flottantes (stats / aide) en
+            // haut à gauche, pour que le bandeau ne soit jamais recouvert.
+            const SizedBox(height: 52),
             ObservationBanner(dayIndex: dayIndex),
-            const SizedBox(height: 4),
-            // Mini-cairn silencieux : il se forme au fil des jours d'observation
-            // (une pierre par jour), sans un mot — l'app ne parle pas en J1-3.
-            CairnView(
-              stones: dayIndex,
-              haptics: false,
-              width: 132,
-              height: 96,
-            ),
             Expanded(
               child: Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    // Pierre-graine : une seule pierre fixe pendant l'observation.
+                    // Elle ne grandit PAS avec les jours (ce serait trompeur — en
+                    // J1-3 on ne résiste à rien). Groupée avec le chrono, centrée.
+                    const CairnView(
+                      stones: 1,
+                      haptics: false,
+                      width: 132,
+                      height: 96,
+                    ),
+                    const SizedBox(height: 6),
                     _ChronoLabel(since: since),
                     const SizedBox(height: 24),
                     TapStone(onTap: _onTap, child: _glyph(onSurface)),

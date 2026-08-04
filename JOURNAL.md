@@ -5,11 +5,24 @@
 
 ---
 
-## Point de reprise — 2026-08-03 (session 3, suite : contenu produit & polish, v1.4.0)
+## Point de reprise — 2026-08-04 (session 3, suite : contenu produit & polish, v1.4.1)
 
 **État : le produit décrit par le PLAN est intégralement codé (jalons 0→14). Dernière release
-publiée : `v1.4.0`.** Seul vrai écart au plan restant : **iOS** (jalon 0 disait « build iOS+Android » ;
+publiée : `v1.4.1`.** Seul vrai écart au plan restant : **iOS** (jalon 0 disait « build iOS+Android » ;
 seul Android est configuré/signé/testé).
+
+### Ajustements v1.4.1 (retours de test sur vrai téléphone)
+- **Icônes** (stats / aide / bouclier) : opacité 0.35 → **0.55** ; bandeau « Jour X/3 » descendu sous
+  la rangée d'icônes (plus de chevauchement).
+- **Écran « règle du jeu »** : conditions de la révélation détaillées (**3 jours ET ≥ 30 cigarettes**),
+  petit rendu **gras** des `**…**` ajouté.
+- **Paliers santé** : +2 paliers (**2 h**, **12 h**) et faits affinés (NHS/CDC/AHA) ; ils **se rejouent**
+  après une rechute (`revealedMinutesSince(events, dernièreCigarette)` — on ne compte que depuis le
+  dernier tap). Le « plus haut cairn » garde le record.
+- **Mini-cairn d'observation** : **une seule pierre-graine fixe** (ne grandit plus par jour — c'était
+  trompeur : en J1-3 on ne résiste à rien) et **recentrée** avec le chrono (ne flotte plus en haut).
+- Rappel vérifié : le **chrono « depuis la dernière » est juste** (diff d'instants absolus, insensible
+  au fuseau) ; le cairn ne peut pas déborder (pierres rétrécies pour tenir dans un cadre fixe).
 
 ### Ce qui a été ajouté après l'auto-update
 - **Jalon 11 — paliers santé** (`domain/health/milestones.dart`, testé) : altitudes = faits

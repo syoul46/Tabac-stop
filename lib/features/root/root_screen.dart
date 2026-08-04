@@ -114,7 +114,7 @@ class _WithBackupAccess extends ConsumerWidget {
                     color: Theme.of(context)
                         .colorScheme
                         .onSurface
-                        .withValues(alpha: 0.35),
+                        .withValues(alpha: 0.55),
                   ),
                   tooltip: 'Tes chiffres',
                   onPressed: () => _openStats(context),
@@ -125,7 +125,7 @@ class _WithBackupAccess extends ConsumerWidget {
                     color: Theme.of(context)
                         .colorScheme
                         .onSurface
-                        .withValues(alpha: 0.35),
+                        .withValues(alpha: 0.55),
                   ),
                   tooltip: 'La règle du jeu',
                   onPressed: () => _openHelp(context),
@@ -142,7 +142,7 @@ class _WithBackupAccess extends ConsumerWidget {
               icon: Icon(
                 Icons.shield_outlined,
                 color:
-                    Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.35),
+                    Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.55),
               ),
               tooltip: 'Sauvegarde',
               onPressed: () => _openBackup(context),
