@@ -460,3 +460,34 @@ Refonte du combat en réduction, décidée avec le user. **Deux règles verrouil
 | # | Jalon | Contenu | Sortie vérifiable |
 |---|---|---|---|
 | **15** | **Combat de Boss (PV)** | PV par difficulté, délais illimités, fumer soigne (silencieux), tête de Boss + barre de PV, « revoir ma révélation » | vaincre un Boss demande + de délais tenus que de cigarettes ; on peut changer d'approche |
+
+---
+
+## 16. Idées suivantes (backlog — non tranché)
+
+Réserve d'idées discutées avec le user. **Rien n'est verrouillé** : chaque item liste ce qui reste
+à décider avant d'en faire une spec.
+
+### 16.1 « Ce que tu as évité » (dérivé) — *combo recommandé*
+- À partir du **rythme observé** (médiane / moyenne d'avant le mode), estimer les cigarettes évitées.
+- Affichage **factuel, jamais culpabilisant** : *« à ton rythme d'avant, ~X aujourd'hui — tu en es à Y »* ;
+  cumul *« ~N évitées ce mois-ci »*. Pur / dérivé du journal.
+- À trancher : **baseline** = fenêtre d'observation figée au choix du mode, ou moyenne glissante ? ·
+  où l'afficher (stats + écran de mode) · formulation exacte.
+
+### 16.2 Compagnon de délai (respiration) — *combo recommandé*
+- Pendant le compte à rebours 10 min, une **respiration guidée minérale** (le cairn « respire »),
+  pour surfer l'envie au lieu d'attendre. Dans le mode réduction (combat de Boss).
+- À trancher : **automatique ou opt-in** · cycle (4-7-8 ?) · désactivable · discrétion.
+
+### 16.3 En réserve (à re-prioriser)
+Widget écran d'accueil (cairn / chrono / PV) · paysage de cairns au fil des mois · altitude en toile
+de fond (relief qui se révèle) · cairn **partageable** (rendu local, à l'initiative de l'user) ·
+galerie des Boss vaincus (trophées) · re-détection de nouveaux Boss · tendance des écarts (stats) ·
+**iOS** (le seul vrai trou du plan).
+
+### 16.4 À manier avec prudence (frôle des règles)
+- **Nudges** (« ton Café de 7 h 10 approche ») : **opt-in strict**, **réduction only** — sinon casse
+  « l'app parle le moins possible ».
+- **Argent économisé** : demande le prix du paquet → **contredit** « aucun setup » → option facultative, jamais imposé.
+- **Son** à la pose : **opt-in** (app souvent ouverte en soirée / silence).
