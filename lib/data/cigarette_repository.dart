@@ -35,6 +35,19 @@ class CigaretteRepository {
         );
   }
 
+  /// Annule (supprime) la **dernière** cigarette enregistrée — pour corriger un
+  /// tap par erreur. Renvoie `true` si une cigarette a été supprimée. Ne touche
+  /// qu'à la cigarette la plus récente : c'est une correction, pas un historique.
+  Future<bool> undoLastCigarette() async {
+    final last = await (_db.select(_db.cigarettes)
+          ..orderBy([(t) => OrderingTerm.desc(t.occurredAtUtc)])
+          ..limit(1))
+        .getSingleOrNull();
+    if (last == null) return false;
+    await (_db.delete(_db.cigarettes)..where((t) => t.id.equals(last.id))).go();
+    return true;
+  }
+
   /// La dernière cigarette enregistrée (ou null si aucune), en flux réactif.
   Stream<Cigarette?> watchLast() {
     final q = _db.select(_db.cigarettes)

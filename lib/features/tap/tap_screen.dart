@@ -19,6 +19,10 @@ import 'tap_stone.dart';
 /// Fenêtre pendant laquelle les icônes de contexte restent proposées après un tap.
 const _contextWindow = Duration(seconds: 6);
 
+/// Fenêtre pendant laquelle « Annuler » reste proposé — pour corriger un tap par
+/// erreur sans risquer d'effacer une cigarette légitime plus ancienne.
+const _undoWindow = Duration(seconds: 15);
+
 /// Écran 1 / phase d'observation. Au premier lancement : le bouton + une phrase.
 /// Ensuite : bandeau « Jour X sur 3 », chrono, compte du jour, courbe horaire,
 /// et — brièvement après chaque tap — les 3 icônes de contexte.
@@ -50,6 +54,13 @@ class _TapScreenState extends ConsumerState<TapScreen> {
     // Retour franc, puis on enregistre. Rien d'autre — aucune consolation.
     unawaited(HapticFeedback.mediumImpact());
     await ref.read(cigaretteRepositoryProvider).logSmoke();
+  }
+
+  /// Annule le dernier tap (mis-tap). Silencieux, sans confirmation : c'est une
+  /// correction, pas une décision.
+  Future<void> _undo() async {
+    unawaited(HapticFeedback.selectionClick());
+    await ref.read(cigaretteRepositoryProvider).undoLastCigarette();
   }
 
   @override
@@ -111,6 +122,19 @@ class _TapScreenState extends ConsumerState<TapScreen> {
                           .read(cigaretteRepositoryProvider)
                           .setContext(last.id, ctx),
                     ),
+                    // « Annuler » discret, seulement dans les secondes qui suivent
+                    // un tap — pour corriger une erreur, jamais réécrire l'histoire.
+                    if (since < _undoWindow) ...[
+                      const SizedBox(height: 6),
+                      TextButton.icon(
+                        onPressed: _undo,
+                        icon: const Icon(Icons.undo, size: 16),
+                        label: const Text('Annuler'),
+                        style: TextButton.styleFrom(
+                          foregroundColor: onSurface.withValues(alpha: 0.5),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
