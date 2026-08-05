@@ -249,7 +249,9 @@ class _AltitudeCard extends StatelessWidget {
                     fontSize: 13, color: c.onSurface.withValues(alpha: 0.8))),
           if (next != null) ...[
             const SizedBox(height: 8),
-            Text('prochain : ${next!.altitudeMeters} m — ${next!.title}',
+            Text(
+                'prochain palier : ${next!.title} sans fumer → '
+                '${next!.altitudeMeters} m',
                 style: TextStyle(
                     fontSize: 12, color: c.onSurface.withValues(alpha: 0.5))),
           ],
