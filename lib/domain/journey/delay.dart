@@ -1,13 +1,13 @@
-import '../../core/time/logical_day.dart';
 import '../../data/database.dart';
 import '../models/enums.dart';
 
 /// Durée d'un délai proposé sur le Boss : 10 minutes, pas plus.
 const kDelayLength = Duration(minutes: 10);
 
-/// État du délai du jour (un seul délai par jour logique).
+/// État du délai courant. Modèle **par manche** (spec §15) : dès qu'une manche
+/// est close (tenue ou rompue), une nouvelle est proposable — délais illimités.
 enum DelayStatus {
-  /// Pas encore lancé aujourd'hui : le délai est proposable.
+  /// Aucune manche en cours : le délai est proposable (ou relançable).
   available,
 
   /// En cours : le compte à rebours tourne.
@@ -16,10 +16,10 @@ enum DelayStatus {
   /// Écoulé mais pas encore finalisé (à enregistrer comme « tenu »).
   elapsed,
 
-  /// Tenu jusqu'au bout aujourd'hui — une pierre posée.
+  /// Tenu (une pierre posée, −1 PV Boss). Transitoire — l'UI l'affiche brièvement.
   held,
 
-  /// Rompu aujourd'hui (« je fume quand même ») — silencieux.
+  /// Rompu (« je fume quand même », +1 PV Boss). Transitoire.
   broken,
 }
 
@@ -31,34 +31,34 @@ class DelayState {
   final DateTime? endsAt;
 }
 
-/// Résout l'état du délai pour le jour logique de [now] à partir des events.
+/// Résout l'état du délai à partir des events, **par manche** : on regarde le
+/// dernier `delayStarted` et s'il a été clos (tenu/rompu) depuis. Si oui →
+/// [DelayStatus.available] (relançable), sinon running/elapsed. Plus de limite
+/// « un par jour ».
 DelayState resolveDelay(
   List<JourneyEvent> events,
   DateTime now, {
   Duration length = kDelayLength,
 }) {
-  final today = LogicalDay.dayOf(now);
-  DateTime? startedAt;
-  var heldToday = false;
-  var brokenToday = false;
-
+  DateTime? lastStart;
+  DateTime? lastTerminal; // dernier delayHeld / delayBroken
   for (final e in events) {
     final wall = e.occurredAtUtc.toLocal();
-    if (LogicalDay.dayOf(wall) != today) continue;
     if (e.kind == JourneyEventKind.delayStarted.name) {
-      if (startedAt == null || wall.isAfter(startedAt)) startedAt = wall;
-    } else if (e.kind == JourneyEventKind.delayHeld.name) {
-      heldToday = true;
-    } else if (e.kind == JourneyEventKind.delayBroken.name) {
-      brokenToday = true;
+      if (lastStart == null || wall.isAfter(lastStart)) lastStart = wall;
+    } else if (e.kind == JourneyEventKind.delayHeld.name ||
+        e.kind == JourneyEventKind.delayBroken.name) {
+      if (lastTerminal == null || wall.isAfter(lastTerminal)) lastTerminal = wall;
     }
   }
 
-  if (heldToday) return const DelayState(DelayStatus.held);
-  if (brokenToday) return const DelayState(DelayStatus.broken);
-  if (startedAt == null) return const DelayState(DelayStatus.available);
+  if (lastStart == null) return const DelayState(DelayStatus.available);
+  // Manche close (un terminal après le dernier lancement) → relançable.
+  if (lastTerminal != null && !lastTerminal.isBefore(lastStart)) {
+    return const DelayState(DelayStatus.available);
+  }
 
-  final endsAt = startedAt.add(length);
+  final endsAt = lastStart.add(length);
   if (now.isBefore(endsAt)) {
     return DelayState(DelayStatus.running, endsAt: endsAt);
   }

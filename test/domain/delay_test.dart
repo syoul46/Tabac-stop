@@ -10,7 +10,7 @@ JourneyEvent evt(JourneyEventKind kind, DateTime whenLocal) => JourneyEvent(
     );
 
 void main() {
-  final now = DateTime(2026, 7, 30, 15, 0); // 15 h, jour logique du 30
+  final now = DateTime(2026, 7, 30, 15, 0);
 
   test('aucun événement → available', () {
     expect(resolveDelay(const [], now).status, DelayStatus.available);
@@ -29,29 +29,45 @@ void main() {
         DelayStatus.elapsed);
   });
 
-  test('tenu aujourd\'hui → held', () {
+  test('après un délai tenu → available (relançable, plus de « 1/jour »)', () {
     final events = [
       evt(JourneyEventKind.delayStarted, now.subtract(const Duration(minutes: 20))),
       evt(JourneyEventKind.delayHeld, now.subtract(const Duration(minutes: 10))),
     ];
-    expect(resolveDelay(events, now).status, DelayStatus.held);
+    expect(resolveDelay(events, now).status, DelayStatus.available);
   });
 
-  test('rompu aujourd\'hui → broken (une seule tentative par jour)', () {
+  test('après une rupture → available (relançable)', () {
     final events = [
       evt(JourneyEventKind.delayStarted, now.subtract(const Duration(minutes: 5))),
       evt(JourneyEventKind.delayBroken, now.subtract(const Duration(minutes: 4))),
     ];
-    expect(resolveDelay(events, now).status, DelayStatus.broken);
+    expect(resolveDelay(events, now).status, DelayStatus.available);
   });
 
-  test('délai tenu hier n\'affecte pas aujourd\'hui → available', () {
-    final yesterday = now.subtract(const Duration(days: 1));
+  test('relance : un nouveau délai après une manche close → running', () {
     final events = [
-      evt(JourneyEventKind.delayStarted, yesterday),
-      evt(JourneyEventKind.delayHeld, yesterday.add(const Duration(minutes: 10))),
+      evt(JourneyEventKind.delayStarted, now.subtract(const Duration(minutes: 40))),
+      evt(JourneyEventKind.delayHeld, now.subtract(const Duration(minutes: 30))),
+      evt(JourneyEventKind.delayStarted, now.subtract(const Duration(minutes: 3))),
     ];
+    final s = resolveDelay(events, now);
+    expect(s.status, DelayStatus.running);
+    expect(s.endsAt,
+        now.subtract(const Duration(minutes: 3)).add(const Duration(minutes: 10)));
+  });
+
+  test('plusieurs manches le même jour possibles (2 tenus le même jour)', () {
+    final events = [
+      evt(JourneyEventKind.delayStarted, now.subtract(const Duration(hours: 3))),
+      evt(JourneyEventKind.delayHeld,
+          now.subtract(const Duration(hours: 2, minutes: 50))),
+      evt(JourneyEventKind.delayStarted, now.subtract(const Duration(hours: 1))),
+      evt(JourneyEventKind.delayHeld, now.subtract(const Duration(minutes: 50))),
+    ];
+    // Dernière manche close → available (on peut relancer une 3ᵉ fois).
     expect(resolveDelay(events, now).status, DelayStatus.available);
+    expect(stonesPlaced(events), 2);
   });
 
   test('stonesPlaced compte les délais tenus', () {
