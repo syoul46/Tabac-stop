@@ -18,12 +18,8 @@ import 'tap_stone.dart';
 /// Fenêtre pendant laquelle les icônes de contexte restent proposées après un tap.
 const _contextWindow = Duration(seconds: 6);
 
-/// Fenêtre pendant laquelle « Annuler » reste proposé — pour corriger un tap par
-/// erreur sans risquer d'effacer une cigarette légitime plus ancienne.
-const _undoWindow = Duration(seconds: 15);
-
 /// Écran 1 / phase d'observation. Au premier lancement : le bouton + une phrase.
-/// Ensuite : bandeau « Jour X sur 3 », chrono, compte du jour, courbe horaire,
+/// Ensuite : bandeau « Jour X sur 7 », chrono, compte du jour, courbe horaire,
 /// et — brièvement après chaque tap — les 3 icônes de contexte.
 class TapScreen extends ConsumerStatefulWidget {
   const TapScreen({super.key});
@@ -55,9 +51,27 @@ class _TapScreenState extends ConsumerState<TapScreen> {
     await ref.read(cigaretteRepositoryProvider).logSmoke();
   }
 
-  /// Annule le dernier tap (mis-tap). Silencieux, sans confirmation : c'est une
-  /// correction, pas une décision.
+  /// Annule le dernier tap (mis-tap) — persistant (un tap par erreur peut se
+  /// remarquer bien plus tard), avec une confirmation pour éviter une
+  /// suppression accidentelle.
   Future<void> _undo() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        content: const Text('Veux-tu supprimer cette cigarette ?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Non'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Supprimer'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
     unawaited(HapticFeedback.selectionClick());
     await ref.read(cigaretteRepositoryProvider).undoLastCigarette();
   }
@@ -125,19 +139,17 @@ class _TapScreenState extends ConsumerState<TapScreen> {
                           .read(cigaretteRepositoryProvider)
                           .setContext(last.id, ctx),
                     ),
-                    // « Annuler » discret, seulement dans les secondes qui suivent
-                    // un tap — pour corriger une erreur, jamais réécrire l'histoire.
-                    if (since < _undoWindow) ...[
-                      const SizedBox(height: 6),
-                      TextButton.icon(
-                        onPressed: _undo,
-                        icon: const Icon(Icons.undo, size: 16),
-                        label: const Text('Annuler'),
-                        style: TextButton.styleFrom(
-                          foregroundColor: onSurface.withValues(alpha: 0.5),
-                        ),
+                    // « Annuler » discret, toujours disponible (un mis-tap peut
+                    // se remarquer tard) — avec confirmation avant suppression.
+                    const SizedBox(height: 6),
+                    TextButton.icon(
+                      onPressed: _undo,
+                      icon: const Icon(Icons.undo, size: 16),
+                      label: const Text('Annuler'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: onSurface.withValues(alpha: 0.5),
                       ),
-                    ],
+                    ),
                   ],
                 ),
               ),
