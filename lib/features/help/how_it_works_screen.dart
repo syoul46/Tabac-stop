@@ -48,16 +48,17 @@ class HowItWorksScreen extends StatelessWidget {
           ),
           const _Rule(
             icon: Icons.visibility_outlined,
-            title: 'Les 3 premiers jours : on observe',
+            title: 'La première semaine : on observe',
             body: 'Cairn enregistre en silence et ne te propose rien. Fume '
                 'normalement — c’est ce qui donne des données vraies, sans '
-                'culpabilité ni faux chiffres.',
+                'culpabilité ni faux chiffres. Une semaine entière capte aussi '
+                'ton rythme du week-end.',
           ),
           _Rule(
             icon: Icons.auto_awesome_outlined,
             iconColor: c.primary,
             title: 'La révélation',
-            body: 'Elle se déclenche après **3 jours** ET **au moins 30 '
+            body: 'Elle se déclenche après **7 jours** ET **au moins 30 '
                 'cigarettes** enregistrées. En dessous, Cairn préfère continuer '
                 'd’observer en silence plutôt que de sortir une analyse bancale. '
                 'Là, il parle pour la première fois : ton rythme, et le nom de '

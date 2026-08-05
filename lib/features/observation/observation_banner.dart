@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../domain/journey/reveal_gate.dart';
+
 /// Bandeau de la phase d'observation. Ton calme (vert de nature, pas le lagon
 /// réservé aux succès). Donne la permission de fumer normalement.
 class ObservationBanner extends StatelessWidget {
@@ -18,7 +20,7 @@ class ObservationBanner extends StatelessWidget {
         border: Border.all(color: c.tertiary.withValues(alpha: 0.30)),
       ),
       child: Text(
-        'Jour $dayIndex sur 3 — on observe',
+        'Jour $dayIndex sur $kObservationDays — on observe',
         style: TextStyle(
           fontSize: 12.5,
           fontWeight: FontWeight.w600,

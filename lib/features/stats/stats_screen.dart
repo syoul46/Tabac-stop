@@ -43,7 +43,7 @@ class StatsScreen extends ConsumerWidget {
     final currentMode = ref.watch(currentModeProvider).asData?.value;
     // Le retour à la révélation n'a de sens qu'une fois le portrait « mûr »
     // (assez de données) ou un mode déjà choisi (pour changer d'avis).
-    final canRevisitReveal = shouldReveal(cigs) || currentMode != null;
+    final canRevisitReveal = shouldReveal(cigs, now) || currentMode != null;
     final defeated = defeatedBossKeys(events);
 
     final gap = m.medianGap;
@@ -103,13 +103,6 @@ class StatsScreen extends ConsumerWidget {
                 _Section(label: 'Tes heures'),
                 const SizedBox(height: 8),
                 HourlyCurve(counts: hourlyCounts(cigs)),
-                const SizedBox(height: 6),
-                Center(
-                  child: Text('0 h → 23 h (heure locale)',
-                      style: TextStyle(
-                          fontSize: 11,
-                          color: c.onSurface.withValues(alpha: 0.45))),
-                ),
                 if (report.bosses.isNotEmpty) ...[
                   const SizedBox(height: 24),
                   _Section(label: 'Tes Boss'),

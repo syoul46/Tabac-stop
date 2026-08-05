@@ -45,7 +45,7 @@ class RevealScreen extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                revisit ? 'OÙ TU EN ES' : 'VOILÀ TES 3 JOURS',
+                revisit ? 'OÙ TU EN ES' : 'VOILÀ TA SEMAINE',
                 style: TextStyle(
                   fontSize: 12,
                   letterSpacing: 2,

@@ -5,9 +5,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/time/format.dart';
-import '../../core/time/logical_day.dart';
 import '../../data/cigarette_repository.dart';
 import '../../data/database.dart';
+import '../../domain/journey/reveal_gate.dart';
 import '../../domain/metrics/hourly.dart';
 import '../cairn/cairn_view.dart';
 import '../help/how_it_works_screen.dart';
@@ -77,9 +77,12 @@ class _TapScreenState extends ConsumerState<TapScreen> {
 
     final now = DateTime.now();
     final since = now.difference(last.occurredAtUtc.toLocal());
+    // Jour d'observation basé sur la **durée réelle** depuis le 1ᵉʳ tap (bloc de
+    // 24 h), cohérent avec la fenêtre de révélation (7 jours réels).
     final dayIndex = first == null
         ? 1
-        : LogicalDay.indexSince(wallTimeOf(first), now).clamp(1, 3);
+        : (now.difference(first.occurredAtUtc.toLocal()).inHours ~/ 24 + 1)
+            .clamp(1, kObservationDays);
     final showContext = last.contextA == null && since < _contextWindow;
 
     return Scaffold(

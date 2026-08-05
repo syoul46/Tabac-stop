@@ -29,11 +29,14 @@ enum JourneyPhase {
 JourneyPhase resolvePhase({
   required List<Cigarette> cigs,
   required JourneyMode? mode,
+  required DateTime now,
 }) {
   if (cigs.isEmpty) return JourneyPhase.firstLaunch;
 
   if (mode == null) {
-    return shouldReveal(cigs) ? JourneyPhase.revealReady : JourneyPhase.observing;
+    return shouldReveal(cigs, now)
+        ? JourneyPhase.revealReady
+        : JourneyPhase.observing;
   }
 
   switch (mode) {

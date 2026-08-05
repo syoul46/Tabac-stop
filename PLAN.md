@@ -144,9 +144,9 @@ Un **Boss** = une cigarette qui **revient chaque jour à peu près à la même h
 liée à un contexte. C'est ce qui rend la révélation J+3 impossible à obtenir ailleurs.
 
 ### Pré-requis (✅ tranché)
-- **≥ 30 taps** ET **≥ 3 jours** de données. En dessous : aucune proposition (chiffre au hasard
+- **≥ 30 taps** ET **≥ 7 jours réels** de données. En dessous : aucune proposition (chiffre au hasard
   = perte de confiance). C'est la raison technique de la phase d'observation.
-- Si les 72 h sont atteintes mais **< 30 taps** (petit fumeur) : on **prolonge l'observation en
+- Si les 7 jours sont atteints mais **< 30 taps** (petit fumeur) : on **prolonge l'observation en
   silence** — pas de reveal pauvre. Message inchangé (« on observe »), pas d'échec affiché.
 
 ### Algorithme
@@ -173,7 +173,7 @@ liée à un contexte. C'est ce qui rend la révélation J+3 impossible à obteni
 ### Testabilité
 Fonction pure `List<Cigarette> → BossReport`. Testée avec des **fixtures de faux fumeurs**
 (3 jours synthétiques : gros fumeur régulier, fumeur du soir, fumeur social…). Un **mode debug
-« seed »** injecte ces historiques pour développer sans attendre 3 jours réels.
+« seed »** injecte ces historiques pour développer sans attendre une semaine réelle.
 
 ---
 
@@ -181,9 +181,9 @@ Fonction pure `List<Cigarette> → BossReport`. Testée avec des **fixtures de f
 
 ```
                  ┌──────────────┐
-   J1 ─────────► │  OBSERVING   │  (J1-3) l'app ne propose RIEN, elle enregistre
-                 └──────┬───────┘  écran : chrono + count + courbe + "Jour X/3 — on observe"
-        72h & ≥30 taps  │
+   J1 ─────────► │  OBSERVING   │  (J1-7) l'app ne propose RIEN, elle enregistre
+                 └──────┬───────┘  écran : chrono + count + courbe + "Jour X/7 — on observe"
+        7 j réels & ≥30 taps  │
                         ▼
                  ┌──────────────┐
                  │   REVEAL     │  portrait perso + 1ᵉʳ Boss nommé + question du mode
@@ -211,7 +211,7 @@ Guard central : **on ne bloque jamais** sur la question du mode — la 3ᵉ port
 
 - **Écran 1 = le bouton, déjà fonctionnel.** Aucun compte, aucun objectif, aucune date d'arrêt,
   aucun « combien par jour ». Une phrase : *« Tape quand tu fumes. C'est tout, pour l'instant. »*
-- **J1-3 : silence total.** Aucun défi, aucune mascotte. Texte unique : *« Jour X sur 3 — on
+- **J1-7 : silence total.** Aucun défi, aucune mascotte. Texte unique : *« Jour X sur 7 — on
   observe, on ne change rien. »* (donne la permission de fumer normalement → pas de culpabilité
   → pas de mensonge → données vraies).
 - **Validation silencieuse.** Le tap « je fume quand même » : écran revient à zéro, chrono repart,
@@ -278,7 +278,7 @@ lib/
     journey/       state machine + transitions
   features/
     tap/           Écran 1 (le bouton)
-    observation/   J1-3 (courbe + "Jour X/3")
+    observation/   J1-7 (courbe + "Jour X/7")
     reveal/        portrait J+3 + question du mode
     challenge/     Boss + délai + badge
     stats/
@@ -297,7 +297,7 @@ test/
 |---|---|---|---|
 | **0** | Setup | projet Flutter, deps, schéma drift, riverpod, thème | app vide qui build iOS+Android |
 | **1** | **Le bouton** | tap → enregistre, chrono, count aujourd'hui, **0 compte** | on peut taper, ça persiste |
-| **2** | Observation J1-3 | courbe qui se remplit, « Jour X/3 », 3 icônes contexte optionnelles | l'écran d'observation vit |
+| **2** | Observation J1-7 | courbe qui se remplit, « Jour X/7 », 3 icônes contexte optionnelles | l'écran d'observation vit |
 | **3** | Moteur de métriques | médiane, moyenne, histogramme, créneau chargé (Dart pur + tests) | tests verts sur fixtures |
 | **4** | Détection Boss | clustering + difficulté + `BossReport` + mode seed debug | reveal calculé sur faux fumeurs |
 | **5** | Révélation J+3 | écran portrait, 1ᵉʳ Boss nommé, question du mode (3 portes) | le moment charnière tourne |
@@ -368,7 +368,7 @@ Repères classiques (NHS/CDC). Table figée v1, extensible.
   `milestoneRevealed` (payload = seuil en minutes). Après une rechute, re-grimper **ne re-révèle
   pas** (l'app resterait bavarde). On ne suit que le **plus haut seuil déjà révélé**.
 - Le reveal ne s'affiche **qu'en mode** (arrêt net / réduction) — **jamais** pendant l'observation
-  J1-3 (silence) ni sur l'Écran 1.
+  J1-7 (silence) ni sur l'Écran 1.
 - Que des **gains**, jamais de perte affichée. Voix **lagon**, sobre, une carte, un bouton.
 
 ### Dérivés (jamais stockés comme vérité)

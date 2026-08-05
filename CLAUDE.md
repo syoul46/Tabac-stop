@@ -38,8 +38,9 @@ XChaCha20-Poly1305**. **Aucun backend, aucun compte, aucune synchro.**
 
 Conséquences concrètes à ne jamais violer :
 - **Écran 1 = le bouton, déjà fonctionnel.** Aucun compte / objectif / date d'arrêt / « combien par jour ».
-- **J1–3 : silence total.** L'app enregistre, ne propose rien. Elle donne la permission de fumer
-  normalement (→ pas de culpabilité → pas de mensonge → données vraies).
+- **1ʳᵉ semaine (J1–7) : silence total.** L'app enregistre, ne propose rien. Elle donne la permission
+  de fumer normalement (→ pas de culpabilité → pas de mensonge → données vraies). La fenêtre est une
+  **semaine réelle** (capte aussi le week-end) — voir la détection des Boss ci-dessous.
 - **Validation silencieuse** : le tap « je fume quand même » remet l'écran à zéro, chrono repart,
   **aucun texte, aucune consolation** (toute consolation implique une faute).
 - **Rechute (arrêt net)** : le streak retombe à 0, mais **jours-propres cumulés** et **record
@@ -59,11 +60,13 @@ Conséquences concrètes à ne jamais violer :
 - **Le tap normal et « je fume quand même » sont le MÊME événement** ; seuls les flags
   (`during_delay`, `was_boss`) diffèrent. La validation silencieuse est donc le comportement par
   défaut, pas un cas spécial.
-- **Détection des Boss** : pré-requis **≥30 taps ET ≥3 jours** avant toute proposition (en dessous,
-  un chiffre au hasard détruit la confiance). Si 72 h atteintes mais <30 taps → **prolonger
-  l'observation en silence**, jamais de reveal pauvre. Fonction pure `List<Cigarette> → BossReport`,
-  testée sur des **fixtures de faux fumeurs**. Un **mode seed debug** injecte des historiques
-  synthétiques pour développer sans attendre 3 jours réels.
+- **Détection des Boss** : pré-requis **≥30 taps ET ≥7 jours d'observation RÉELLE** (`now − 1ʳᵉ
+  cigarette ≥ 168 h` — pas un compteur de jours de calendrier : commencer à 23 h ne triche pas)
+  avant toute proposition (en dessous, un chiffre au hasard détruit la confiance). Si les 7 jours
+  sont atteints mais <30 taps → **prolonger l'observation en silence**, jamais de reveal pauvre.
+  Constantes dans `domain/journey/reveal_gate.dart` (`kObservationDays = 7`). Fonction pure
+  `List<Cigarette> → BossReport`, testée sur des **fixtures de faux fumeurs**. Un **mode seed debug**
+  injecte des historiques synthétiques (8 j) pour développer sans attendre une semaine réelle.
 - **Nommer ≠ attaquer** : la révélation **nomme** le Boss le plus ancré (7 h 10) ; la cible J4
   **attaque** le plus fragile (creux d'après-midi) pour garantir une victoire. La copie du reveal
   ne promet jamais que le Boss nommé est la première cible.

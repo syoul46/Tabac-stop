@@ -29,7 +29,7 @@ class RootScreen extends ConsumerWidget {
         ref.watch(allCigarettesProvider).asData?.value ?? const <Cigarette>[];
     final mode = ref.watch(currentModeProvider).asData?.value;
 
-    final phase = resolvePhase(cigs: cigs, mode: mode);
+    final phase = resolvePhase(cigs: cigs, mode: mode, now: DateTime.now());
     final Widget screen;
     switch (phase) {
       case JourneyPhase.revealReady:

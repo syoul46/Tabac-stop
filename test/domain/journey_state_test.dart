@@ -15,28 +15,34 @@ void main() {
     dailyTimes: List.generate(11, (i) => (6 + i, 0)), // 33 (>= seuil)
     days: 3,
   );
+  // Assez tard pour dépasser la fenêtre d'observation (7 j réels) depuis le
+  // 1ᵉʳ tap (2026-07-25) — la révélation peut donc se déclencher.
+  final now = DateTime.utc(2026, 8, 5);
 
   test('aucun tap → firstLaunch', () {
-    expect(resolvePhase(cigs: const [], mode: null), JourneyPhase.firstLaunch);
+    expect(resolvePhase(cigs: const [], mode: null, now: now),
+        JourneyPhase.firstLaunch);
   });
 
   test('peu de taps, aucun mode → observing', () {
-    expect(resolvePhase(cigs: fewCigs, mode: null), JourneyPhase.observing);
+    expect(resolvePhase(cigs: fewCigs, mode: null, now: now),
+        JourneyPhase.observing);
   });
 
   test('seuil atteint, aucun mode → revealReady', () {
-    expect(resolvePhase(cigs: manyCigs, mode: null), JourneyPhase.revealReady);
+    expect(resolvePhase(cigs: manyCigs, mode: null, now: now),
+        JourneyPhase.revealReady);
   });
 
   test('mode choisi → phase du mode (indépendant du seuil)', () {
-    expect(resolvePhase(cigs: manyCigs, mode: JourneyMode.coldTurkey),
+    expect(resolvePhase(cigs: manyCigs, mode: JourneyMode.coldTurkey, now: now),
         JourneyPhase.coldTurkey);
-    expect(resolvePhase(cigs: manyCigs, mode: JourneyMode.reduction),
+    expect(resolvePhase(cigs: manyCigs, mode: JourneyMode.reduction, now: now),
         JourneyPhase.reduction);
   });
 
   test('undecided → on continue d\'observer (pas de re-révélation)', () {
-    expect(resolvePhase(cigs: manyCigs, mode: JourneyMode.undecided),
+    expect(resolvePhase(cigs: manyCigs, mode: JourneyMode.undecided, now: now),
         JourneyPhase.undecided);
   });
 }
