@@ -27,6 +27,36 @@ int holdsForBoss(List<JourneyEvent> events, String key) => events
         e.kind == JourneyEventKind.delayHeld.name && _payloadBossKey(e) == key)
     .length;
 
+// ── Combat par points de vie (spec PLAN §15) ────────────────────────────────
+// PV = PVmax − délais tenus + cigarettes fumées contre le Boss, borné [0, PVmax].
+// Chaque délai tenu entame le Boss (−1) ; chaque cigarette le soigne (+1). On ne
+// le vainc que si le net penche du bon côté. Le cairn, lui, ne recule jamais.
+
+/// PV max d'un Boss selon sa difficulté = nb de délais tenus *nets* pour le
+/// vaincre : fragile 3 · tenace 4 · coriace 5.
+int bossMaxHp(Boss b) => switch (b.difficulty) {
+      BossDifficulty.easy => 3,
+      BossDifficulty.medium => 4,
+      BossDifficulty.hard => 5,
+    };
+
+/// Soins reçus = cigarettes fumées contre ce Boss (event `delayBroken` tagué).
+int healsForBoss(List<JourneyEvent> events, String key) => events
+    .where((e) =>
+        e.kind == JourneyEventKind.delayBroken.name &&
+        _payloadBossKey(e) == key)
+    .length;
+
+/// PV courants du Boss, bornés [0, PVmax].
+int bossHp(Boss b, List<JourneyEvent> events) {
+  final k = bossKey(b);
+  final hp = bossMaxHp(b) - holdsForBoss(events, k) + healsForBoss(events, k);
+  return hp.clamp(0, bossMaxHp(b));
+}
+
+/// Vaincu quand ses PV tombent à 0.
+bool isBossDefeated(Boss b, List<JourneyEvent> events) => bossHp(b, events) == 0;
+
 /// Les Boss **vaincus** = ceux dont le seuil de délais tenus est atteint.
 /// Purement dérivé du journal (jamais stocké comme vérité).
 Set<String> defeatedBossKeys(List<JourneyEvent> events) {

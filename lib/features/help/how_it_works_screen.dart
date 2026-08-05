@@ -78,10 +78,13 @@ class HowItWorksScreen extends StatelessWidget {
             icon: Icons.landscape_outlined,
             iconColor: hibiscus,
             title: 'Tes Boss',
-            body: 'On attaque le Boss le plus fragile en premier, un délai de '
-                '10 minutes à la fois. Tiens-le 3 jours et le Boss est vaincu : '
-                'un gros rocher est hissé au sommet de ton cairn. Puis on passe '
-                'au suivant.',
+            body: 'On attaque le plus fragile en premier. Chaque **délai de 10 '
+                'min tenu** lui enlève un **point de vie** (et pose une pierre). '
+                'Chaque **cigarette lui en redonne un**. Tu le bats donc si tu '
+                'tiens plus de délais que tu ne craques — un gros rocher est '
+                'alors hissé au sommet, et on passe au suivant. Les plus '
+                'coriaces ont plus de points de vie. Tes pierres, elles, ne '
+                'retombent jamais.',
           ),
           _Rule(
             icon: Icons.trending_up,
