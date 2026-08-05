@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/theme/cairn_theme.dart';
+import '../core/update/update_service.dart';
 import '../data/cigarette_repository.dart';
 import '../data/database.dart';
 import '../data/journey_repository.dart';
@@ -11,6 +12,7 @@ import '../domain/models/enums.dart';
 import '../features/cairn/cairn_view.dart';
 import '../features/help/how_it_works_screen.dart';
 import '../features/reveal/reveal_screen.dart';
+import '../features/update/update_banner.dart';
 import '../features/stats/stats_screen.dart';
 import '../features/tap/tap_screen.dart';
 
@@ -65,6 +67,14 @@ void main() {
       journeyEventsProvider.overrideWith((ref) => Stream.value(events)),
       // Un mode choisi → le bouton « Revoir ma révélation » apparaît dans les stats.
       currentModeProvider.overrideWith((ref) => Stream.value(JourneyMode.reduction)),
+      // Force une fausse mise à jour dispo (pour le preview du bandeau).
+      updateCheckProvider.overrideWith((ref) => const UpdateInfo(
+            version: '1.6.0',
+            notes: '',
+            apkUrl: '',
+            apkSize: 0,
+            pageUrl: '',
+          )),
       lastCigaretteProvider.overrideWith((ref) => Stream.value(obsCigs.last)),
       todaysCigarettesProvider.overrideWith((ref) => Stream.value(obsCigs)),
       firstCigaretteProvider.overrideWith((ref) => Stream.value(obsCigs.first)),
@@ -86,6 +96,9 @@ class _App extends StatelessWidget {
         'dust' => const _AutoDrop(),
         'help' => const HowItWorksScreen(),
         'revisit' => const RevealScreen(revisit: true),
+        'update' => const Scaffold(
+            body: Stack(children: [Center(child: Text('écran de fond')), UpdateBanner()]),
+          ),
         _ => const StatsScreen(),
       },
     );

@@ -60,15 +60,16 @@ class _UpdateBannerState extends ConsumerState<UpdateBanner> {
 
     final c = Theme.of(context).colorScheme;
     return Positioned(
+      // Pleine largeur (recouvre brièvement les icônes du haut le temps de la
+      // proposition) : le texte a toute la place → jamais de rendu vertical.
       top: 0,
-      // laisse la place aux icônes (stats + aide à gauche, bouclier à droite)
-      left: 100,
-      right: 52,
+      left: 8,
+      right: 8,
       child: SafeArea(
         child: Material(
           color: Colors.transparent,
           child: Container(
-            padding: const EdgeInsets.fromLTRB(14, 10, 8, 10),
+            padding: const EdgeInsets.fromLTRB(16, 10, 12, 8),
             decoration: BoxDecoration(
               color: c.surface,
               borderRadius: BorderRadius.circular(14),
@@ -87,38 +88,46 @@ class _UpdateBannerState extends ConsumerState<UpdateBanner> {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      Text(
-                        _progress > 0
-                            ? 'Téléchargement… ${(_progress * 100).round()} %'
-                            : 'Téléchargement…',
-                        style: TextStyle(fontSize: 13.5, color: c.onSurface),
+                      Flexible(
+                        child: Text(
+                          _progress > 0
+                              ? 'Téléchargement… ${(_progress * 100).round()} %'
+                              : 'Téléchargement…',
+                          style: TextStyle(fontSize: 13.5, color: c.onSurface),
+                        ),
                       ),
                     ],
                   )
-                : Row(
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Expanded(
-                        child: Text(
-                          'Cairn ${info.version} est disponible.',
-                          style: TextStyle(
-                            fontSize: 13.5,
-                            color: c.onSurface.withValues(alpha: 0.85),
-                          ),
+                      Text(
+                        'Cairn ${info.version} est disponible.',
+                        style: TextStyle(
+                          fontSize: 13.5,
+                          color: c.onSurface.withValues(alpha: 0.85),
                         ),
                       ),
-                      TextButton(
-                        onPressed: () => _update(info),
-                        style: TextButton.styleFrom(foregroundColor: c.primary),
-                        child: const Text('Mettre à jour'),
-                      ),
-                      IconButton(
-                        visualDensity: VisualDensity.compact,
-                        tooltip: 'Ignorer',
-                        icon: Icon(Icons.close,
-                            size: 18,
-                            color: c.onSurface.withValues(alpha: 0.5)),
-                        onPressed: () =>
-                            setState(() => _dismissedVersion = info.version),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            onPressed: () => setState(
+                                () => _dismissedVersion = info.version),
+                            style: TextButton.styleFrom(
+                                foregroundColor:
+                                    c.onSurface.withValues(alpha: 0.6)),
+                            child: const Text('Plus tard'),
+                          ),
+                          const SizedBox(width: 4),
+                          TextButton(
+                            onPressed: () => _update(info),
+                            style: TextButton.styleFrom(
+                                foregroundColor: c.primary),
+                            child: const Text('Mettre à jour'),
+                          ),
+                        ],
                       ),
                     ],
                   ),
