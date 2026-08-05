@@ -3,6 +3,26 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/update/update_service.dart';
 
+/// Résumé condensé des notes de release (markdown) : la « tête » de chaque puce
+/// (jusqu'au 1ᵉʳ point), sans les `#`, `**`, ni liens. 4 items max.
+String _condensedNotes(String notes) {
+  final items = <String>[];
+  for (final raw in notes.split('\n')) {
+    final line = raw.trim();
+    if (!(line.startsWith('- ') || line.startsWith('* '))) continue;
+    var l = line.substring(2).trim().replaceAll('**', '');
+    l = l.replaceAllMapped(
+        RegExp(r'\[([^\]]+)\]\([^)]*\)'), (m) => m[1] ?? ''); // liens → texte
+    if (l.isEmpty) continue;
+    final dot = l.indexOf('.');
+    var head = (dot > 0 && dot <= 60) ? l.substring(0, dot) : l;
+    if (head.length > 58) head = '${head.substring(0, 57)}…';
+    items.add('• $head');
+    if (items.length >= 4) break;
+  }
+  return items.join('\n');
+}
+
 /// Bandeau discret, en haut, quand une nouvelle version existe. Un tap télécharge
 /// et lance l'installeur. Rejetable. Conforme à la règle « l'app parle peu » :
 /// n'apparaît que sur un fait concret (mise à jour dispo) et jamais en cas
@@ -59,6 +79,7 @@ class _UpdateBannerState extends ConsumerState<UpdateBanner> {
     if (info.version == _dismissedVersion) return const SizedBox.shrink();
 
     final c = Theme.of(context).colorScheme;
+    final summary = _condensedNotes(info.notes);
     return Positioned(
       // Pleine largeur (recouvre brièvement les icônes du haut le temps de la
       // proposition) : le texte a toute la place → jamais de rendu vertical.
@@ -106,9 +127,23 @@ class _UpdateBannerState extends ConsumerState<UpdateBanner> {
                         'Cairn ${info.version} est disponible.',
                         style: TextStyle(
                           fontSize: 13.5,
+                          fontWeight: FontWeight.w600,
                           color: c.onSurface.withValues(alpha: 0.85),
                         ),
                       ),
+                      if (summary.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          summary,
+                          style: TextStyle(
+                            fontSize: 12,
+                            height: 1.35,
+                            color: c.onSurface.withValues(alpha: 0.65),
+                          ),
+                          maxLines: 5,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                       Row(
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [

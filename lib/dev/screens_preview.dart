@@ -70,7 +70,12 @@ void main() {
       // Force une fausse mise à jour dispo (pour le preview du bandeau).
       updateCheckProvider.overrideWith((ref) => const UpdateInfo(
             version: '1.6.0',
-            notes: '',
+            notes: '## Nouveautés\n\n'
+                '- **Observation sur une semaine.** La révélation après 7 jours réels.\n'
+                '- **Revoir ta révélation.** Change d\'approche quand tu veux.\n'
+                '- **Annuler le dernier tap.** Corrige un enregistrement par erreur.\n\n'
+                '## Corrigé\n\n'
+                '- **Réduction** : le chrono reste toujours visible.\n',
             apkUrl: '',
             apkSize: 0,
             pageUrl: '',
