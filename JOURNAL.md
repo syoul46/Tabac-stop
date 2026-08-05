@@ -5,11 +5,35 @@
 
 ---
 
-## Point de reprise — 2026-08-04 (session 3, suite : contenu produit & polish, v1.4.1)
+## Point de reprise — 2026-08-05 (session 3, suite : v1.5.0)
 
 **État : le produit décrit par le PLAN est intégralement codé (jalons 0→14). Dernière release
-publiée : `v1.4.1`.** Seul vrai écart au plan restant : **iOS** (jalon 0 disait « build iOS+Android » ;
-seul Android est configuré/signé/testé).
+publiée : `v1.5.0`.** Seul vrai écart au plan restant : **iOS** (jalon 0 disait « build iOS+Android » ;
+seul Android est configuré/signé/testé). Changelog complet : `CHANGELOG.md`.
+
+### v1.5.0 (retours de test → un lot publié)
+- **Fenêtre d'observation = 7 jours RÉELS** : `shouldReveal(cigs, now)` = `≥30 taps` ET
+  `now − 1ʳᵉ cigarette ≥ 168 h` (`kObservationDays=7` dans `reveal_gate.dart`) — plus un compteur de
+  jours calendaires (commencer à 23 h ne triche plus). `resolvePhase` prend `now`. Copie : « Jour X
+  sur 7 », « Voilà ta semaine », règle du jeu, seed 8 j, CLAUDE.md/PLAN (palier santé « 72 h » intact).
+- **Revoir la révélation / changer d'approche** (PLAN §15 option A) : `RevealScreen(revisit:true)`
+  (titre « Où tu en es », appbar « Changer d'approche », `setMode` + `popUntil` racine) ; bouton dans
+  les **stats** ; corrige l'impasse « je ne sais pas ».
+- **Annuler le dernier tap** : `undoLastCigarette()` + bouton « Annuler » 15 s après un tap (Écran 1).
+- **Repères horaires** 0h/4h/8h/12h/16h/20h sous la courbe (`HourlyCurve`, écran principal + stats).
+- **Réduction** : chrono « depuis la dernière » **toujours affiché** (même pendant un délai / tenu).
+- Libellé du prochain palier d'altitude clarifié.
+- ⚠️ Piège Flutter rencontré : `OverflowBox` **sans hauteur bornée** → overflow « Infinity PIXELS ».
+  Toujours borner (`maxHeight` / `SizedBox`).
+
+### Ajustements v1.4.1 (retours de test sur vrai téléphone)
+- **Icônes** (stats / aide / bouclier) : opacité 0.35 → **0.55** ; bandeau « Jour X/3 » descendu sous
+  la rangée d'icônes (plus de chevauchement).
+- **Écran « règle du jeu »** : conditions de la révélation détaillées (**3 jours ET ≥ 30 cigarettes**),
+  petit rendu **gras** des `**…**` ajouté.
+- **Paliers santé** : +2 paliers (**2 h**, **12 h**) et faits affinés (NHS/CDC/AHA) ; ils **se rejouent**
+  après une rechute (`revealedMinutesSince(events, dernièreCigarette)` — on ne compte que depuis le
+  dernier tap). Le « plus haut cairn » garde le record.
 
 ### Ajustements v1.4.1 (retours de test sur vrai téléphone)
 - **Icônes** (stats / aide / bouclier) : opacité 0.35 → **0.55** ; bandeau « Jour X/3 » descendu sous
