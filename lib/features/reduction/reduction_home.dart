@@ -158,6 +158,8 @@ class _Header extends StatelessWidget {
     final theme = Theme.of(context);
     final c = theme.colorScheme;
 
+    // Quand un délai tourne, le compte à rebours passe devant (c'est le moment
+    // actif) — mais le chrono « depuis la dernière » reste toujours affiché.
     if (delay.status == DelayStatus.running) {
       final left = delay.endsAt!.difference(now);
       final clamped = left.isNegative ? Duration.zero : left;
@@ -173,26 +175,20 @@ class _Header extends StatelessWidget {
           Text('tiens bon — le Boss peut attendre',
               style: TextStyle(
                   fontSize: 12.5, color: c.onSurface.withValues(alpha: 0.6))),
+          const SizedBox(height: 8),
+          Text(
+            '${formatSinceLast(since)} · depuis la dernière',
+            style: TextStyle(
+                fontSize: 12,
+                color: c.onSurface.withValues(alpha: 0.5),
+                fontFeatures: const [FontFeature.tabularFigures()]),
+          ),
         ],
       );
     }
 
-    if (delay.status == DelayStatus.held) {
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text('Pierre posée',
-              style: theme.textTheme.displaySmall
-                  ?.copyWith(color: c.primary, fontWeight: FontWeight.w600)),
-          const SizedBox(height: 2),
-          Text('le Boss a tenu bon aujourd’hui',
-              style: TextStyle(
-                  fontSize: 12.5, color: c.onSurface.withValues(alpha: 0.6))),
-        ],
-      );
-    }
-
-    // available / broken / elapsed : chrono sobre.
+    // Tous les autres états : le chrono « depuis la dernière » est le timer
+    // persistant (toujours là après un tap). Un liseré « pierre posée » si tenu.
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -209,6 +205,14 @@ class _Header extends StatelessWidget {
         Text('depuis la dernière',
             style: TextStyle(
                 fontSize: 12, color: c.onSurface.withValues(alpha: 0.55))),
+        if (delay.status == DelayStatus.held) ...[
+          const SizedBox(height: 6),
+          Text('délai tenu · pierre posée',
+              style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: c.primary)),
+        ],
       ],
     );
   }
