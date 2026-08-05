@@ -11,6 +11,15 @@
 publiée : `v1.5.1`.** Seul vrai écart au plan restant : **iOS** (jalon 0 disait « build iOS+Android » ;
 seul Android est configuré/signé/testé). Changelog complet : `CHANGELOG.md`.
 
+### v1.5.1 (correctifs)
+- **Bandeau de mise à jour** qui s'affichait **à la verticale** sur écran étroit → **pleine largeur**
+  (`update_banner.dart`, `left/right:8`, message sur sa propre ligne) + **résumé condensé du changelog**
+  (têtes de puces de `info.notes`). ⚠️ cause du bug : un `Text` dans une `Row` réduit à ~0 de large.
+- **« Annuler »** (undo tap) désormais **persistant** (plus de fenêtre 15 s) + **confirmation** avant suppression.
+- Observation au-delà de la fenêtre → « **Jour 8 — on observe** » (`dayIndex` déplafonné).
+- Prompt de sauvegarde → **vrai nombre de jours** (`distinctLogicalDays`, plus « 3 » en dur).
+- Dédicace dans le footer (`version_tag.dart`).
+
 ### v1.5.0 (retours de test → un lot publié)
 - **Fenêtre d'observation = 7 jours RÉELS** : `shouldReveal(cigs, now)` = `≥30 taps` ET
   `now − 1ʳᵉ cigarette ≥ 168 h` (`kObservationDays=7` dans `reveal_gate.dart`) — plus un compteur de
@@ -25,15 +34,6 @@ seul Android est configuré/signé/testé). Changelog complet : `CHANGELOG.md`.
 - Libellé du prochain palier d'altitude clarifié.
 - ⚠️ Piège Flutter rencontré : `OverflowBox` **sans hauteur bornée** → overflow « Infinity PIXELS ».
   Toujours borner (`maxHeight` / `SizedBox`).
-
-### Ajustements v1.4.1 (retours de test sur vrai téléphone)
-- **Icônes** (stats / aide / bouclier) : opacité 0.35 → **0.55** ; bandeau « Jour X/3 » descendu sous
-  la rangée d'icônes (plus de chevauchement).
-- **Écran « règle du jeu »** : conditions de la révélation détaillées (**3 jours ET ≥ 30 cigarettes**),
-  petit rendu **gras** des `**…**` ajouté.
-- **Paliers santé** : +2 paliers (**2 h**, **12 h**) et faits affinés (NHS/CDC/AHA) ; ils **se rejouent**
-  après une rechute (`revealedMinutesSince(events, dernièreCigarette)` — on ne compte que depuis le
-  dernier tap). Le « plus haut cairn » garde le record.
 
 ### Ajustements v1.4.1 (retours de test sur vrai téléphone)
 - **Icônes** (stats / aide / bouclier) : opacité 0.35 → **0.55** ; bandeau « Jour X/3 » descendu sous
