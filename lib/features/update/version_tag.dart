@@ -23,7 +23,7 @@ class VersionTag extends StatelessWidget {
                 final v = snap.data?.version;
                 if (v == null) return const SizedBox.shrink();
                 return Text(
-                  'v$v',
+                  'v$v · dédicacé à mon Arc-en-ciel ♥',
                   style: TextStyle(
                     fontSize: 11,
                     color: Theme.of(context)
