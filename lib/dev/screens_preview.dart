@@ -10,6 +10,7 @@ import '../data/journey_repository.dart';
 import '../domain/models/enums.dart';
 import '../features/cairn/cairn_view.dart';
 import '../features/help/how_it_works_screen.dart';
+import '../features/reveal/reveal_screen.dart';
 import '../features/stats/stats_screen.dart';
 import '../features/tap/tap_screen.dart';
 
@@ -62,6 +63,8 @@ void main() {
     overrides: [
       allCigarettesProvider.overrideWith((ref) => Stream.value(cigs)),
       journeyEventsProvider.overrideWith((ref) => Stream.value(events)),
+      // Un mode choisi → le bouton « Revoir ma révélation » apparaît dans les stats.
+      currentModeProvider.overrideWith((ref) => Stream.value(JourneyMode.reduction)),
       lastCigaretteProvider.overrideWith((ref) => Stream.value(obsCigs.last)),
       todaysCigarettesProvider.overrideWith((ref) => Stream.value(obsCigs)),
       firstCigaretteProvider.overrideWith((ref) => Stream.value(obsCigs.first)),
@@ -82,6 +85,7 @@ class _App extends StatelessWidget {
         'obs' => const TapScreen(),
         'dust' => const _AutoDrop(),
         'help' => const HowItWorksScreen(),
+        'revisit' => const RevealScreen(revisit: true),
         _ => const StatsScreen(),
       },
     );

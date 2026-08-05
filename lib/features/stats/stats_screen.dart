@@ -9,9 +9,11 @@ import '../../domain/boss/boss.dart';
 import '../../domain/boss/victory.dart';
 import '../../domain/health/milestones.dart';
 import '../../domain/journey/delay.dart';
+import '../../domain/journey/reveal_gate.dart';
 import '../../domain/metrics/hourly.dart';
 import '../../domain/metrics/metrics.dart';
 import '../observation/hourly_curve.dart';
+import '../reveal/reveal_screen.dart';
 
 /// Écran de statistiques — ouvert par l'utilisateur (donc l'app peut détailler,
 /// sans violer « elle se tait » qui ne vaut que pour la parole non sollicitée).
@@ -38,6 +40,10 @@ class StatsScreen extends ConsumerWidget {
     final current = milestoneAt(abstinence);
     final next = nextMilestoneAfter(abstinence);
     final stones = stonesPlaced(events);
+    final currentMode = ref.watch(currentModeProvider).asData?.value;
+    // Le retour à la révélation n'a de sens qu'une fois le portrait « mûr »
+    // (assez de données) ou un mode déjà choisi (pour changer d'avis).
+    final canRevisitReveal = shouldReveal(cigs) || currentMode != null;
     final defeated = defeatedBossKeys(events);
 
     final gap = m.medianGap;
@@ -109,6 +115,25 @@ class StatsScreen extends ConsumerWidget {
                   _Section(label: 'Tes Boss'),
                   for (final b in report.bosses)
                     _BossRow(boss: b, defeated: defeated.contains(bossKey(b))),
+                ],
+                if (canRevisitReveal) ...[
+                  const SizedBox(height: 30),
+                  Center(
+                    child: OutlinedButton.icon(
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                            builder: (_) =>
+                                const RevealScreen(revisit: true)),
+                      ),
+                      icon: const Icon(Icons.auto_awesome_outlined, size: 18),
+                      label: const Text('Revoir ma révélation'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: c.primary,
+                        side: BorderSide(
+                            color: c.primary.withValues(alpha: 0.5)),
+                      ),
+                    ),
+                  ),
                 ],
               ],
             ),

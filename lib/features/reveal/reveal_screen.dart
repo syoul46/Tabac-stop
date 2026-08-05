@@ -9,11 +9,19 @@ import '../../domain/models/enums.dart';
 
 /// L'écran charnière. Après 72 h d'observation silencieuse, l'app parle pour la
 /// première fois — et le lagon (accent primaire) fait ici ses débuts.
+///
+/// [revisit] = ré-ouvert depuis les stats pour **changer d'approche** : le titre
+/// s'adoucit et choisir un mode referme l'écran (au lieu d'être routé par la
+/// machine à états). Aucune donnée n'est perdue — le mode n'est qu'un filtre.
 class RevealScreen extends ConsumerWidget {
-  const RevealScreen({super.key});
+  const RevealScreen({super.key, this.revisit = false});
 
-  void _choose(WidgetRef ref, JourneyMode mode) =>
-      ref.read(journeyRepositoryProvider).setMode(mode);
+  final bool revisit;
+
+  void _choose(BuildContext context, WidgetRef ref, JourneyMode mode) {
+    ref.read(journeyRepositoryProvider).setMode(mode);
+    if (revisit) Navigator.of(context).popUntil((r) => r.isFirst);
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -23,6 +31,13 @@ class RevealScreen extends ConsumerWidget {
     final boss = ref.watch(bossReportProvider).mostAnchored;
 
     return Scaffold(
+      appBar: revisit
+          ? AppBar(
+              title: const Text('Changer d’approche'),
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+            )
+          : null,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(24, 28, 24, 40),
@@ -30,7 +45,7 @@ class RevealScreen extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'VOILÀ TES 3 JOURS',
+                revisit ? 'OÙ TU EN ES' : 'VOILÀ TES 3 JOURS',
                 style: TextStyle(
                   fontSize: 12,
                   letterSpacing: 2,
@@ -40,7 +55,9 @@ class RevealScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 10),
               Text(
-                'On a appris deux ou trois choses sur toi.',
+                revisit
+                    ? 'Tu peux changer d’approche quand tu veux.'
+                    : 'On a appris deux ou trois choses sur toi.',
                 style: theme.textTheme.headlineSmall
                     ?.copyWith(height: 1.15, fontWeight: FontWeight.w600),
               ),
@@ -59,14 +76,14 @@ class RevealScreen extends ConsumerWidget {
                 icon: Icons.block_outlined,
                 label: 'Arrêt net',
                 subtitle: 'j’arrête, on tient le compteur',
-                onTap: () => _choose(ref, JourneyMode.coldTurkey),
+                onTap: () => _choose(context, ref, JourneyMode.coldTurkey),
               ),
               const SizedBox(height: 10),
               _ModeButton(
                 icon: Icons.trending_down,
                 label: 'Réduction progressive',
                 subtitle: 'on attaque les Boss un par un',
-                onTap: () => _choose(ref, JourneyMode.reduction),
+                onTap: () => _choose(context, ref, JourneyMode.reduction),
               ),
               const SizedBox(height: 10),
               _ModeButton(
@@ -74,7 +91,7 @@ class RevealScreen extends ConsumerWidget {
                 label: 'Je ne sais pas encore',
                 subtitle: 'continue à observer, sans pression',
                 ghost: true,
-                onTap: () => _choose(ref, JourneyMode.undecided),
+                onTap: () => _choose(context, ref, JourneyMode.undecided),
               ),
             ],
           ),
