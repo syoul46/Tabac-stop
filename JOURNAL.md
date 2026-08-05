@@ -5,10 +5,10 @@
 
 ---
 
-## Point de reprise — 2026-08-05 (session 3, suite : v1.5.0)
+## Point de reprise — 2026-08-05 (session 3, suite : v1.5.1)
 
 **État : le produit décrit par le PLAN est intégralement codé (jalons 0→14). Dernière release
-publiée : `v1.5.0`.** Seul vrai écart au plan restant : **iOS** (jalon 0 disait « build iOS+Android » ;
+publiée : `v1.5.1`.** Seul vrai écart au plan restant : **iOS** (jalon 0 disait « build iOS+Android » ;
 seul Android est configuré/signé/testé). Changelog complet : `CHANGELOG.md`.
 
 ### v1.5.0 (retours de test → un lot publié)

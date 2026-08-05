@@ -3,6 +3,23 @@
 Toutes les versions notables. App de sevrage tabagique, **local-first**.
 Format des dates : AAAA-MM-JJ.
 
+## v1.5.1 — 2026-08-05
+
+### Corrigé
+- **Bandeau de mise à jour** : sur certains téléphones, le texte s'affichait **à la verticale**
+  (une lettre par ligne). Il est désormais pleine largeur, toujours lisible.
+- **Observation** au-delà de la fenêtre : affiche « Jour 8 — on observe » (au lieu de rester bloqué
+  sur « Jour 7 sur 7 ») tant que la révélation ne s'est pas déclenchée.
+- **Prompt de sauvegarde** : affiche le **vrai** nombre de jours d'historique (plus « 3 » en dur).
+
+### Amélioré
+- **Bandeau de mise à jour** : montre un **résumé condensé du changelog** (les nouveautés en bref).
+- **Annuler le dernier tap** : le bouton est maintenant **persistant** (un mis-tap peut se remarquer
+  plus tard) et demande une **confirmation** avant de supprimer.
+- Une petite **dédicace** dans le pied de page. ♥
+
+---
+
 ## v1.5.0 — 2026-08-05
 
 ### Ajouté
