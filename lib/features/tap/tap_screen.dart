@@ -7,7 +7,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/time/format.dart';
 import '../../data/cigarette_repository.dart';
 import '../../data/database.dart';
-import '../../domain/journey/reveal_gate.dart';
 import '../../domain/metrics/hourly.dart';
 import '../cairn/cairn_view.dart';
 import '../help/how_it_works_screen.dart';
@@ -78,11 +77,12 @@ class _TapScreenState extends ConsumerState<TapScreen> {
     final now = DateTime.now();
     final since = now.difference(last.occurredAtUtc.toLocal());
     // Jour d'observation basé sur la **durée réelle** depuis le 1ᵉʳ tap (bloc de
-    // 24 h), cohérent avec la fenêtre de révélation (7 jours réels).
-    final dayIndex = first == null
+    // 24 h). Pas de plafond : au-delà de la fenêtre (petit fumeur, <30 taps), on
+    // continue « Jour 8 », « Jour 9 »… (le bandeau lâche le « sur 7 »).
+    final elapsedDays = first == null
         ? 1
-        : (now.difference(first.occurredAtUtc.toLocal()).inHours ~/ 24 + 1)
-            .clamp(1, kObservationDays);
+        : now.difference(first.occurredAtUtc.toLocal()).inHours ~/ 24 + 1;
+    final dayIndex = elapsedDays < 1 ? 1 : elapsedDays;
     final showContext = last.contextA == null && since < _contextWindow;
 
     return Scaffold(

@@ -6,6 +6,7 @@ import '../../data/database.dart';
 import '../../data/journey_repository.dart';
 import '../../domain/journey/backup_prompt.dart';
 import '../../domain/journey/journey_state.dart';
+import '../../domain/metrics/metrics.dart';
 import '../backup/backup_screen.dart';
 import '../boss/boss_victory_reveal.dart';
 import '../coldturkey/cold_turkey_home.dart';
@@ -156,6 +157,7 @@ class _WithBackupAccess extends ConsumerWidget {
             bottom: 0,
             child: SafeArea(
               child: _BackupPrompt(
+                days: distinctLogicalDays(cigs),
                 onLater: () =>
                     ref.read(journeyRepositoryProvider).markBackupPromptSeen(),
                 onSave: () {
@@ -172,7 +174,9 @@ class _WithBackupAccess extends ConsumerWidget {
 
 /// Bandeau du J4 : proposé une seule fois. Factuel, pas culpabilisant.
 class _BackupPrompt extends StatelessWidget {
-  const _BackupPrompt({required this.onLater, required this.onSave});
+  const _BackupPrompt(
+      {required this.days, required this.onLater, required this.onSave});
+  final int days;
   final VoidCallback onLater;
   final VoidCallback onSave;
 
@@ -191,7 +195,7 @@ class _BackupPrompt extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            'Tu as 3 jours d’historique. Sauvegarde-les — chiffré, '
+            'Tu as $days jours d’historique. Sauvegarde-les — chiffré, '
             'sur ton téléphone.',
             style: TextStyle(
                 fontSize: 13.5,

@@ -20,7 +20,10 @@ class ObservationBanner extends StatelessWidget {
         border: Border.all(color: c.tertiary.withValues(alpha: 0.30)),
       ),
       child: Text(
-        'Jour $dayIndex sur $kObservationDays — on observe',
+        // Au-delà de la fenêtre (petit fumeur), on lâche le « sur 7 ».
+        dayIndex <= kObservationDays
+            ? 'Jour $dayIndex sur $kObservationDays — on observe'
+            : 'Jour $dayIndex — on observe',
         style: TextStyle(
           fontSize: 12.5,
           fontWeight: FontWeight.w600,
