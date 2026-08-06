@@ -23,6 +23,11 @@ enum JourneyEventKind {
   /// Un Boss a été vaincu (un gros rocher hissé au sommet). Payload
   /// `{bossKey}`, pour ne célébrer la victoire qu'une fois.
   bossDefeated,
+
+  /// Pierre bonus : tenir au-delà des 10 min sans fumer (une à 20 min, une à
+  /// 30 min ; plafond +2 par manche). Ne compte QUE pour le cairn — jamais pour
+  /// les PV du Boss (un Boss ne se blesse qu'une fois/jour).
+  bonusStone,
 }
 
 /// Mode courant du parcours. `undecided` = 3ᵉ porte de la révélation : on ne

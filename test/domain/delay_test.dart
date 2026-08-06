@@ -86,12 +86,78 @@ void main() {
     expect(stonesPlaced(events), 2);
   });
 
-  test('stonesPlaced compte les délais tenus', () {
+  test('stonesPlaced compte les délais tenus + les pierres bonus', () {
     final events = [
       evt(JourneyEventKind.delayHeld, now.subtract(const Duration(days: 2))),
       evt(JourneyEventKind.delayBroken, now.subtract(const Duration(days: 1))),
       evt(JourneyEventKind.delayHeld, now),
+      evt(JourneyEventKind.bonusStone, now),
+      evt(JourneyEventKind.bonusStone, now),
     ];
-    expect(stonesPlaced(events), 2);
+    expect(stonesPlaced(events), 4); // 2 tenus + 2 bonus
+  });
+
+  group('pendingBonusStones (tenir au-delà des 10 min)', () {
+    Cigarette cig(DateTime whenLocal) => Cigarette(
+          id: 'c-${whenLocal.millisecondsSinceEpoch}',
+          occurredAtUtc: whenLocal.toUtc(),
+          tzOffsetMin: 0,
+          contextA: null,
+          wasBoss: false,
+          duringDelay: false,
+        );
+
+    test('après un délai tenu : +1 à 20 min, +1 à 30 min (plafond 2)', () {
+      final start = now.subtract(const Duration(minutes: 25));
+      final events = [
+        evt(JourneyEventKind.delayStarted, start),
+        evt(JourneyEventKind.delayHeld, start.add(const Duration(minutes: 10))),
+      ];
+      // 25 min après le lancement → 1 bonus dû (20 min franchi, pas 30).
+      expect(pendingBonusStones(events, const [], now), 1);
+      // 35 min après → 2 bonus dus.
+      expect(
+        pendingBonusStones(
+            events, const [], start.add(const Duration(minutes: 35))),
+        2,
+      );
+    });
+
+    test('ne compte pas ce qui est déjà posé', () {
+      final start = now.subtract(const Duration(minutes: 35));
+      final events = [
+        evt(JourneyEventKind.delayStarted, start),
+        evt(JourneyEventKind.delayHeld, start.add(const Duration(minutes: 10))),
+        evt(JourneyEventKind.bonusStone, start.add(const Duration(minutes: 20))),
+      ];
+      expect(pendingBonusStones(events, const [], now), 1); // 2 dus − 1 posé
+    });
+
+    test('une cigarette depuis le lancement coupe le bonus', () {
+      final start = now.subtract(const Duration(minutes: 35));
+      final events = [
+        evt(JourneyEventKind.delayStarted, start),
+        evt(JourneyEventKind.delayHeld, start.add(const Duration(minutes: 10))),
+      ];
+      final cigs = [cig(start.add(const Duration(minutes: 15)))];
+      expect(pendingBonusStones(events, cigs, now), 0);
+    });
+
+    test('pas de bonus si la manche n’a pas été tenue', () {
+      final start = now.subtract(const Duration(minutes: 35));
+      final events = [evt(JourneyEventKind.delayStarted, start)];
+      expect(pendingBonusStones(events, const [], now), 0);
+    });
+
+    test('relancer un délai remet le bonus à zéro', () {
+      final first = now.subtract(const Duration(minutes: 40));
+      final events = [
+        evt(JourneyEventKind.delayStarted, first),
+        evt(JourneyEventKind.delayHeld, first.add(const Duration(minutes: 10))),
+        // nouvelle manche relancée récemment, pas encore tenue
+        evt(JourneyEventKind.delayStarted, now.subtract(const Duration(minutes: 2))),
+      ];
+      expect(pendingBonusStones(events, const [], now), 0);
+    });
   });
 }

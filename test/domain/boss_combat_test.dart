@@ -121,4 +121,12 @@ void main() {
     expect(isBossDefeated(b, const [], held4), isFalse); // 5 − 4 = 1
     expect(isBossDefeated(b, const [], [...held4, heldAt(5, 7, 0)]), isTrue);
   });
+
+  test('engagedToday : entamé aujourd’hui uniquement (jour + fenêtre)', () {
+    final b = _boss(hour: 7);
+    final today = DateTime(2026, 1, 5, 12, 0); // jour logique 5
+    expect(engagedToday(b, [heldAt(5, 7, 0)], today), isTrue);
+    expect(engagedToday(b, [heldAt(4, 7, 0)], today), isFalse); // hier
+    expect(engagedToday(b, [heldAt(5, 12, 0)], today), isFalse); // hors fenêtre
+  });
 }

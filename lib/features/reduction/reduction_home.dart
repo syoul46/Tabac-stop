@@ -29,6 +29,7 @@ class ReductionHome extends ConsumerStatefulWidget {
 class _ReductionHomeState extends ConsumerState<ReductionHome> {
   Timer? _ticker;
   bool _finalizing = false;
+  bool _bonusInFlight = false;
 
   @override
   void initState() {
@@ -36,6 +37,7 @@ class _ReductionHomeState extends ConsumerState<ReductionHome> {
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
       _maybeFinalize();
+      _maybeBonus();
       setState(() {});
     });
   }
@@ -46,32 +48,39 @@ class _ReductionHomeState extends ConsumerState<ReductionHome> {
     super.dispose();
   }
 
-  /// Quand le délai s'est écoulé sans rupture, on l'enregistre comme tenu —
-  /// attribué au Boss visé du jour (pour la victoire de Boss).
+  /// Quand le délai s'est écoulé sans rupture, on l'enregistre comme tenu (une
+  /// pierre). Les dégâts au Boss (v2) sont dérivés de l'horodatage (jour + heure).
   void _maybeFinalize() {
     final events = ref.read(journeyEventsProvider).asData?.value ?? const [];
     final st = resolveDelay(events, DateTime.now());
     if (st.status == DelayStatus.elapsed && !_finalizing) {
       _finalizing = true;
-      final report = ref.read(bossReportProvider);
-      final cigs = ref.read(allCigarettesProvider).asData?.value ?? const [];
-      final target = nextTarget(report, defeatedBossKeys(report, cigs, events));
       ref
           .read(journeyRepositoryProvider)
-          .markDelayHeld(bossKey: target == null ? null : bossKey(target))
+          .markDelayHeld()
           .whenComplete(() => _finalizing = false);
     }
   }
 
-  /// « Je fume » : on enregistre, et **le Boss reprend 1 PV** (soin, silencieux).
-  /// Si un délai tournait, on l'annule aussi. Aucune consolation, aucun reproche.
-  Future<void> _onTapStone(DelayStatus status) async {
-    unawaited(HapticFeedback.mediumImpact());
-    final report = ref.read(bossReportProvider);
+  /// Tenir au-delà des 10 min sans fumer → pierres bonus (20 min, 30 min).
+  void _maybeBonus() {
+    if (_bonusInFlight) return;
     final events = ref.read(journeyEventsProvider).asData?.value ?? const [];
     final cigs = ref.read(allCigarettesProvider).asData?.value ?? const [];
-    final target = nextTarget(report, defeatedBossKeys(report, cigs, events));
-    final key = target == null ? null : bossKey(target);
+    final n = pendingBonusStones(events, cigs, DateTime.now());
+    if (n <= 0) return;
+    _bonusInFlight = true;
+    unawaited(HapticFeedback.selectionClick());
+    ref
+        .read(journeyRepositoryProvider)
+        .markBonusStones(n)
+        .whenComplete(() => _bonusInFlight = false);
+  }
+
+  /// « Je fume » : on enregistre. Le Boss se resoigne (dérivé de l'horodatage,
+  /// v2), en silence. Si un délai tournait, on l'annule. Aucune consolation.
+  Future<void> _onTapStone(DelayStatus status) async {
+    unawaited(HapticFeedback.mediumImpact());
     final running = status == DelayStatus.running;
     await ref
         .read(cigaretteRepositoryProvider)
@@ -79,7 +88,7 @@ class _ReductionHomeState extends ConsumerState<ReductionHome> {
     if (running) {
       await ref.read(notificationServiceProvider).cancelDelayEnd();
     }
-    await ref.read(journeyRepositoryProvider).markDelayBroken(bossKey: key);
+    await ref.read(journeyRepositoryProvider).markDelayBroken();
   }
 
   /// Lance le délai du jour et planifie le rappel de fin à T+10.
@@ -122,12 +131,15 @@ class _ReductionHomeState extends ConsumerState<ReductionHome> {
       body: SafeArea(
         child: Column(
           children: [
-            const SizedBox(height: 16),
+            // Laisse passer la rangée d'icônes flottantes (stats / règle /
+            // sauvegarde) en haut, pour que le bandeau du Boss ne soit pas recouvert.
+            const SizedBox(height: 52),
             if (target != null)
               _TargetBanner(
                 boss: target,
                 hp: bossHp(target, cigs, events),
                 maxHp: bossMaxHp(target),
+                engagedToday: engagedToday(target, events, now),
               ),
             Expanded(
               child: Center(
@@ -279,10 +291,14 @@ class _Action extends StatelessWidget {
 
 class _TargetBanner extends StatelessWidget {
   const _TargetBanner(
-      {required this.boss, required this.hp, required this.maxHp});
+      {required this.boss,
+      required this.hp,
+      required this.maxHp,
+      this.engagedToday = false});
   final Boss boss;
   final int hp;
   final int maxHp;
+  final bool engagedToday;
 
   @override
   Widget build(BuildContext context) {
@@ -330,6 +346,14 @@ class _TargetBanner extends StatelessWidget {
                             color: c.onSurface.withValues(alpha: 0.5))),
                   ],
                 ),
+                if (engagedToday) ...[
+                  const SizedBox(height: 4),
+                  Text('entamé aujourd’hui ✓ — reviens demain',
+                      style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                          color: hibiscus)),
+                ],
               ],
             ),
           ),

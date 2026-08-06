@@ -62,6 +62,19 @@ int daysCracked(Boss b, List<Cigarette> cigs) {
   return days.length;
 }
 
+/// Vrai si le Boss a **déjà été entamé aujourd'hui** (un délai tenu en fenêtre
+/// sur le jour logique de [now]). Sert à dire « entamé aujourd'hui ✓ — reviens
+/// demain » plutôt que de laisser croire qu'un 2ᵉ délai le même jour est sans effet.
+bool engagedToday(Boss b, List<JourneyEvent> events, DateTime now) {
+  final today = LogicalDay.dayOf(now);
+  for (final e in events) {
+    if (e.kind != JourneyEventKind.delayHeld.name) continue;
+    final w = e.occurredAtUtc.toLocal();
+    if (bossWindowContains(b, w) && LogicalDay.dayOf(w) == today) return true;
+  }
+  return false;
+}
+
 /// PV courants du Boss, bornés [0, PVmax].
 int bossHp(Boss b, List<Cigarette> cigs, List<JourneyEvent> events) {
   final hp = bossMaxHp(b) - daysEngaged(b, events) + daysCracked(b, cigs);

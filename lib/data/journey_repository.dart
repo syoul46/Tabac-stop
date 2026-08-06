@@ -60,18 +60,26 @@ class JourneyRepository {
   Future<void> startDelay() => _log(JourneyEventKind.delayStarted);
 
   /// Le délai a été rompu / on a fumé face au Boss (« je fume quand même ») —
-  /// silencieux. Tagué [bossKey] → +1 PV au Boss (soin, spec §15).
-  Future<void> markDelayBroken({String? bossKey}) async {
-    await _db.into(_db.journeyEvents).insert(
+  /// silencieux. Le soin du Boss est dérivé des horodatages des cigarettes (v2),
+  /// plus besoin de taguer l'event.
+  Future<void> markDelayBroken() => _log(JourneyEventKind.delayBroken);
+
+  /// Pierres bonus (tenir au-delà des 10 min) — [count] d'un coup. Pour le
+  /// cairn seulement, jamais pour les PV du Boss.
+  Future<void> markBonusStones(int count) async {
+    if (count <= 0) return;
+    await _db.batch((b) {
+      for (var i = 0; i < count; i++) {
+        b.insert(
+          _db.journeyEvents,
           JourneyEventsCompanion.insert(
             id: _uuid.v4(),
             occurredAtUtc: DateTime.now().toUtc(),
-            kind: JourneyEventKind.delayBroken.name,
-            payload: bossKey == null
-                ? const Value.absent()
-                : Value(jsonEncode({'bossKey': bossKey})),
+            kind: JourneyEventKind.bonusStone.name,
           ),
         );
+      }
+    });
   }
 
   /// Une rechute en arrêt net (le streak repart à zéro). Journalisé pour
@@ -95,21 +103,13 @@ class JourneyRepository {
   }
 
   /// Le délai a été tenu → une pierre. Au tout premier, on décroche un badge.
-  /// [bossKey] attribue le délai au Boss visé (pour la victoire de Boss).
-  Future<void> markDelayHeld({String? bossKey}) async {
+  /// Les dégâts au Boss (v2) sont dérivés de l'horodatage (jour + heure), plus
+  /// besoin de taguer l'event.
+  Future<void> markDelayHeld() async {
     final priorHeld = await (_db.select(_db.journeyEvents)
           ..where((t) => t.kind.equals(JourneyEventKind.delayHeld.name)))
         .get();
-    await _db.into(_db.journeyEvents).insert(
-          JourneyEventsCompanion.insert(
-            id: _uuid.v4(),
-            occurredAtUtc: DateTime.now().toUtc(),
-            kind: JourneyEventKind.delayHeld.name,
-            payload: bossKey == null
-                ? const Value.absent()
-                : Value(jsonEncode({'bossKey': bossKey})),
-          ),
-        );
+    await _log(JourneyEventKind.delayHeld);
     if (priorHeld.isEmpty) {
       await _log(JourneyEventKind.badgeEarned); // premier délai tenu
     }

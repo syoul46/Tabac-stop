@@ -84,6 +84,53 @@ DelayState resolveDelay(
   return const DelayState(DelayStatus.elapsed);
 }
 
-/// Nombre de pierres posées = délais tenus (sur tout l'historique).
-int stonesPlaced(List<JourneyEvent> events) =>
-    events.where((e) => e.kind == JourneyEventKind.delayHeld.name).length;
+/// Nombre de pierres posées = délais tenus **+ pierres bonus** (tenir au-delà
+/// des 10 min). Sur tout l'historique.
+int stonesPlaced(List<JourneyEvent> events) => events
+    .where((e) =>
+        e.kind == JourneyEventKind.delayHeld.name ||
+        e.kind == JourneyEventKind.bonusStone.name)
+    .length;
+
+/// Pierres bonus **encore à poser** pour la manche en cours, si l'abstinence
+/// continue après un délai tenu : +1 à 2×[length] (20 min), +1 à 3×[length]
+/// (30 min), plafond 2. Renvoie 0 si la dernière manche n'a pas été tenue, si un
+/// nouveau délai a été relancé, ou si une cigarette a été fumée depuis le
+/// lancement. Pur & testable ; `reduction_home` émet ce qui manque.
+int pendingBonusStones(
+  List<JourneyEvent> events,
+  List<Cigarette> cigs,
+  DateTime now, {
+  Duration length = kDelayLength,
+}) {
+  DateTime? start; // instant UTC du dernier delayStarted
+  var held = false;
+  var emitted = 0;
+  for (final e in events) {
+    final t = e.occurredAtUtc;
+    if (e.kind == JourneyEventKind.delayStarted.name) {
+      start = t;
+      held = false;
+      emitted = 0;
+    } else if (start != null && !t.isBefore(start)) {
+      if (e.kind == JourneyEventKind.delayHeld.name) {
+        held = true;
+      } else if (e.kind == JourneyEventKind.delayBroken.name) {
+        held = false;
+      } else if (e.kind == JourneyEventKind.bonusStone.name) {
+        emitted++;
+      }
+    }
+  }
+  if (start == null || !held) return 0;
+  // Une cigarette depuis le lancement rompt la série de bonus.
+  for (final c in cigs) {
+    if (!c.occurredAtUtc.isBefore(start)) return 0;
+  }
+  final elapsed = now.toUtc().difference(start);
+  var due = 0;
+  if (elapsed >= length * 2) due++;
+  if (elapsed >= length * 3) due++;
+  final remaining = due - emitted;
+  return remaining > 0 ? remaining : 0;
+}
