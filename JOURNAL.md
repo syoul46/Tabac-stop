@@ -5,7 +5,36 @@
 
 ---
 
-## Point de reprise — 2026-08-06 (session 4 : §15 combat de Boss codé)
+## Point de reprise — 2026-08-06 (session 4b : §15 combat **v2** — régularité)
+
+**État : §15 recodé en v2 (exigence de régularité) — codé, testé, vérifié sur émulateur, non publié.**
+On reste en phase de fix. **105 tests verts**, `flutter analyze` propre.
+
+### §15 v2 — la victoire se gagne par JOURS, à l'heure du Boss
+Décidé avec le user : le combat v1 (compteur d'événements, 3 délais n'importe quand) ne prouvait pas
+le changement d'habitude. v2 recale sur la **régularité**.
+- `PV = clamp(PVmax − joursEntamés + joursCraqués, 0, PVmax)`, PVmax = **jours** (3/4/5).
+  - **jour entamé** = ≥1 délai tenu dans la fenêtre du Boss (**± 30 min**, `kBossWindowMin`) → −1 PV, 1×/jour.
+  - **jour craqué** = ≥1 cigarette dans la fenêtre → +1 PV (le Boss se resoigne, silencieux).
+  - jour neutre = pause. Tout **dérivé des horodatages** (heure murale + `LogicalDay`), plus de tag `bossKey`.
+- `victory.dart` : `bossHp(boss, cigs, events)`, helpers `bossWindowContains`/`daysEngaged`/`daysCracked`/
+  `engagedToday` ; signatures `defeatedBossKeys`/`pendingBossVictory`/`isBossDefeated` en `(…, cigs, events)`.
+- **Pierres bonus** : tenir au-delà des 10 min → +1 à 20 min, +1 à 30 min (plafond +2/manche). Event
+  `bonusStone`, `stonesPlaced` les compte, `pendingBonusStones` (pur) calcule le reste, le ticker émet.
+  Vérifié live : 5 → 8 pierres. Ces pierres ne touchent JAMAIS les PV du Boss.
+- **UI** : bandeau cible « entamé aujourd'hui ✓ — reviens demain » (`engagedToday`) ; bandeau **descendu
+  à 52 px** (il chevauchait les icônes stats/règle/sauvegarde).
+- **Nettoyage** : `markDelayHeld()`/`markDelayBroken()` sans paramètre.
+
+### ⚠️ Piège formatage (à retenir)
+`dart format .` de l'environnement local applique le **nouveau « tall style »** et reformate **tout
+l'arbre** (49 fichiers de churn). Ne PAS le lancer en global tant que le repo est sur l'ancien style :
+formater à la main / n'éditer que les fichiers touchés. J'ai dû `git checkout HEAD -- .` puis
+réappliquer les changements à la main.
+
+---
+
+## Point de reprise — 2026-08-06 (session 4 : §15 combat de Boss codé v1)
 
 **État : §15 (combat de Boss par PV) codé et vérifié sur émulateur, non publié.** On reste en
 phase de fix (pas de release sans demande explicite). 93 tests verts, `flutter analyze` propre.

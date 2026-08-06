@@ -413,13 +413,14 @@ hissé au sommet*, en **hibiscus** (seul écart chaud autorisé) :
 
 ---
 
-## 15. Combat de Boss — PV, délais multiples, personnage (**v1 codé · v2 à recoder**, non publié)
+## 15. Combat de Boss — PV, délais multiples, personnage (**codé v2**, non publié)
 
 Refonte du combat en réduction, décidée avec le user. **Deux règles verrouillées changent** — voir
-« Impacts » plus bas. **v1 codée et vérifiée sur émulateur** (bout-en-bout : seed → révélation →
-réduction → délai tenu = −1 PV + pierre → victoire). Non publié. ⚠️ **Une révision v2 est verrouillée**
-(exigence de régularité — voir « Révision v2 » plus bas) : elle **remplace** le décompte par événements
-par un décompte **par jours à l'heure du Boss**. Lire v2 avant de recoder le combat.
+« Impacts » plus bas. Le combat est désormais en **v2** (exigence de régularité — voir « Révision v2 »
+plus bas) : le décompte se fait **par jours à l'heure du Boss**, plus par événements. **v2 codée,
+testée (105 tests) et vérifiée sur émulateur.** Non publié (phase de fix). La section « Mécanique »
+ci-dessous décrit la v1 (compteur d'événements) — conservée pour l'historique, mais **c'est la v2 qui
+fait foi**.
 
 ### Décisions verrouillées
 - **Fumer soigne le Boss (+1 PV)** — assumé, mais **silencieux** (aucun texte/reproche/rouge) et le
@@ -473,7 +474,7 @@ par un décompte **par jours à l'heure du Boss**. Lire v2 avant de recoder le c
 - **Règle du jeu** : section combat développée (nomme ≠ attaque, visuel Boss + barre de PV,
   PV 3/4/5, délai relançable, victoire = rocher hissé définitif) + prévisu dev `SCREEN=combat`.
 
-### Révision v2 — exigence de régularité (verrouillé session 4, **à recoder**)
+### Révision v2 — exigence de régularité (**codée** session 4)
 
 Le combat v1 (ci-dessus) se gagne sur un **compteur d'événements** : 3 délais tenus, n'importe quand,
 n'importe où. Or un Boss est **défini par sa récurrence horaire quotidienne** — on peut donc « vaincre
@@ -499,13 +500,22 @@ PV = clamp( PVmax − joursEntamés + joursCraqués , 0 , PVmax )
 l'heure) ; **bonus de durée** — si l'utilisateur tient au-delà des 10 min sans fumer, **+1 pierre à
 20 min, +1 à 30 min** (plafond **+2**, soit 3 pierres max pour une manche). Le cairn ne recule jamais.
 
-**Impacts code (à recoder) :** `domain/boss/victory.dart` — `bossHp` passe du décompte d'events au
-décompte de **jours logiques en fenêtre** (nouveaux helpers `bossWindowContains(boss, wallTime)`,
-`daysEngaged`, `daysCracked`, via `logical_day.dart` + heure murale). Constante `kBossWindowMin = 30`.
-Le heal n'a plus besoin de `markDelayBroken(bossKey:)` (dérivé des timestamps de cigarettes). Bonus de
-durée : logique de pose de pierre étendue (par paliers 10/20/30 min depuis la dernière cigarette).
-Tests `boss_combat` réécrits sur des fixtures multi-jours. UI : la barre de PV ne bouge qu'**une fois/jour**
-→ copie à prévoir (« entamé aujourd'hui ✓ — reviens demain ») pour éviter « j'ai tenu un 2ᵉ délai, rien n'a bougé ».
+**Réalisé (code v2) :**
+- `domain/boss/victory.dart` : `bossHp(boss, cigs, events)` = `PVmax − daysEngaged + daysCracked` borné.
+  Helpers `bossWindowContains`, `daysEngaged`, `daysCracked`, `engagedToday` (via `logical_day.dart` +
+  heure murale). `kBossWindowMin = 30`. Signatures `defeatedBossKeys`/`pendingBossVictory`/`isBossDefeated`
+  passées à `(…, cigs, events)`. Le heal est dérivé des horodatages des cigarettes.
+- `domain/journey/delay.dart` : `stonesPlaced` compte `delayHeld` **+** `bonusStone` ; `pendingBonusStones`
+  (pur) = pierres bonus restant à poser pour la manche (paliers `2×length` / `3×length`, plafond 2,
+  coupé par une cigarette ou une relance).
+- Nouvel event `JourneyEventKind.bonusStone` ; `markBonusStones(n)` (batch). Nettoyage : `markDelayHeld()`
+  / `markDelayBroken()` sans paramètre (le tag `bossKey` devenait inutile).
+- `reduction_home` : le ticker émet les bonus dus (`_maybeBonus`) ; bandeau cible affiche
+  « entamé aujourd'hui ✓ — reviens demain » quand `engagedToday`. Bandeau descendu (52 px, ne chevauche
+  plus les icônes du haut).
+- Tests réécrits sur fixtures multi-jours (`boss_combat`, `boss_victory`) + bonus & `engagedToday`.
+  **105 tests verts.** ⚠️ Ne pas lancer `dart format .` global : l'outil récent applique le « tall style »
+  et reformate tout l'arbre — formatage à la main pour rester sur l'ancien style du repo.
 
 | # | Jalon | Contenu | Sortie vérifiable |
 |---|---|---|---|
