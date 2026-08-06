@@ -45,6 +45,22 @@ void main() {
     expect(resolveDelay(events, now).status, DelayStatus.available);
   });
 
+  test('juste tenu (< fenêtre de feedback) → held (moment de succès)', () {
+    final events = [
+      evt(JourneyEventKind.delayStarted, now.subtract(const Duration(minutes: 10))),
+      evt(JourneyEventKind.delayHeld, now.subtract(const Duration(seconds: 2))),
+    ];
+    expect(resolveDelay(events, now).status, DelayStatus.held);
+  });
+
+  test('juste rompu (< fenêtre de feedback) → broken', () {
+    final events = [
+      evt(JourneyEventKind.delayStarted, now.subtract(const Duration(minutes: 3))),
+      evt(JourneyEventKind.delayBroken, now.subtract(const Duration(seconds: 2))),
+    ];
+    expect(resolveDelay(events, now).status, DelayStatus.broken);
+  });
+
   test('relance : un nouveau délai après une manche close → running', () {
     final events = [
       evt(JourneyEventKind.delayStarted, now.subtract(const Duration(minutes: 40))),

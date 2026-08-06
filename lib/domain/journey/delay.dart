@@ -1,8 +1,16 @@
 import '../../data/database.dart';
 import '../models/enums.dart';
 
-/// Durée d'un délai proposé sur le Boss : 10 minutes, pas plus.
-const kDelayLength = Duration(minutes: 10);
+/// Durée d'un délai proposé sur le Boss : 10 minutes, pas plus. Surchargeable
+/// pour les tests manuels via `--dart-define=DELAY_SECONDS=15` (dev seulement —
+/// la valeur par défaut reste 600 s = 10 min en production).
+const kDelayLength = Duration(
+  seconds: int.fromEnvironment('DELAY_SECONDS', defaultValue: 600),
+);
+
+/// Fenêtre pendant laquelle, une manche close, on affiche brièvement son
+/// résultat (tenu / rompu) avant de reproposer un délai.
+const kDelayFeedbackWindow = Duration(seconds: 6);
 
 /// État du délai courant. Modèle **par manche** (spec §15) : dès qu'une manche
 /// est close (tenue ou rompue), une nouvelle est proposable — délais illimités.
@@ -39,22 +47,33 @@ DelayState resolveDelay(
   List<JourneyEvent> events,
   DateTime now, {
   Duration length = kDelayLength,
+  Duration feedback = kDelayFeedbackWindow,
 }) {
   DateTime? lastStart;
   DateTime? lastTerminal; // dernier delayHeld / delayBroken
+  DelayStatus? lastTerminalKind; // held ou broken
   for (final e in events) {
     final wall = e.occurredAtUtc.toLocal();
     if (e.kind == JourneyEventKind.delayStarted.name) {
       if (lastStart == null || wall.isAfter(lastStart)) lastStart = wall;
     } else if (e.kind == JourneyEventKind.delayHeld.name ||
         e.kind == JourneyEventKind.delayBroken.name) {
-      if (lastTerminal == null || wall.isAfter(lastTerminal)) lastTerminal = wall;
+      if (lastTerminal == null || wall.isAfter(lastTerminal)) {
+        lastTerminal = wall;
+        lastTerminalKind = e.kind == JourneyEventKind.delayHeld.name
+            ? DelayStatus.held
+            : DelayStatus.broken;
+      }
     }
   }
 
   if (lastStart == null) return const DelayState(DelayStatus.available);
-  // Manche close (un terminal après le dernier lancement) → relançable.
+  // Manche close (un terminal après le dernier lancement) : on montre son
+  // résultat un court instant (moment de succès), puis on repropose un délai.
   if (lastTerminal != null && !lastTerminal.isBefore(lastStart)) {
+    if (now.difference(lastTerminal) < feedback) {
+      return DelayState(lastTerminalKind!);
+    }
     return const DelayState(DelayStatus.available);
   }
 

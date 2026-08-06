@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../boss/boss_face.dart';
 import '../cairn/cairn_view.dart';
 
 /// « La règle du jeu » — écran ouvert par l'utilisateur qui explique tout le
@@ -26,8 +27,7 @@ class HowItWorksScreen extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(24, 4, 24, 44),
         children: [
           Center(
-            child: CairnView(
-                stones: 4, bossRocks: 1, width: 150, height: 150),
+            child: CairnView(stones: 4, bossRocks: 1, width: 150, height: 150),
           ),
           const SizedBox(height: 8),
           Text(
@@ -35,21 +35,24 @@ class HowItWorksScreen extends StatelessWidget {
             'Il ne dit quelque chose que (1) quand tu as réussi, (2) quand il a '
             'un fait à te révéler. Le reste du temps, c’est juste un bouton.',
             style: TextStyle(
-                fontSize: 15,
-                height: 1.45,
-                color: c.onSurface.withValues(alpha: 0.85)),
+              fontSize: 15,
+              height: 1.45,
+              color: c.onSurface.withValues(alpha: 0.85),
+            ),
           ),
           const SizedBox(height: 28),
           const _Rule(
             icon: Icons.touch_app_outlined,
             title: 'Un bouton, c’est tout',
-            body: 'Tu tapes quand tu fumes. Pas de compte, pas de date d’arrêt, '
+            body:
+                'Tu tapes quand tu fumes. Pas de compte, pas de date d’arrêt, '
                 'pas de « combien par jour ». Ça démarre tout seul.',
           ),
           const _Rule(
             icon: Icons.visibility_outlined,
             title: 'La première semaine : on observe',
-            body: 'Cairn enregistre en silence et ne te propose rien. Fume '
+            body:
+                'Cairn enregistre en silence et ne te propose rien. Fume '
                 'normalement — c’est ce qui donne des données vraies, sans '
                 'culpabilité ni faux chiffres. Une semaine entière capte aussi '
                 'ton rythme du week-end.',
@@ -58,7 +61,8 @@ class HowItWorksScreen extends StatelessWidget {
             icon: Icons.auto_awesome_outlined,
             iconColor: c.primary,
             title: 'La révélation',
-            body: 'Elle se déclenche après **7 jours** ET **au moins 30 '
+            body:
+                'Elle se déclenche après **7 jours** ET **au moins 30 '
                 'cigarettes** enregistrées. En dessous, Cairn préfère continuer '
                 'd’observer en silence plutôt que de sortir une analyse bancale. '
                 'Là, il parle pour la première fois : ton rythme, et le nom de '
@@ -69,7 +73,8 @@ class HowItWorksScreen extends StatelessWidget {
           _Rule(
             icon: Icons.terrain_outlined,
             title: 'Le cairn monte',
-            body: 'Chaque envie résistée, chaque palier franchi pose une pierre. '
+            body:
+                'Chaque envie résistée, chaque palier franchi pose une pierre. '
                 'Le cairn grandit. Fumer ne fait JAMAIS tomber de pierre — le '
                 'cairn se met juste en pause. Ton « plus haut cairn » ne '
                 'redescend jamais, même après une rechute.',
@@ -77,20 +82,50 @@ class HowItWorksScreen extends StatelessWidget {
           _Rule(
             icon: Icons.landscape_outlined,
             iconColor: hibiscus,
-            title: 'Tes Boss',
-            body: 'On attaque le plus fragile en premier. Chaque **délai de 10 '
-                'min tenu** lui enlève un **point de vie** (et pose une pierre). '
-                'Chaque **cigarette lui en redonne un**. Tu le bats donc si tu '
-                'tiens plus de délais que tu ne craques — un gros rocher est '
-                'alors hissé au sommet, et on passe au suivant. Les plus '
-                'coriaces ont plus de points de vie. Tes pierres, elles, ne '
-                'retombent jamais.',
+            title: 'Le combat des Boss',
+            body:
+                'À la révélation, Cairn **nomme** ton Boss le plus ancré. '
+                'Mais pour te garantir une première victoire, il t’attaque '
+                'd’abord au plus **fragile** — pas forcément celui qui est '
+                'nommé.',
+          ),
+          const _BossDemo(),
+          _Rule(
+            icon: Icons.favorite_border,
+            iconColor: hibiscus,
+            title: 'Ses points de vie',
+            body:
+                'Chaque Boss en a selon sa dureté : **fragile 3**, '
+                '**tenace 4**, **coriace 5**. Chaque **délai de 10 min tenu** '
+                'lui en enlève un — et pose une pierre. Chaque **cigarette lui '
+                'en redonne un**, sans un mot ni reproche. Tu le bats donc '
+                'seulement si tu tiens plus de délais que tu ne craques.',
+          ),
+          _Rule(
+            icon: Icons.replay,
+            iconColor: hibiscus,
+            title: 'Le délai est relançable',
+            body:
+                'Dès qu’un délai est tenu (ou rompu), tu peux en relancer un '
+                'aussitôt — autant de fois qu’il faut. Un délai tenu s’affiche '
+                'un court instant : **délai tenu · pierre posée**.',
+          ),
+          _Rule(
+            icon: Icons.military_tech_outlined,
+            iconColor: hibiscus,
+            title: 'La victoire',
+            body:
+                'À **0 point de vie**, le Boss est vaincu : un gros **rocher '
+                'est hissé** au sommet de ton cairn, et on passe au suivant. '
+                'Cette victoire est définitive — et tes pierres ne retombent '
+                'jamais.',
           ),
           _Rule(
             icon: Icons.trending_up,
             iconColor: c.primary,
             title: 'Les altitudes',
-            body: 'Plus tu tiens sans fumer, plus le cairn prend de l’altitude — '
+            body:
+                'Plus tu tiens sans fumer, plus le cairn prend de l’altitude — '
                 'et chaque palier te révèle un fait vrai sur ton corps : 12 h le '
                 'monoxyde de carbone repart, 48 h le goût revient, 1 an le risque '
                 'cardiaque divisé par deux. Après une rechute, la montée les '
@@ -99,17 +134,21 @@ class HowItWorksScreen extends StatelessWidget {
           _Rule(
             icon: Icons.lock_outline,
             title: 'Tes données restent à toi',
-            body: 'Tout reste sur ton téléphone : aucun compte, aucun serveur. '
+            body:
+                'Tout reste sur ton téléphone : aucun compte, aucun serveur. '
                 'Tu peux exporter une sauvegarde chiffrée quand tu veux. Seule '
                 'connexion : vérifier s’il existe une mise à jour.',
           ),
           const SizedBox(height: 8),
           Center(
-            child: Text('Un tas de pierres ne tousse pas.',
-                style: TextStyle(
-                    fontSize: 13,
-                    fontStyle: FontStyle.italic,
-                    color: c.onSurface.withValues(alpha: 0.5))),
+            child: Text(
+              'Un tas de pierres ne tousse pas.',
+              style: TextStyle(
+                fontSize: 13,
+                fontStyle: FontStyle.italic,
+                color: c.onSurface.withValues(alpha: 0.5),
+              ),
+            ),
           ),
         ],
       ),
@@ -123,12 +162,80 @@ TextSpan _emphasize(String text, TextStyle base) {
   final parts = text.split('**');
   for (var i = 0; i < parts.length; i++) {
     if (parts[i].isEmpty) continue;
-    spans.add(TextSpan(
-      text: parts[i],
-      style: i.isOdd ? base.copyWith(fontWeight: FontWeight.w700) : base,
-    ));
+    spans.add(
+      TextSpan(
+        text: parts[i],
+        style: i.isOdd ? base.copyWith(fontWeight: FontWeight.w700) : base,
+      ),
+    );
   }
   return TextSpan(style: base, children: spans);
+}
+
+/// Petite carte d'exemple : à quoi ressemble un Boss en plein combat (visage
+/// grognon + barre de PV entamée), pour illustrer « Le combat des Boss ».
+class _BossDemo extends StatelessWidget {
+  const _BossDemo();
+
+  @override
+  Widget build(BuildContext context) {
+    final c = Theme.of(context).colorScheme;
+    final hibiscus = Theme.of(context).brightness == Brightness.dark
+        ? const Color(0xFFE07050)
+        : const Color(0xFFCB5A38);
+    return Container(
+      margin: const EdgeInsets.only(bottom: 22),
+      padding: const EdgeInsets.fromLTRB(14, 12, 16, 12),
+      decoration: BoxDecoration(
+        color: hibiscus.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: hibiscus.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        children: [
+          const BossFace(size: 46),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'TON ADVERSAIRE',
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    letterSpacing: 1.4,
+                    fontWeight: FontWeight.w700,
+                    color: hibiscus,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'le Café de 7 h 10',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    const BossHpBar(hp: 2, maxHp: 4),
+                    const SizedBox(width: 8),
+                    Text(
+                      '2/4 PV',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: c.onSurface.withValues(alpha: 0.5),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _Rule extends StatelessWidget {
@@ -152,23 +259,32 @@ class _Rule extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 22, color: iconColor ?? c.onSurface.withValues(alpha: 0.55)),
+          Icon(
+            icon,
+            size: 22,
+            color: iconColor ?? c.onSurface.withValues(alpha: 0.55),
+          ),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
-                    style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.w600)),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 const SizedBox(height: 4),
                 Text.rich(
                   _emphasize(
                     body,
                     TextStyle(
-                        fontSize: 14,
-                        height: 1.4,
-                        color: c.onSurface.withValues(alpha: 0.75)),
+                      fontSize: 14,
+                      height: 1.4,
+                      color: c.onSurface.withValues(alpha: 0.75),
+                    ),
                   ),
                 ),
               ],
