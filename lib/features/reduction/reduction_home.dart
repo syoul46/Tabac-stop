@@ -140,6 +140,7 @@ class _ReductionHomeState extends ConsumerState<ReductionHome> {
                 hp: bossHp(target, cigs, events),
                 maxHp: bossMaxHp(target),
                 engagedToday: engagedToday(target, events, now),
+                inWindow: bossWindowContains(target, now),
               ),
             Expanded(
               child: Center(
@@ -289,16 +290,62 @@ class _Action extends StatelessWidget {
   }
 }
 
-class _TargetBanner extends StatelessWidget {
+class _TargetBanner extends StatefulWidget {
   const _TargetBanner(
       {required this.boss,
       required this.hp,
       required this.maxHp,
-      this.engagedToday = false});
+      this.engagedToday = false,
+      this.inWindow = false});
   final Boss boss;
   final int hp;
   final int maxHp;
   final bool engagedToday;
+
+  /// L'heure courante tombe dans la fenêtre du Boss (± 30 min).
+  final bool inWindow;
+
+  @override
+  State<_TargetBanner> createState() => _TargetBannerState();
+}
+
+class _TargetBannerState extends State<_TargetBanner>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _pulse = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1300),
+  )..addListener(() => setState(() {}));
+
+  // On ne pulse que si on est en pleine fenêtre ET qu'il reste à faire
+  // aujourd'hui (déjà entamé → rien à signaler, on attend demain).
+  bool get _shouldPulse => widget.inWindow && !widget.engagedToday;
+
+  @override
+  void initState() {
+    super.initState();
+    _sync();
+  }
+
+  @override
+  void didUpdateWidget(_TargetBanner old) {
+    super.didUpdateWidget(old);
+    _sync();
+  }
+
+  void _sync() {
+    if (_shouldPulse) {
+      if (!_pulse.isAnimating) _pulse.repeat(reverse: true);
+    } else if (_pulse.isAnimating) {
+      _pulse.stop();
+      _pulse.value = 0;
+    }
+  }
+
+  @override
+  void dispose() {
+    _pulse.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -306,13 +353,26 @@ class _TargetBanner extends StatelessWidget {
     final hibiscus = Theme.of(context).brightness == Brightness.dark
         ? const Color(0xFFE07050)
         : const Color(0xFFCB5A38);
+    // t oscille 0→1 quand on pulse, sinon 0 (état de repos).
+    final t = _shouldPulse ? Curves.easeInOut.transform(_pulse.value) : 0.0;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 24),
       padding: const EdgeInsets.fromLTRB(14, 10, 16, 10),
       decoration: BoxDecoration(
-        color: hibiscus.withValues(alpha: 0.10),
+        color: hibiscus.withValues(alpha: 0.10 + 0.10 * t),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: hibiscus.withValues(alpha: 0.35)),
+        border: Border.all(
+          color: hibiscus.withValues(alpha: 0.35 + 0.55 * t),
+          width: 1 + t,
+        ),
+        boxShadow: [
+          if (t > 0)
+            BoxShadow(
+              color: hibiscus.withValues(alpha: 0.30 * t),
+              blurRadius: 16 * t,
+              spreadRadius: 1 * t,
+            ),
+        ],
       ),
       child: Row(
         children: [
@@ -330,7 +390,7 @@ class _TargetBanner extends StatelessWidget {
                         fontWeight: FontWeight.w700,
                         color: hibiscus)),
                 const SizedBox(height: 2),
-                Text(boss.name,
+                Text(widget.boss.name,
                     style: Theme.of(context)
                         .textTheme
                         .titleMedium
@@ -338,20 +398,27 @@ class _TargetBanner extends StatelessWidget {
                 const SizedBox(height: 6),
                 Row(
                   children: [
-                    BossHpBar(hp: hp, maxHp: maxHp),
+                    BossHpBar(hp: widget.hp, maxHp: widget.maxHp),
                     const SizedBox(width: 8),
-                    Text('$hp/$maxHp PV',
+                    Text('${widget.hp}/${widget.maxHp} PV',
                         style: TextStyle(
                             fontSize: 11,
                             color: c.onSurface.withValues(alpha: 0.5))),
                   ],
                 ),
-                if (engagedToday) ...[
+                if (widget.engagedToday) ...[
                   const SizedBox(height: 4),
                   Text('entamé aujourd’hui ✓ — reviens demain',
                       style: TextStyle(
                           fontSize: 11.5,
                           fontWeight: FontWeight.w600,
+                          color: hibiscus)),
+                ] else if (widget.inWindow) ...[
+                  const SizedBox(height: 4),
+                  Text('c’est le moment — retarde-le',
+                      style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
                           color: hibiscus)),
                 ],
               ],
