@@ -5,6 +5,40 @@
 
 ---
 
+## Point de reprise — 2026-08-06 (session 4 : §15 combat de Boss codé)
+
+**État : §15 (combat de Boss par PV) codé et vérifié sur émulateur, non publié.** On reste en
+phase de fix (pas de release sans demande explicite). 93 tests verts, `flutter analyze` propre.
+
+### §15 — combat de Boss (PV, délais relançables, personnage)
+- **Domaine** (`domain/boss/victory.dart`) : `bossMaxHp` (fragile 3 / tenace 4 / coriace 5),
+  `healsForBoss`, `bossHp = clamp(PVmax − délais tenus + cigarettes, 0, PVmax)`, `isBossDefeated`.
+  `defeatedBossKeys`/`pendingBossVictory` passés en signature `(BossReport, events)`, basés PV.
+- **Délai « par manche »** (`domain/journey/delay.dart`) : relançable, plus de « 1/jour ».
+- **UI** : `features/boss/boss_face.dart` (rocher grognon hibiscus + `BossHpBar`) ; bandeau cible
+  en réduction (visage + PV) ; `_onTapStone` soigne le Boss via `markDelayBroken(bossKey:)` (silencieux).
+- **Callers recâblés** : stats, arrêt net (`bossReportProvider`), reveal de victoire.
+
+### Correctif clé — « le délai ne fonctionnait pas »
+Le message de succès « délai tenu · pierre posée » était **du code mort** : `resolveDelay` ne
+renvoyait jamais `held`, donc à l'expiration **rien ne « parlait »** (le compte à rebours
+disparaissait, la barre de PV baissait en silence). → `resolveDelay` renvoie maintenant `held`/`broken`
+pendant une **fenêtre de 6 s** (`kDelayFeedbackWindow`) après une manche close, puis `available`.
+
+### Outils de test / robustesse
+- `kDelayLength` réglable via `--dart-define=DELAY_SECONDS=N` (défaut 600 s). **Ne pas publier un
+  APK buildé avec l'override.** Testé bout-en-bout à 10 s sur l'ému.
+- `tap_screen` : colonne centrale scrollable si écran court (corrige un overflow du widget test).
+- Prévisu dev : `SCREEN=combat` (rend `ReductionHome`).
+- « La règle du jeu » : section combat développée (visuel Boss + PV, nomme ≠ attaque, PV 3/4/5,
+  relançable, victoire = rocher hissé définitif).
+
+### Reste
+- iOS (inchangé). Backlog produit : PLAN §16 (« ce que tu as évité », compagnon de respiration…).
+- Ne pas oublier : `boss_face.dart` réutilisé par la règle du jeu (`_BossDemo`) et le bandeau réduction.
+
+---
+
 ## Point de reprise — 2026-08-05 (session 3, suite : v1.5.1)
 
 **État : le produit décrit par le PLAN est intégralement codé (jalons 0→14). Dernière release

@@ -413,10 +413,11 @@ hissé au sommet*, en **hibiscus** (seul écart chaud autorisé) :
 
 ---
 
-## 15. Combat de Boss — PV, délais multiples, personnage (spec v1.5.0, **à coder**)
+## 15. Combat de Boss — PV, délais multiples, personnage (**codé**, non publié)
 
 Refonte du combat en réduction, décidée avec le user. **Deux règles verrouillées changent** — voir
-« Impacts » plus bas.
+« Impacts » plus bas. **Codé et vérifié sur émulateur** (bout-en-bout : seed → révélation →
+réduction → délai tenu = −1 PV + pierre → victoire). Non publié (phase de fix en cours).
 
 ### Décisions verrouillées
 - **Fumer soigne le Boss (+1 PV)** — assumé, mais **silencieux** (aucun texte/reproche/rouge) et le
@@ -456,6 +457,19 @@ Refonte du combat en réduction, décidée avec le user. **Deux règles verrouil
 - **CLAUDE.md** : nuancer l'invariant — un **setback scopé au combat de Boss** est désormais assumé
   (le Boss se resoigne), MAIS le cairn/les pierres/jours-propres/plus-haut-cairn **ne reculent jamais**
   et l'app reste **silencieuse** quand on fume.
+
+### Réalisé (session 4) — écarts / ajouts vs spec
+- **Moment de succès à l'expiration** (ajout) : `resolveDelay` renvoie brièvement `held`/`broken`
+  (fenêtre `kDelayFeedbackWindow` = 6 s) après une manche close, avant `available`. Sans ça, le
+  message « délai tenu · pierre posée » (déjà présent dans `_Header`) ne s'affichait **jamais** —
+  `resolveDelay` ne renvoyait que `available` : rien ne « parlait » à l'expiration.
+- **Durée de délai réglable** (dev/test) : `kDelayLength` lit `--dart-define=DELAY_SECONDS` (défaut
+  **600 s = 10 min** en prod). Sert à tester l'expiration à la main. **Ne jamais publier un APK
+  buildé avec cet override.**
+- **Robustesse layout** : la colonne centrale de `tap_screen` est scrollable si l'écran est court
+  (corrige un overflow révélé par le widget test, protège les petits téléphones).
+- **Règle du jeu** : section combat développée (nomme ≠ attaque, visuel Boss + barre de PV,
+  PV 3/4/5, délai relançable, victoire = rocher hissé définitif) + prévisu dev `SCREEN=combat`.
 
 | # | Jalon | Contenu | Sortie vérifiable |
 |---|---|---|---|
