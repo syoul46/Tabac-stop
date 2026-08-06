@@ -93,22 +93,36 @@ class HowItWorksScreen extends StatelessWidget {
           _Rule(
             icon: Icons.favorite_border,
             iconColor: hibiscus,
-            title: 'Ses points de vie',
+            title: 'On gagne par la régularité',
             body:
-                'Chaque Boss en a selon sa dureté : **fragile 3**, '
-                '**tenace 4**, **coriace 5**. Chaque **délai de 10 min tenu** '
-                'lui en enlève un — et pose une pierre. Chaque **cigarette lui '
-                'en redonne un**, sans un mot ni reproche. Tu le bats donc '
-                'seulement si tu tiens plus de délais que tu ne craques.',
+                'Un Boss a des points de vie selon sa dureté : **fragile 3**, '
+                '**tenace 4**, **coriace 5** — comptés en **jours**. Pour lui en '
+                'enlever un, il faut le **retarder à son heure** : un délai tenu '
+                'dans sa tranche (± 30 min) compte pour **le jour**. Plusieurs '
+                'délais le même jour ne comptent qu’une fois — c’est **revenir '
+                'chaque jour** qui l’use.',
           ),
           _Rule(
-            icon: Icons.replay,
+            icon: Icons.local_fire_department_outlined,
             iconColor: hibiscus,
-            title: 'Le délai est relançable',
+            title: 'Fumer à son heure le soigne',
             body:
-                'Dès qu’un délai est tenu (ou rompu), tu peux en relancer un '
-                'aussitôt — autant de fois qu’il faut. Un délai tenu s’affiche '
-                'un court instant : **délai tenu · pierre posée**.',
+                'Si tu **fumes dans sa tranche horaire**, le Boss **regagne un '
+                'point de vie** — en silence, sans reproche. Tu le bats donc '
+                'seulement si tu tiens, jour après jour, plus que tu ne craques. '
+                'Un jour où tu ne fais rien à son heure ? Rien ne bouge, on '
+                'reprend demain.',
+          ),
+          _Rule(
+            icon: Icons.notifications_active_outlined,
+            iconColor: hibiscus,
+            title: 'Le bandeau te prévient',
+            body:
+                'Quand l’heure du Boss approche, son bandeau **se met à pulser** '
+                '— « c’est le moment ». C’est là qu’un délai tenu compte. Le '
+                'délai est **relançable** autant de fois qu’il faut ; tenir '
+                'au-delà des 10 min pose même des **pierres bonus** (à 20 et '
+                '30 min).',
           ),
           _Rule(
             icon: Icons.military_tech_outlined,
