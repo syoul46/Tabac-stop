@@ -8,15 +8,17 @@ import '../../core/notifications/notification_service.dart';
 import '../../core/time/format.dart';
 import '../../data/cigarette_repository.dart';
 import '../../data/journey_repository.dart';
+import '../../domain/boss/boss.dart';
 import '../../domain/boss/victory.dart';
 import '../../domain/journey/delay.dart';
+import '../boss/boss_face.dart';
 import '../cairn/cairn_view.dart';
 import '../tap/tap_stone.dart';
 
-/// Mode réduction. On annonce la première cible (le Boss le plus fragile) et on
-/// propose **un seul délai de 10 min par jour** dessus. Tenu = une pierre posée
-/// (1ᵉʳ badge au 1ᵉʳ tenu). Rompu = validation silencieuse. Le reste du temps,
-/// l'app se tait.
+/// Mode réduction — **combat de Boss (spec §15)**. On attaque le plus fragile ;
+/// chaque **délai de 10 min tenu** lui enlève 1 PV (+ une pierre), chaque
+/// **cigarette lui en redonne 1** (silencieux). Délais **relançables** (plus de
+/// « 1/jour »). Le Boss tombe quand ses PV atteignent 0. Le cairn ne recule jamais.
 class ReductionHome extends ConsumerStatefulWidget {
   const ReductionHome({super.key});
 
@@ -52,7 +54,7 @@ class _ReductionHomeState extends ConsumerState<ReductionHome> {
     if (st.status == DelayStatus.elapsed && !_finalizing) {
       _finalizing = true;
       final report = ref.read(bossReportProvider);
-      final target = nextTarget(report, defeatedBossKeys(events));
+      final target = nextTarget(report, defeatedBossKeys(report, events));
       ref
           .read(journeyRepositoryProvider)
           .markDelayHeld(bossKey: target == null ? null : bossKey(target))
@@ -60,27 +62,31 @@ class _ReductionHomeState extends ConsumerState<ReductionHome> {
     }
   }
 
+  /// « Je fume » : on enregistre, et **le Boss reprend 1 PV** (soin, silencieux).
+  /// Si un délai tournait, on l'annule aussi. Aucune consolation, aucun reproche.
   Future<void> _onTapStone(DelayStatus status) async {
     unawaited(HapticFeedback.mediumImpact());
-    final repo = ref.read(cigaretteRepositoryProvider);
-    if (status == DelayStatus.running) {
-      // « Je fume quand même » : on enregistre, on romp le délai, on annule le
-      // rappel. Rien d'autre — aucune consolation.
-      await repo.logSmoke(wasBoss: true, duringDelay: true);
-      await ref.read(journeyRepositoryProvider).markDelayBroken();
+    final report = ref.read(bossReportProvider);
+    final events = ref.read(journeyEventsProvider).asData?.value ?? const [];
+    final target = nextTarget(report, defeatedBossKeys(report, events));
+    final key = target == null ? null : bossKey(target);
+    final running = status == DelayStatus.running;
+    await ref
+        .read(cigaretteRepositoryProvider)
+        .logSmoke(wasBoss: true, duringDelay: running);
+    if (running) {
       await ref.read(notificationServiceProvider).cancelDelayEnd();
-    } else {
-      await repo.logSmoke();
     }
+    await ref.read(journeyRepositoryProvider).markDelayBroken(bossKey: key);
   }
 
   /// Lance le délai du jour et planifie le rappel de fin à T+10.
   Future<void> _startDelay() async {
     unawaited(HapticFeedback.selectionClick());
     await ref.read(journeyRepositoryProvider).startDelay();
+    final report = ref.read(bossReportProvider);
     final events = ref.read(journeyEventsProvider).asData?.value ?? const [];
-    final target =
-        nextTarget(ref.read(bossReportProvider), defeatedBossKeys(events));
+    final target = nextTarget(report, defeatedBossKeys(report, events));
     final bossName = target?.name ?? 'le Boss';
     await ref.read(notificationServiceProvider).scheduleDelayEnd(
           DateTime.now().add(kDelayLength),
@@ -98,9 +104,10 @@ class _ReductionHomeState extends ConsumerState<ReductionHome> {
     final last = ref.watch(lastCigaretteProvider).asData?.value;
     final events = ref.watch(journeyEventsProvider).asData?.value ?? const [];
 
-    final defeated = defeatedBossKeys(events);
+    final report = ref.watch(bossReportProvider);
+    final defeated = defeatedBossKeys(report, events);
     // La cible = le Boss le plus fragile pas encore vaincu.
-    final target = nextTarget(ref.watch(bossReportProvider), defeated);
+    final target = nextTarget(report, defeated);
     final delay = resolveDelay(events, now);
     final stones = stonesPlaced(events);
     final since = last == null
@@ -112,7 +119,12 @@ class _ReductionHomeState extends ConsumerState<ReductionHome> {
         child: Column(
           children: [
             const SizedBox(height: 16),
-            if (target != null) _TargetBanner(name: target.name),
+            if (target != null)
+              _TargetBanner(
+                boss: target,
+                hp: bossHp(target, events),
+                maxHp: bossMaxHp(target),
+              ),
             Expanded(
               child: Center(
                 child: Column(
@@ -262,35 +274,61 @@ class _Action extends StatelessWidget {
 }
 
 class _TargetBanner extends StatelessWidget {
-  const _TargetBanner({required this.name});
-  final String name;
+  const _TargetBanner(
+      {required this.boss, required this.hp, required this.maxHp});
+  final Boss boss;
+  final int hp;
+  final int maxHp;
 
   @override
   Widget build(BuildContext context) {
     final c = Theme.of(context).colorScheme;
+    final hibiscus = Theme.of(context).brightness == Brightness.dark
+        ? const Color(0xFFE07050)
+        : const Color(0xFFCB5A38);
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 24),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.fromLTRB(14, 10, 16, 10),
       decoration: BoxDecoration(
-        color: c.secondary.withValues(alpha: 0.12),
+        color: hibiscus.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: c.secondary.withValues(alpha: 0.35)),
+        border: Border.all(color: hibiscus.withValues(alpha: 0.35)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Text('PREMIÈRE CIBLE',
-              style: TextStyle(
-                  fontSize: 10.5,
-                  letterSpacing: 1.4,
-                  fontWeight: FontWeight.w700,
-                  color: c.secondary)),
-          const SizedBox(height: 2),
-          Text(name,
-              style: Theme.of(context)
-                  .textTheme
-                  .titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w600)),
+          const BossFace(size: 46),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('TON ADVERSAIRE',
+                    style: TextStyle(
+                        fontSize: 10.5,
+                        letterSpacing: 1.4,
+                        fontWeight: FontWeight.w700,
+                        color: hibiscus)),
+                const SizedBox(height: 2),
+                Text(boss.name,
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleMedium
+                        ?.copyWith(fontWeight: FontWeight.w600)),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    BossHpBar(hp: hp, maxHp: maxHp),
+                    const SizedBox(width: 8),
+                    Text('$hp/$maxHp PV',
+                        style: TextStyle(
+                            fontSize: 11,
+                            color: c.onSurface.withValues(alpha: 0.5))),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );

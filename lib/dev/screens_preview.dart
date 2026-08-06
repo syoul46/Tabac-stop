@@ -11,6 +11,7 @@ import '../data/journey_repository.dart';
 import '../domain/models/enums.dart';
 import '../features/cairn/cairn_view.dart';
 import '../features/help/how_it_works_screen.dart';
+import '../features/reduction/reduction_home.dart';
 import '../features/reveal/reveal_screen.dart';
 import '../features/update/update_banner.dart';
 import '../features/stats/stats_screen.dart';
@@ -98,6 +99,7 @@ class _App extends StatelessWidget {
       theme: buildCairnLightTheme(),
       home: switch (screen) {
         'obs' => const TapScreen(),
+        'combat' => const ReductionHome(),
         'dust' => const _AutoDrop(),
         'help' => const HowItWorksScreen(),
         'revisit' => const RevealScreen(revisit: true),

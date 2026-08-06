@@ -59,8 +59,20 @@ class JourneyRepository {
   /// Lance le délai du jour sur le Boss.
   Future<void> startDelay() => _log(JourneyEventKind.delayStarted);
 
-  /// Le délai a été rompu (« je fume quand même ») — silencieux.
-  Future<void> markDelayBroken() => _log(JourneyEventKind.delayBroken);
+  /// Le délai a été rompu / on a fumé face au Boss (« je fume quand même ») —
+  /// silencieux. Tagué [bossKey] → +1 PV au Boss (soin, spec §15).
+  Future<void> markDelayBroken({String? bossKey}) async {
+    await _db.into(_db.journeyEvents).insert(
+          JourneyEventsCompanion.insert(
+            id: _uuid.v4(),
+            occurredAtUtc: DateTime.now().toUtc(),
+            kind: JourneyEventKind.delayBroken.name,
+            payload: bossKey == null
+                ? const Value.absent()
+                : Value(jsonEncode({'bossKey': bossKey})),
+          ),
+        );
+  }
 
   /// Une rechute en arrêt net (le streak repart à zéro). Journalisé pour
   /// l'historique ; les compteurs cumulés et le record, eux, ne bougent pas.

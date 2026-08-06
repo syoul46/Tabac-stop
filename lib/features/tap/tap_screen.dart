@@ -82,7 +82,8 @@ class _TapScreenState extends ConsumerState<TapScreen> {
     final onSurface = theme.colorScheme.onSurface;
 
     final last = ref.watch(lastCigaretteProvider).asData?.value;
-    final todays = ref.watch(todaysCigarettesProvider).asData?.value ??
+    final todays =
+        ref.watch(todaysCigarettesProvider).asData?.value ??
         const <Cigarette>[];
     final first = ref.watch(firstCigaretteProvider).asData?.value;
 
@@ -108,49 +109,59 @@ class _TapScreenState extends ConsumerState<TapScreen> {
             const SizedBox(height: 52),
             ObservationBanner(dayIndex: dayIndex),
             Expanded(
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Pierre-graine : une seule pierre fixe pendant l'observation.
-                    // Elle ne grandit PAS avec les jours (ce serait trompeur — en
-                    // J1-3 on ne résiste à rien). Groupée avec le chrono, centrée.
-                    const CairnView(
-                      stones: 1,
-                      haptics: false,
-                      width: 132,
-                      height: 96,
+              // Centré quand il y a la place, scrollable sinon (petits écrans) —
+              // évite tout débordement de la colonne centrale.
+              child: LayoutBuilder(
+                builder: (context, constraints) => SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: constraints.maxHeight,
                     ),
-                    const SizedBox(height: 6),
-                    _ChronoLabel(since: since),
-                    const SizedBox(height: 24),
-                    TapStone(onTap: _onTap, child: _glyph(onSurface)),
-                    const SizedBox(height: 18),
-                    Text(
-                      '${todays.length} aujourd’hui',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: onSurface.withValues(alpha: 0.6),
-                      ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Pierre-graine : une seule pierre fixe pendant l'observation.
+                        // Elle ne grandit PAS avec les jours (ce serait trompeur — en
+                        // J1-3 on ne résiste à rien). Groupée avec le chrono, centrée.
+                        const CairnView(
+                          stones: 1,
+                          haptics: false,
+                          width: 132,
+                          height: 96,
+                        ),
+                        const SizedBox(height: 6),
+                        _ChronoLabel(since: since),
+                        const SizedBox(height: 24),
+                        TapStone(onTap: _onTap, child: _glyph(onSurface)),
+                        const SizedBox(height: 18),
+                        Text(
+                          '${todays.length} aujourd’hui',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: onSurface.withValues(alpha: 0.6),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        ContextPicker(
+                          visible: showContext,
+                          onSelect: (ctx) => ref
+                              .read(cigaretteRepositoryProvider)
+                              .setContext(last.id, ctx),
+                        ),
+                        // « Annuler » discret, toujours disponible (un mis-tap peut
+                        // se remarquer tard) — avec confirmation avant suppression.
+                        const SizedBox(height: 6),
+                        TextButton.icon(
+                          onPressed: _undo,
+                          icon: const Icon(Icons.undo, size: 16),
+                          label: const Text('Annuler'),
+                          style: TextButton.styleFrom(
+                            foregroundColor: onSurface.withValues(alpha: 0.5),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 8),
-                    ContextPicker(
-                      visible: showContext,
-                      onSelect: (ctx) => ref
-                          .read(cigaretteRepositoryProvider)
-                          .setContext(last.id, ctx),
-                    ),
-                    // « Annuler » discret, toujours disponible (un mis-tap peut
-                    // se remarquer tard) — avec confirmation avant suppression.
-                    const SizedBox(height: 6),
-                    TextButton.icon(
-                      onPressed: _undo,
-                      icon: const Icon(Icons.undo, size: 16),
-                      label: const Text('Annuler'),
-                      style: TextButton.styleFrom(
-                        foregroundColor: onSurface.withValues(alpha: 0.5),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -174,10 +185,12 @@ class _TapScreenState extends ConsumerState<TapScreen> {
               _InvitePhrase(color: onSurface),
               const SizedBox(height: 18),
               TextButton(
-                onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                    builder: (_) => const HowItWorksScreen())),
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const HowItWorksScreen()),
+                ),
                 style: TextButton.styleFrom(
-                    foregroundColor: onSurface.withValues(alpha: 0.5)),
+                  foregroundColor: onSurface.withValues(alpha: 0.5),
+                ),
                 child: const Text('Comment ça marche ?'),
               ),
             ],
@@ -188,9 +201,9 @@ class _TapScreenState extends ConsumerState<TapScreen> {
   }
 
   Widget _glyph(Color onSurface) => Text(
-        '✦',
-        style: TextStyle(fontSize: 40, color: onSurface.withValues(alpha: 0.5)),
-      );
+    '✦',
+    style: TextStyle(fontSize: 40, color: onSurface.withValues(alpha: 0.5)),
+  );
 }
 
 class _ChronoLabel extends StatelessWidget {
@@ -236,7 +249,10 @@ class _InvitePhrase extends StatelessWidget {
         Text(
           'Tape quand tu fumes.',
           style: TextStyle(
-              fontSize: 18, color: color, fontWeight: FontWeight.w500),
+            fontSize: 18,
+            color: color,
+            fontWeight: FontWeight.w500,
+          ),
         ),
         const SizedBox(height: 4),
         Text(

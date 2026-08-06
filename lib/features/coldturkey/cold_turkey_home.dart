@@ -75,7 +75,8 @@ class _ColdTurkeyHomeState extends ConsumerState<ColdTurkeyHome> {
     final cigs =
         ref.watch(allCigarettesProvider).asData?.value ?? const <Cigarette>[];
     final events = ref.watch(journeyEventsProvider).asData?.value ?? const [];
-    final bossRocks = defeatedBossKeys(events).length;
+    final bossRocks =
+        defeatedBossKeys(ref.watch(bossReportProvider), events).length;
 
     final streak = last == null
         ? Duration.zero

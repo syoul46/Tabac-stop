@@ -4,9 +4,6 @@ import '../../data/database.dart';
 import '../models/enums.dart';
 import 'boss.dart';
 
-/// Nombre de délais tenus (un par jour) sur un même Boss pour le **vaincre**.
-const kBossVictoryHolds = 3;
-
 /// Clé stable d'un Boss = son heure murale (les clusters sont horaires).
 String bossKey(Boss b) => 'h${b.hour}';
 
@@ -57,19 +54,14 @@ int bossHp(Boss b, List<JourneyEvent> events) {
 /// Vaincu quand ses PV tombent à 0.
 bool isBossDefeated(Boss b, List<JourneyEvent> events) => bossHp(b, events) == 0;
 
-/// Les Boss **vaincus** = ceux dont le seuil de délais tenus est atteint.
-/// Purement dérivé du journal (jamais stocké comme vérité).
-Set<String> defeatedBossKeys(List<JourneyEvent> events) {
-  final counts = <String, int>{};
-  for (final e in events) {
-    if (e.kind != JourneyEventKind.delayHeld.name) continue;
-    final k = _payloadBossKey(e);
-    if (k != null) counts.update(k, (v) => v + 1, ifAbsent: () => 1);
+/// Les Boss **vaincus** = PV à 0, OU dont la victoire a déjà été célébrée (le
+/// rocher ne retombe jamais). Nécessite le rapport pour les PV par difficulté.
+Set<String> defeatedBossKeys(BossReport report, List<JourneyEvent> events) {
+  final out = revealedVictoryKeys(events).toSet();
+  for (final b in report.bosses) {
+    if (bossHp(b, events) == 0) out.add(bossKey(b));
   }
-  return {
-    for (final entry in counts.entries)
-      if (entry.value >= kBossVictoryHolds) entry.key,
-  };
+  return out;
 }
 
 /// Clés des Boss dont la victoire a déjà été révélée (event `bossDefeated`).
@@ -79,12 +71,13 @@ Set<String> revealedVictoryKeys(List<JourneyEvent> events) => {
           if (_payloadBossKey(e) != null) _payloadBossKey(e)!,
     };
 
-/// La victoire à révéler maintenant : un Boss vaincu dont la victoire n'a pas
+/// La victoire à révéler maintenant : un Boss à 0 PV dont la victoire n'a pas
 /// encore été annoncée. null s'il n'y a rien à célébrer.
-String? pendingBossVictory(List<JourneyEvent> events) {
+String? pendingBossVictory(BossReport report, List<JourneyEvent> events) {
   final revealed = revealedVictoryKeys(events);
-  for (final k in defeatedBossKeys(events)) {
-    if (!revealed.contains(k)) return k;
+  for (final b in report.bosses) {
+    final k = bossKey(b);
+    if (bossHp(b, events) == 0 && !revealed.contains(k)) return k;
   }
   return null;
 }
