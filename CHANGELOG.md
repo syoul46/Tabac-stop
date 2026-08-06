@@ -3,6 +3,24 @@
 Toutes les versions notables. App de sevrage tabagique, **local-first**.
 Format des dates : AAAA-MM-JJ.
 
+## v1.6.0 — 2026-08-06
+
+### Nouveautés
+- **Le combat des Boss** (mode réduction). Une fois ta révélation faite, tu affrontes tes cigarettes
+  ancrées **une par une**, en commençant par la plus fragile. Chaque Boss a un **visage** et une
+  **barre de points de vie**.
+- **On gagne par la régularité.** Un Boss ne tombe que si tu le **retardes à son heure** (± 30 min
+  autour de sa tranche), sur **plusieurs jours** : fragile 3 jours, tenace 4, coriace 5. Fumer à son
+  heure lui **redonne** un point de vie — en silence, sans reproche. À 0, un **rocher est hissé** au
+  sommet de ton cairn : victoire définitive.
+- **Le bandeau pulse quand tu es dans sa tranche horaire** — « c'est le moment ».
+- **Délais relançables** autant de fois que tu veux, et **pierres bonus** si tu tiens au-delà des
+  10 min (une de plus à 20 min, une à 30 min).
+
+### Amélioré
+- **Moment de succès** clair à la fin d'un délai tenu (« délai tenu · pierre posée »).
+- **La règle du jeu** détaille tout le combat, avec l'aperçu du Boss.
+
 ## v1.5.1 — 2026-08-05
 
 ### Corrigé
