@@ -413,11 +413,13 @@ hissé au sommet*, en **hibiscus** (seul écart chaud autorisé) :
 
 ---
 
-## 15. Combat de Boss — PV, délais multiples, personnage (**codé**, non publié)
+## 15. Combat de Boss — PV, délais multiples, personnage (**v1 codé · v2 à recoder**, non publié)
 
 Refonte du combat en réduction, décidée avec le user. **Deux règles verrouillées changent** — voir
-« Impacts » plus bas. **Codé et vérifié sur émulateur** (bout-en-bout : seed → révélation →
-réduction → délai tenu = −1 PV + pierre → victoire). Non publié (phase de fix en cours).
+« Impacts » plus bas. **v1 codée et vérifiée sur émulateur** (bout-en-bout : seed → révélation →
+réduction → délai tenu = −1 PV + pierre → victoire). Non publié. ⚠️ **Une révision v2 est verrouillée**
+(exigence de régularité — voir « Révision v2 » plus bas) : elle **remplace** le décompte par événements
+par un décompte **par jours à l'heure du Boss**. Lire v2 avant de recoder le combat.
 
 ### Décisions verrouillées
 - **Fumer soigne le Boss (+1 PV)** — assumé, mais **silencieux** (aucun texte/reproche/rouge) et le
@@ -471,9 +473,44 @@ réduction → délai tenu = −1 PV + pierre → victoire). Non publié (phase 
 - **Règle du jeu** : section combat développée (nomme ≠ attaque, visuel Boss + barre de PV,
   PV 3/4/5, délai relançable, victoire = rocher hissé définitif) + prévisu dev `SCREEN=combat`.
 
+### Révision v2 — exigence de régularité (verrouillé session 4, **à recoder**)
+
+Le combat v1 (ci-dessus) se gagne sur un **compteur d'événements** : 3 délais tenus, n'importe quand,
+n'importe où. Or un Boss est **défini par sa récurrence horaire quotidienne** — on peut donc « vaincre
+le Café de 7 h 10 » en tenant 3 délais un mardi après-midi, sans jamais affronter le vrai déclencheur.
+v2 recale la victoire sur la **régularité, au jour et à l'heure du Boss**. **Cette révision remplace la
+décision « dégâts = nb de délais tenus ».**
+
+**Modèle (pur, dérivé des horodatages — plus besoin de taguer les events avec `bossKey`) :**
+```
+PV = clamp( PVmax − joursEntamés + joursCraqués , 0 , PVmax )
+```
+- **Fenêtre du Boss** = `centerMinute ± kBossWindowMin` (**30 min**, cohérent avec `epsMinutes = 25`).
+- **Jour entamé** (−1 PV, **une fois/jour logique**) = ≥ 1 **délai tenu** dont l'instant tombe dans la
+  fenêtre. Il faut *activement* tenir un délai — une simple non-envie ne blesse pas le Boss.
+- **Jour craqué** (+1 PV, borné à PVmax) = ≥ 1 **cigarette** (n'importe laquelle, même hors délai) dans
+  la fenêtre. Peut annuler un jour de progrès, jamais sous 0, **toujours silencieux**.
+- **Jour neutre** (ni délai-en-fenêtre, ni clope-en-fenêtre) = **pause**, aucun mouvement. (Donc
+  « consécutif sans punir » = un cumul-net au jour, pas un streak qui casse sur un jour manqué.)
+- **Un même jour** peut être entamé ET craqué → net 0 (tenir plus qu'on ne craque).
+- **PVmax = nb de jours** : fragile **3** · tenace **4** · coriace **5**. Vaincu à 0 → rocher hissé, définitif.
+
+**Le cairn, découplé du combat** : *tout* délai tenu pose **1 pierre** (où que ce soit, quelle que soit
+l'heure) ; **bonus de durée** — si l'utilisateur tient au-delà des 10 min sans fumer, **+1 pierre à
+20 min, +1 à 30 min** (plafond **+2**, soit 3 pierres max pour une manche). Le cairn ne recule jamais.
+
+**Impacts code (à recoder) :** `domain/boss/victory.dart` — `bossHp` passe du décompte d'events au
+décompte de **jours logiques en fenêtre** (nouveaux helpers `bossWindowContains(boss, wallTime)`,
+`daysEngaged`, `daysCracked`, via `logical_day.dart` + heure murale). Constante `kBossWindowMin = 30`.
+Le heal n'a plus besoin de `markDelayBroken(bossKey:)` (dérivé des timestamps de cigarettes). Bonus de
+durée : logique de pose de pierre étendue (par paliers 10/20/30 min depuis la dernière cigarette).
+Tests `boss_combat` réécrits sur des fixtures multi-jours. UI : la barre de PV ne bouge qu'**une fois/jour**
+→ copie à prévoir (« entamé aujourd'hui ✓ — reviens demain ») pour éviter « j'ai tenu un 2ᵉ délai, rien n'a bougé ».
+
 | # | Jalon | Contenu | Sortie vérifiable |
 |---|---|---|---|
 | **15** | **Combat de Boss (PV)** | PV par difficulté, délais illimités, fumer soigne (silencieux), tête de Boss + barre de PV, « revoir ma révélation » | vaincre un Boss demande + de délais tenus que de cigarettes ; on peut changer d'approche |
+| **15 v2** | **Régularité** | dégâts = **jours** distincts où on retarde le Boss **à son heure** (± 30 min) ; fumer en fenêtre = +1 PV ; bonus pierres 20/30 min | vaincre le Café de 7 h 10 demande de le retarder vers 7 h 10 sur 3+ jours ; une clope en fenêtre rallonge |
 
 ---
 

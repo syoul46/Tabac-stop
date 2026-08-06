@@ -40,7 +40,7 @@ class StatsScreen extends ConsumerWidget {
     final current = milestoneAt(abstinence);
     final next = nextMilestoneAfter(abstinence);
     final stones = stonesPlaced(events);
-    final defeated = defeatedBossKeys(report, events);
+    final defeated = defeatedBossKeys(report, cigs, events);
     final currentMode = ref.watch(currentModeProvider).asData?.value;
     // Le retour à la révélation n'a de sens qu'une fois le portrait « mûr »
     // (assez de données) ou un mode déjà choisi (pour changer d'avis).

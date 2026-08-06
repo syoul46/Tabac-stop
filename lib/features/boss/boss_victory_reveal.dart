@@ -41,8 +41,10 @@ class _BossVictoryRevealState extends ConsumerState<BossVictoryReveal> {
   Widget build(BuildContext context) {
     final events =
         ref.watch(journeyEventsProvider).asData?.value ?? const <JourneyEvent>[];
+    final cigs =
+        ref.watch(allCigarettesProvider).asData?.value ?? const <Cigarette>[];
     final report = ref.watch(bossReportProvider);
-    final key = pendingBossVictory(report, events);
+    final key = pendingBossVictory(report, cigs, events);
     if (key == null) {
       // Réinitialise pour la prochaine victoire.
       _armed = false;

@@ -6,33 +6,6 @@ import 'package:cairn/domain/boss/victory.dart';
 import 'package:cairn/domain/models/enums.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-JourneyEvent _held(String? key, {int i = 0}) => JourneyEvent(
-      id: 'h$i',
-      occurredAtUtc: DateTime.utc(2026, 1, 1).add(Duration(days: i)),
-      kind: JourneyEventKind.delayHeld.name,
-      payload: key == null ? null : jsonEncode({'bossKey': key}),
-    );
-
-JourneyEvent _broken(String? key, {int i = 0}) => JourneyEvent(
-      id: 'b$i',
-      occurredAtUtc: DateTime.utc(2026, 1, 1).add(Duration(hours: i)),
-      kind: JourneyEventKind.delayBroken.name,
-      payload: key == null ? null : jsonEncode({'bossKey': key}),
-    );
-
-JourneyEvent _defeated(String key) => JourneyEvent(
-      id: 'd$key',
-      occurredAtUtc: DateTime.utc(2026, 2, 1),
-      kind: JourneyEventKind.bossDefeated.name,
-      payload: jsonEncode({'bossKey': key}),
-    );
-
-/// Rapport à un seul Boss fragile (PVmax 3) à l'heure [hour].
-BossReport _reportEasy(int hour) {
-  final b = _boss(hour, 0.2);
-  return BossReport(bosses: [b], mostAnchored: b, easiestTarget: b);
-}
-
 Boss _boss(int hour, double hardness) => Boss(
       centerMinute: hour * 60,
       spreadMinutes: 5,
@@ -44,57 +17,86 @@ Boss _boss(int hour, double hardness) => Boss(
       hardness: hardness,
     );
 
+/// Délai tenu à l'heure murale [h] h [m], le [day] janvier 2026.
+JourneyEvent heldAt(int day, int h, int m) => JourneyEvent(
+      id: 'h-$day-$h-$m',
+      occurredAtUtc: DateTime(2026, 1, day, h, m).toUtc(),
+      kind: JourneyEventKind.delayHeld.name,
+    );
+
+/// Cigarette à l'heure murale [h] h [m] le [day] janvier 2026 (offset 0).
+Cigarette cigAt(int day, int h, int m) => Cigarette(
+      id: 'c-$day-$h-$m',
+      occurredAtUtc: DateTime.utc(2026, 1, day, h, m),
+      tzOffsetMin: 0,
+      contextA: null,
+      wasBoss: false,
+      duringDelay: false,
+    );
+
+JourneyEvent _defeated(String key) => JourneyEvent(
+      id: 'd$key',
+      occurredAtUtc: DateTime.utc(2026, 2, 1),
+      kind: JourneyEventKind.bossDefeated.name,
+      payload: jsonEncode({'bossKey': key}),
+    );
+
+/// Rapport à un seul Boss fragile (PVmax 3 jours) à l'heure [hour].
+BossReport _reportEasy(int hour) {
+  final b = _boss(hour, 0.2);
+  return BossReport(bosses: [b], mostAnchored: b, easiestTarget: b);
+}
+
 void main() {
   test('bossKey = heure murale', () {
     expect(bossKey(_boss(7, 0.2)), 'h7');
     expect(bossKey(_boss(21, 0.9)), 'h21');
   });
 
-  group('holds & defeated', () {
-    test('compte les délais tenus par Boss', () {
-      final events = [_held('h7', i: 0), _held('h7', i: 1), _held('h15', i: 2)];
-      expect(holdsForBoss(events, 'h7'), 2);
-      expect(holdsForBoss(events, 'h15'), 1);
+  group('defeatedBossKeys (v2 — jours à l’heure du Boss)', () {
+    test('vaincu à 3 jours distincts entamés, pas avant', () {
+      final report = _reportEasy(7);
+      final two = [heldAt(1, 7, 0), heldAt(2, 7, 0)];
+      expect(defeatedBossKeys(report, const [], two), isEmpty);
+      final three = [heldAt(1, 7, 0), heldAt(2, 7, 0), heldAt(3, 7, 0)];
+      expect(defeatedBossKeys(report, const [], three), {'h7'});
     });
 
-    test('vaincu quand les PV tombent à 0 (fragile = 3), pas avant', () {
+    test('une cigarette à l’heure retarde la victoire', () {
       final report = _reportEasy(7);
-      final two = [for (var i = 0; i < 2; i++) _held('h7', i: i)];
-      expect(defeatedBossKeys(report, two), isEmpty);
-      final three = [for (var i = 0; i < 3; i++) _held('h7', i: i)];
-      expect(defeatedBossKeys(report, three), {'h7'});
+      final e = [heldAt(1, 7, 0), heldAt(2, 7, 0), heldAt(3, 7, 0)]; // 3 jours
+      final cigs = [cigAt(1, 7, 20)]; // jour 1 aussi craqué → net 2
+      expect(defeatedBossKeys(report, cigs, e), isEmpty);
     });
 
-    test('une cigarette soigne le Boss et retarde la victoire', () {
+    test('les délais hors fenêtre ne vainquent personne', () {
       final report = _reportEasy(7);
-      // 3 tenus - 1 cigarette = net 2 → PV 1 → pas vaincu.
-      final events = [
-        for (var i = 0; i < 3; i++) _held('h7', i: i),
-        _broken('h7'),
-      ];
-      expect(defeatedBossKeys(report, events), isEmpty);
+      final e = [heldAt(1, 12, 0), heldAt(2, 12, 0), heldAt(3, 12, 0)];
+      expect(defeatedBossKeys(report, const [], e), isEmpty);
     });
 
-    test('les délais non attribués (payload nul) ne vainquent personne', () {
+    test('une victoire déjà célébrée reste acquise (rocher ne retombe pas)', () {
       final report = _reportEasy(7);
-      final events = [for (var i = 0; i < 5; i++) _held(null, i: i)];
-      expect(defeatedBossKeys(report, events), isEmpty);
+      // aucun délai, mais un event bossDefeated → clé toujours dans defeated
+      expect(defeatedBossKeys(report, const [], [_defeated('h7')]), {'h7'});
     });
   });
 
   group('pendingBossVictory', () {
     test('un Boss vaincu non révélé → à célébrer', () {
       final report = _reportEasy(7);
-      final events = [for (var i = 0; i < 3; i++) _held('h7', i: i)];
-      expect(pendingBossVictory(report, events), 'h7');
+      final e = [heldAt(1, 7, 0), heldAt(2, 7, 0), heldAt(3, 7, 0)];
+      expect(pendingBossVictory(report, const [], e), 'h7');
     });
     test('déjà révélé → plus rien', () {
       final report = _reportEasy(7);
-      final events = [
-        for (var i = 0; i < 3; i++) _held('h7', i: i),
+      final e = [
+        heldAt(1, 7, 0),
+        heldAt(2, 7, 0),
+        heldAt(3, 7, 0),
         _defeated('h7'),
       ];
-      expect(pendingBossVictory(report, events), isNull);
+      expect(pendingBossVictory(report, const [], e), isNull);
     });
   });
 

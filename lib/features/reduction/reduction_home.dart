@@ -54,7 +54,8 @@ class _ReductionHomeState extends ConsumerState<ReductionHome> {
     if (st.status == DelayStatus.elapsed && !_finalizing) {
       _finalizing = true;
       final report = ref.read(bossReportProvider);
-      final target = nextTarget(report, defeatedBossKeys(report, events));
+      final cigs = ref.read(allCigarettesProvider).asData?.value ?? const [];
+      final target = nextTarget(report, defeatedBossKeys(report, cigs, events));
       ref
           .read(journeyRepositoryProvider)
           .markDelayHeld(bossKey: target == null ? null : bossKey(target))
@@ -68,7 +69,8 @@ class _ReductionHomeState extends ConsumerState<ReductionHome> {
     unawaited(HapticFeedback.mediumImpact());
     final report = ref.read(bossReportProvider);
     final events = ref.read(journeyEventsProvider).asData?.value ?? const [];
-    final target = nextTarget(report, defeatedBossKeys(report, events));
+    final cigs = ref.read(allCigarettesProvider).asData?.value ?? const [];
+    final target = nextTarget(report, defeatedBossKeys(report, cigs, events));
     final key = target == null ? null : bossKey(target);
     final running = status == DelayStatus.running;
     await ref
@@ -86,7 +88,8 @@ class _ReductionHomeState extends ConsumerState<ReductionHome> {
     await ref.read(journeyRepositoryProvider).startDelay();
     final report = ref.read(bossReportProvider);
     final events = ref.read(journeyEventsProvider).asData?.value ?? const [];
-    final target = nextTarget(report, defeatedBossKeys(report, events));
+    final cigs = ref.read(allCigarettesProvider).asData?.value ?? const [];
+    final target = nextTarget(report, defeatedBossKeys(report, cigs, events));
     final bossName = target?.name ?? 'le Boss';
     await ref.read(notificationServiceProvider).scheduleDelayEnd(
           DateTime.now().add(kDelayLength),
@@ -103,9 +106,10 @@ class _ReductionHomeState extends ConsumerState<ReductionHome> {
     final todays = ref.watch(todaysCigarettesProvider).asData?.value ?? const [];
     final last = ref.watch(lastCigaretteProvider).asData?.value;
     final events = ref.watch(journeyEventsProvider).asData?.value ?? const [];
+    final cigs = ref.watch(allCigarettesProvider).asData?.value ?? const [];
 
     final report = ref.watch(bossReportProvider);
-    final defeated = defeatedBossKeys(report, events);
+    final defeated = defeatedBossKeys(report, cigs, events);
     // La cible = le Boss le plus fragile pas encore vaincu.
     final target = nextTarget(report, defeated);
     final delay = resolveDelay(events, now);
@@ -122,7 +126,7 @@ class _ReductionHomeState extends ConsumerState<ReductionHome> {
             if (target != null)
               _TargetBanner(
                 boss: target,
-                hp: bossHp(target, events),
+                hp: bossHp(target, cigs, events),
                 maxHp: bossMaxHp(target),
               ),
             Expanded(
