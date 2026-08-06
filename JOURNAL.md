@@ -23,7 +23,8 @@ le changement d'habitude. v2 recale sur la **régularité**.
   `bonusStone`, `stonesPlaced` les compte, `pendingBonusStones` (pur) calcule le reste, le ticker émet.
   Vérifié live : 5 → 8 pierres. Ces pierres ne touchent JAMAIS les PV du Boss.
 - **UI** : bandeau cible « entamé aujourd'hui ✓ — reviens demain » (`engagedToday`) ; bandeau **descendu
-  à 52 px** (il chevauchait les icônes stats/règle/sauvegarde).
+  à 52 px** (il chevauchait les icônes stats/règle/sauvegarde) ; **pulse en fenêtre horaire** (le bandeau
+  respire + « c'est le moment — retarde-le » quand on est dans les ± 30 min du Boss, pas encore entamé).
 - **Nettoyage** : `markDelayHeld()`/`markDelayBroken()` sans paramètre.
 
 ### ⚠️ Piège formatage (à retenir)

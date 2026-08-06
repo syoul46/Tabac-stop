@@ -512,7 +512,9 @@ l'heure) ; **bonus de durée** — si l'utilisateur tient au-delà des 10 min sa
   / `markDelayBroken()` sans paramètre (le tag `bossKey` devenait inutile).
 - `reduction_home` : le ticker émet les bonus dus (`_maybeBonus`) ; bandeau cible affiche
   « entamé aujourd'hui ✓ — reviens demain » quand `engagedToday`. Bandeau descendu (52 px, ne chevauche
-  plus les icônes du haut).
+  plus les icônes du haut). **Pulse en fenêtre** : dans la tranche horaire du Boss (± 30 min) et pas
+  encore entamé aujourd'hui, le bandeau « respire » (fond/halo/bordure hibiscus, easeInOut 1,3 s) +
+  « c'est le moment — retarde-le » (`_TargetBanner` devenu StatefulWidget).
 - Tests réécrits sur fixtures multi-jours (`boss_combat`, `boss_victory`) + bonus & `engagedToday`.
   **105 tests verts.** ⚠️ Ne pas lancer `dart format .` global : l'outil récent applique le « tall style »
   et reformate tout l'arbre — formatage à la main pour rester sur l'ancien style du repo.
