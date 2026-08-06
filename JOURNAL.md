@@ -7,8 +7,9 @@
 
 ## Point de reprise — 2026-08-06 (session 4b : §15 combat **v2** — régularité)
 
-**État : §15 recodé en v2 (exigence de régularité) — codé, testé, vérifié sur émulateur, non publié.**
-On reste en phase de fix. **105 tests verts**, `flutter analyze` propre.
+**État : §15 recodé en v2 (exigence de régularité) — codé, testé, vérifié sur émulateur, et
+PUBLIÉ en `v1.6.0`** (« le combat des Boss »). **105 tests verts**, `flutter analyze` propre.
+Release : 2 APK signés `cairn-1.6.0-{arm64-v8a,armeabi-v7a}.apk`, tag `v1.6.0`, marquée Latest.
 
 ### §15 v2 — la victoire se gagne par JOURS, à l'heure du Boss
 Décidé avec le user : le combat v1 (compteur d'événements, 3 délais n'importe quand) ne prouvait pas
