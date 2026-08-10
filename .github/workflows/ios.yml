@@ -1,0 +1,137 @@
+## Build iOS — `.ipa` non signé (jalon iOS-C, cf. PLAN.md §17)
+##
+## Cairn ne passe ni par l'App Store ni par TestFlight. Ce workflow produit un
+## `.ipa` **non signé** que l'utilisateur re-signe lui-même avec son Apple ID
+## gratuit (Sideloadly / AltStore / SideStore). Le runner macOS est gratuit pour
+## un repo public : c'est ce qui permet de builder iOS depuis un poste Linux.
+##
+## Déclenchement :
+##   - push d'un tag `v*`   → build + tentative d'attache à la release du tag
+##   - release publiée      → attache l'.ipa à la release qui vient de sortir
+##   - manuel               → build seul (ou attache à un tag donné en entrée)
+##
+## L'artefact est TOUJOURS uploadé sur le run, même quand aucune release
+## n'existe : rien ne se perd si l'ordre tag/release est inversé.
+
+name: iOS (.ipa non signé)
+
+on:
+  push:
+    tags: ['v*']
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag de release auquel attacher l'.ipa (vide = build seul)"
+        required: false
+        default: ''
+
+# Un seul build iOS à la fois par ref : le runner macOS est lent et rare.
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write # nécessaire pour attacher l'.ipa à une release
+
+env:
+  FLUTTER_VERSION: 3.44.8 # aligné sur le poste de dev (Dart 3.12.2)
+  COCOAPODS_DISABLE_STATS: 'true'
+
+jobs:
+  build:
+    # macos-latest = runner ARM avec Xcode récent. À épingler (macos-15, …) le
+    # jour où une mise à jour d'image casse le build.
+    runs-on: macos-latest
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Environnement de build
+        run: |
+          sw_vers
+          xcodebuild -version
+          pod --version
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - run: flutter --version
+
+      - name: Dépendances
+        run: flutter pub get
+
+      # Les sorties de codegen sont versionnées, mais on régénère quand même :
+      # un .g.dart périmé se verrait ici plutôt que chez un utilisateur.
+      - name: Codegen (drift)
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      # `--no-codesign` : aucun certificat, aucun profil, aucun secret.
+      # Sortie : build/ios/iphoneos/Runner.app
+      - name: Build iOS (release, sans signature)
+        run: flutter build ios --release --no-codesign
+
+      # Un .ipa est un simple zip contenant Payload/<App>.app — rien de plus.
+      - name: Empaqueter l'.ipa
+        id: package
+        run: |
+          set -euo pipefail
+          app="build/ios/iphoneos/Runner.app"
+          test -d "$app" || { echo "::error::$app introuvable"; exit 1; }
+
+          version="$(sed -n 's/^version: *//p' pubspec.yaml | cut -d+ -f1)"
+          ipa="cairn-${version}-unsigned.ipa"
+
+          rm -rf Payload
+          mkdir -p Payload
+          cp -R "$app" Payload/
+          zip -qry "$ipa" Payload
+          rm -rf Payload
+
+          echo "ipa=$ipa" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+          {
+            echo "### 📦 \`$ipa\`"
+            echo ""
+            echo "| | |"
+            echo "|---|---|"
+            echo "| Taille | $(du -h "$ipa" | cut -f1) |"
+            echo "| SHA-256 | \`$(shasum -a 256 "$ipa" | cut -d' ' -f1)\` |"
+            echo ""
+            echo "⚠️ Binaire **non signé** et **jamais testé sur appareil réel**"
+            echo "(cf. PLAN.md §17.4). À re-signer avec un Apple ID gratuit."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.package.outputs.ipa }}
+          path: ${{ steps.package.outputs.ipa }}
+          if-no-files-found: error
+          retention-days: 90
+
+      # Attache à la release SI elle existe déjà. On n'en crée jamais une :
+      # les releases sont écrites à la main (notes + APK), le workflow ne fait
+      # que déposer son fichier dans celle qui existe.
+      - name: Attacher à la release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          IPA: ${{ steps.package.outputs.ipa }}
+          TAG: ${{ github.event.inputs.tag || github.event.release.tag_name || (startsWith(github.ref, 'refs/tags/') && github.ref_name) || '' }}
+        run: |
+          set -euo pipefail
+          if [ -z "$TAG" ]; then
+            echo "Pas de tag visé — l'.ipa reste disponible en artefact du run."
+            exit 0
+          fi
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            echo "::notice::La release $TAG n'existe pas encore — l'.ipa reste en artefact. Republie-la (ou relance ce workflow avec le tag) pour l'attacher."
+            exit 0
+          fi
+          gh release upload "$TAG" "$IPA" --clobber
+          echo "::notice::$IPA attaché à la release $TAG."
