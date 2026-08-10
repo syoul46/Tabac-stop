@@ -150,7 +150,9 @@ jobs:
   smoke:
     name: smoke (simulateur iOS)
     runs-on: macos-latest
-    timeout-minutes: 45
+    # 45 min ne suffisaient pas quand `flutter test` se bloque : le job était
+    # coupé avant que le garde-fou de l'étape puisse ramener une capture.
+    timeout-minutes: 60
 
     steps:
       - uses: actions/checkout@v4
@@ -265,21 +267,35 @@ jobs:
         env:
           UDID: ${{ steps.sim.outputs.udid }}
         run: |
-          set -euo pipefail
+          set -uo pipefail
           xcrun simctl terminate "$UDID" com.syoul.cairn 2>/dev/null || true
           mkdir -p captures
 
-          ( for i in $(seq -w 1 60); do
-              xcrun simctl io "$UDID" screenshot "captures/frame-$i.png" >/dev/null 2>&1 || true
-              sleep 3
-            done ) &
-          loop=$!
+          flutter test integration_test/parcours_test.dart -d "$UDID" --timeout 5x \
+            > integration.log 2>&1 &
+          test_pid=$!
 
-          set +e
-          flutter test integration_test/parcours_test.dart -d "$UDID" --timeout 5x 2>&1 | tee integration.log
-          rc=${PIPESTATUS[0]}
-          set -e
-          kill "$loop" 2>/dev/null || true
+          # On filme **tant que le test tourne**, pas pendant une durée fixe :
+          # `flutter test` peut rester muet très longtemps (compilation du test
+          # host), et en cas de blocage la dernière capture est la seule trace
+          # de ce qu'il y avait à l'écran.
+          i=0
+          rc=""
+          while kill -0 "$test_pid" 2>/dev/null; do
+            i=$((i + 1))
+            xcrun simctl io "$UDID" screenshot "$(printf 'captures/frame-%03d.png' "$i")" \
+              >/dev/null 2>&1 || true
+            if [ "$i" -gt 180 ]; then   # 180 × 5 s = 15 min sans rendre la main
+              echo "::error::flutter test est bloqué depuis 15 min — voir la dernière capture."
+              kill -9 "$test_pid" 2>/dev/null || true
+              rc=124
+              break
+            fi
+            sleep 5
+          done
+          if [ -z "$rc" ]; then wait "$test_pid"; rc=$?; fi
+
+          cat integration.log
 
           # L'essentiel des frames est identique (build en cours = bureau) :
           # on ne garde que les changements d'écran.
