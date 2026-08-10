@@ -186,13 +186,28 @@ jobs:
           xcrun simctl list devices | grep "$udid"
 
       - name: Installer et lancer Cairn
+        id: launch
         env:
           UDID: ${{ steps.sim.outputs.udid }}
         run: |
           set -euo pipefail
           xcrun simctl install "$UDID" build/ios/iphonesimulator/Runner.app
-          # --console-pty rapatrie stdout/stderr de l'app (donc les erreurs Dart).
-          xcrun simctl launch --console-pty "$UDID" com.syoul.cairn > app.log 2>&1 &
+
+          # Surtout PAS `launch --console-pty` : il exige un vrai tty, qui
+          # n'existe pas en CI — il ne lance rien et ne dit rien. On passe par
+          # un flux de logs séparé, et on lance au premier plan pour voir le
+          # code de retour.
+          xcrun simctl spawn "$UDID" log stream --style compact \
+            --predicate 'process == "Runner"' > app.log 2>&1 &
+          echo "log_pid=$!" >> "$GITHUB_OUTPUT"
+          sleep 3
+
+          # Sortie de la forme « com.syoul.cairn: 12345 » — le pid est celui
+          # d'un process de l'hôte, donc `kill -0` marche depuis le runner.
+          out="$(xcrun simctl launch --terminate-running-process "$UDID" com.syoul.cairn)"
+          echo "$out"
+          echo "app_pid=${out##*: }" >> "$GITHUB_OUTPUT"
+
           sleep 12
           xcrun simctl io "$UDID" screenshot demarrage.png
           sleep 15
@@ -202,15 +217,24 @@ jobs:
         if: always()
         env:
           UDID: ${{ steps.sim.outputs.udid }}
+          APP_PID: ${{ steps.launch.outputs.app_pid }}
+          LOG_PID: ${{ steps.launch.outputs.log_pid }}
         run: |
           set -uo pipefail
           fail=0
 
-          if pgrep -x Runner >/dev/null; then
-            echo "✅ Le process Runner est vivant après 27 s."
+          # Le flux `log stream` peut avoir pris du retard : on récupère aussi
+          # l'historique complet, seul endroit où une erreur dyld apparaîtra.
+          kill "$LOG_PID" 2>/dev/null || true
+          xcrun simctl spawn "$UDID" log show --last 5m --style compact \
+            --predicate 'process == "Runner"' > app-complet.log 2>&1 || true
+
+          if [ -n "$APP_PID" ] && kill -0 "$APP_PID" 2>/dev/null; then
+            echo "✅ Cairn (pid $APP_PID) est vivant après 27 s."
           else
-            echo "::error::Runner n'est plus vivant — l'app a planté au démarrage."
+            echo "::error::Cairn (pid '$APP_PID') n'est plus vivant — plantage au démarrage."
             ls -1 "$HOME/Library/Logs/DiagnosticReports" 2>/dev/null | head -20 || true
+            tail -40 app-complet.log 2>/dev/null || true
             fail=1
           fi
 
@@ -226,7 +250,7 @@ jobs:
             echo "Captures : \`demarrage.png\` (12 s) et \`stabilise.png\` (27 s) dans les artefacts."
             echo ""
             echo '```'
-            tail -30 app.log 2>/dev/null || echo "(aucune sortie)"
+            tail -30 app-complet.log 2>/dev/null || echo "(aucune sortie)"
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -240,5 +264,6 @@ jobs:
             demarrage.png
             stabilise.png
             app.log
+            app-complet.log
           if-no-files-found: warn
           retention-days: 30
