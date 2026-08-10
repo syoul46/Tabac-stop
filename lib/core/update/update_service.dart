@@ -113,6 +113,13 @@ Future<void> downloadAndInstall(
   UpdateInfo info, {
   void Function(double progress)? onProgress,
 }) async {
+  // 0. Android uniquement : iOS n'autorise aucune installation hors App Store
+  //    (sur iPhone, Cairn se met à jour en re-sideloadant l'.ipa — cf. PLAN §17).
+  //    checkForUpdate() renvoie déjà null ailleurs ; cette garde est la ceinture.
+  if (!Platform.isAndroid) {
+    throw const UpdateException('Mise à jour automatique indisponible ici.');
+  }
+
   // 1. Permission d'installer des paquets (Android 8+).
   final status = await Permission.requestInstallPackages.request();
   if (!status.isGranted) {

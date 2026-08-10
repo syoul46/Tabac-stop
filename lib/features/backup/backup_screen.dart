@@ -30,6 +30,12 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
   }
 
   Future<void> _export() async {
+    // iPad : la feuille de partage est une popover et exige une ancre à
+    // l'écran — sans `sharePositionOrigin`, iPadOS lève une exception.
+    // Capturé avant tout `await` : le contexte peut disparaître entre-temps.
+    final box = context.findRenderObject() as RenderBox?;
+    final origin =
+        box != null ? box.localToGlobal(Offset.zero) & box.size : null;
     final pass = await _askPassphrase(confirm: true);
     if (pass == null) return;
     setState(() => _busy = true);
@@ -42,6 +48,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
       await Share.shareXFiles(
         [XFile(file.path, mimeType: 'application/octet-stream')],
         text: 'Sauvegarde Cairn (chiffrée)',
+        sharePositionOrigin: origin,
       );
     } catch (_) {
       _toast('Échec de l’export.');
