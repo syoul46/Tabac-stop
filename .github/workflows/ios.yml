@@ -256,6 +256,41 @@ jobs:
 
           exit $fail
 
+      # `build` + `Verdict` prouvent que l'app démarre. Ici on la **touche** :
+      # taper le galet (aller-retour drift/SQLite) puis déclencher la demande
+      # de permission de notification. Le dialogue système vit hors de l'arbre
+      # Flutter, donc invisible pour le test — d'où la boucle de captures en
+      # parallèle, seule façon d'en ramener la preuve.
+      - name: Parcours guidé (integration_test)
+        env:
+          UDID: ${{ steps.sim.outputs.udid }}
+        run: |
+          set -euo pipefail
+          xcrun simctl terminate "$UDID" com.syoul.cairn 2>/dev/null || true
+          mkdir -p captures
+
+          ( for i in $(seq -w 1 60); do
+              xcrun simctl io "$UDID" screenshot "captures/frame-$i.png" >/dev/null 2>&1 || true
+              sleep 3
+            done ) &
+          loop=$!
+
+          set +e
+          flutter test integration_test/parcours_test.dart -d "$UDID" --timeout 5x 2>&1 | tee integration.log
+          rc=${PIPESTATUS[0]}
+          set -e
+          kill "$loop" 2>/dev/null || true
+
+          # L'essentiel des frames est identique (build en cours = bureau) :
+          # on ne garde que les changements d'écran.
+          prev=""
+          for f in captures/*.png; do
+            h="$(md5 -q "$f")"
+            if [ "$h" = "$prev" ]; then rm -f "$f"; else prev="$h"; fi
+          done
+          echo "Captures conservées : $(ls -1 captures | wc -l)"
+          exit $rc
+
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -263,6 +298,8 @@ jobs:
           path: |
             demarrage.png
             stabilise.png
+            captures/
+            integration.log
             app.log
             app-complet.log
           if-no-files-found: warn

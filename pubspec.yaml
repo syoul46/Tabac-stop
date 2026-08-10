@@ -56,6 +56,11 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  # Pilote l'app sur un vrai simulateur iOS en CI (jalon iOS-D, PLAN §17) :
+  # sans iPhone dans l'équipe, c'est la seule façon de prouver que le tap
+  # écrit bien en base et que les notifications atteignent le système.
+  integration_test:
+    sdk: flutter
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
