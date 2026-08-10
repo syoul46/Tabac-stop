@@ -546,11 +546,109 @@ Réserve d'idées discutées avec le user. **Rien n'est verrouillé** : chaque i
 ### 16.3 En réserve (à re-prioriser)
 Widget écran d'accueil (cairn / chrono / PV) · paysage de cairns au fil des mois · altitude en toile
 de fond (relief qui se révèle) · cairn **partageable** (rendu local, à l'initiative de l'user) ·
-galerie des Boss vaincus (trophées) · re-détection de nouveaux Boss · tendance des écarts (stats) ·
-**iOS** (le seul vrai trou du plan).
+galerie des Boss vaincus (trophées) · re-détection de nouveaux Boss · tendance des écarts (stats).
+*(iOS n'est plus « en réserve » : voir **§17**.)*
 
 ### 16.4 À manier avec prudence (frôle des règles)
 - **Nudges** (« ton Café de 7 h 10 approche ») : **opt-in strict**, **réduction only** — sinon casse
   « l'app parle le moins possible ».
 - **Argent économisé** : demande le prix du paquet → **contredit** « aucun setup » → option facultative, jamais imposé.
 - **Son** à la pose : **opt-in** (app souvent ouverte en soirée / silence).
+
+---
+
+## 17. iOS — release non signée (sideload), sans Mac ni iPhone
+
+Ferme le seul écart au plan restant (jalon 0 disait « build iOS + Android »). **Décidé :** on ne
+passe **jamais** par l'App Store ni TestFlight — on publie un **`.ipa` non signé** à côté des APK
+dans la release GitHub, et l'utilisateur le re-signe lui-même. Cohérent avec le produit : aucun
+compte, aucun serveur, aucune dépendance à un tiers qui pourrait fermer la porte.
+
+### 17.1 Les deux murs (à ne pas confondre)
+
+| Mur | Contrainte | Solution retenue |
+|---|---|---|
+| **Compiler** | Flutter ne compile pas iOS hors macOS + Xcode. Le poste de dev est sous Linux. | **GitHub Actions, runner `macos-*` — gratuit pour un repo public** (le nôtre l'est). Aucun Mac à acheter. |
+| **Installer** | iOS n'a **aucun** équivalent d'« autoriser les sources inconnues ». Tout binaire doit porter une signature que l'appareil accepte. | L'**utilisateur final** re-signe l'`.ipa` avec son **Apple ID gratuit** (Sideloadly / AltStore / SideStore). Validité **7 jours**, refresh automatique en WiFi avec AltStore/SideStore. |
+
+Conséquence à assumer et à écrire dans le README : sur iOS, l'installation est une **manip
+d'utilisateur averti**, qui exige un ordinateur au moins la première fois, et qui expire au bout
+d'une semaine. Ce n'est pas un APK.
+
+### 17.2 Routes écartées (et pourquoi)
+
+| Route | Coût | Apple dans la boucle ? | Verdict |
+|---|---|---|---|
+| **`.ipa` non signé + Apple ID gratuit** | 0 € | non | ✅ **retenue** |
+| Compte dev + **ad-hoc** (100 UDID, 1 an) | 99 $/an | non (pas de review) | à ressortir si un cercle fermé le demande |
+| **TestFlight** | 99 $/an | **oui** (review) | contredit la décision |
+| **DMA / AltStore PAL** (UE) | 99 $/an + frais | **oui** (notarisation obligatoire) | lourd, Apple reste gatekeeper |
+| TrollStore / jailbreak | 0 € | non | public trop étroit (iOS ≤ 16.6.1) |
+
+### 17.3 Jalons
+
+**iOS-A — rendre le projet compilable.** `ios/` est le scaffold brut du jalon 0 : **pas de
+`Podfile`**, jamais compilé. Déjà bon : icônes iOS générées (`flutter_launcher_icons ios: true`),
+police Marcellus embarquée en asset (pas de fetch réseau), `bundle id` `com.syoul.cairn`.
+- Générer le `Podfile` au premier build sur le runner, **le committer** : `platform :ios, '14.0'`
+  (à ajuster au plus haut minimum exigé par drift / `sqlite3_flutter_libs` / `flutter_local_notifications`).
+- Bloc `GCC_PREPROCESSOR_DEFINITIONS` de **permission_handler** : **tout à `0`**. L'app n'utilise
+  `Permission.requestInstallPackages` que dans le chemin d'update **Android** — aucune permission
+  iOS ne doit être compilée (sinon code mort + manifeste de confidentialité inutilement large).
+- `IPHONEOS_DEPLOYMENT_TARGET` aligné dans `project.pbxproj`.
+- `Info.plist` : restreindre à **portrait seul** (les 3 orientations sont autorisées par défaut ;
+  le cairn n'est pas dessiné pour le paysage) + `ITSAppUsesNonExemptEncryption = false`
+  (Argon2id / XChaCha20 embarqués ; inutile hors App Store, mais posé une fois pour toutes).
+
+**iOS-B — parité fonctionnelle (le vrai travail de code).**
+- **Notifications : totalement absentes côté iOS.** `core/notifications/notification_service.dart`
+  ne passe qu'un `AndroidInitializationSettings`. À faire : `DarwinInitializationSettings`, demande
+  de permission explicite, `UNUserNotificationCenter.delegate` dans `AppDelegate` (affichage en
+  premier plan), vérif du fuseau. Les notifications **locales** ne demandent aucun entitlement :
+  elles marchent avec un certificat Apple ID gratuit.
+- **`downloadAndInstall`** (`core/update/update_service.dart`) : ajouter la garde `Platform.isAndroid`
+  — `requestInstallPackages` n'existe pas sur iOS. `checkForUpdate()` renvoie **déjà** `null` hors
+  Android → **silence total sur iOS en v1**, ce qui respecte la règle du produit (et de toute façon
+  iOS ne permet pas d'installer un `.ipa` depuis l'app).
+- **Export / partage** : `share_plus` exige un `sharePositionOrigin` sur iPad (sinon crash) ;
+  `file_picker` et `open_filex` passent par `UIDocumentPicker` → à repasser en revue.
+
+**iOS-C — CI (le dossier `.github/workflows/` n'existe pas encore).**
+- `ios.yml` sur `macos-latest`, déclenché sur tag `v*` :
+  `flutter build ios --release --no-codesign`, puis empaquetage
+  `Payload/Runner.app` → `cairn-<version>-unsigned.ipa`, attaché à la release GitHub.
+- Tant qu'on y est : `ci.yml` sur Linux (`flutter analyze` + `flutter test`) — la CI était déjà au
+  backlog du JOURNAL.
+
+**iOS-D — validation sans appareil.** Sur le runner macOS : booter le **simulateur iOS**, installer
+le build et faire un **smoke test scripté** (`xcrun simctl`) avec captures d'écran en artefacts.
+Attrape les crashes au démarrage, les erreurs drift/SQLite, les polices manquantes.
+**N'attrape pas** : notifications réelles, partage, import de fichier, rendu encoche / Dynamic Island.
+
+**iOS-E — doc.** Section « iOS » du README : fichiers, procédure Sideloadly/AltStore, et
+l'**avertissement honnête** — expiration 7 jours, 3 apps max par Apple ID gratuit, ordinateur requis
+à la première install, **binaire jamais testé sur matériel réel**. Entrée JOURNAL.
+
+### 17.4 Limite assumée
+
+**Pas d'iPhone dans l'équipe.** Le `.ipa` sera « compile et démarre au simulateur », pas
+« validé sur appareil ». C'est publiable — à condition de l'écrire noir sur blanc dans le README
+plutôt que de le laisser deviner.
+
+### 17.5 Voir tourner l'app sans iPhone — ce qui existe vraiment
+
+Il n'existe **aucun émulateur iOS installable sous Linux ou Windows**. Le *simulateur* iOS fait
+partie de Xcode et ne tourne que sur macOS (et ce n'est pas un émulateur : l'app est recompilée pour
+l'architecture de l'hôte). Les options réelles, de la plus raisonnable à la moins :
+
+| Option | Coût | Ce que ça donne |
+|---|---|---|
+| **Runner GitHub Actions + `xcrun simctl`** | 0 € | Simulateur réel, captures d'écran en artefacts. **La voie par défaut** (= jalon iOS-D). |
+| **Runner GH Actions + session interactive** (`tmate`, ou VNC) | 0 € | Un shell — voire un écran — sur un vrai Xcode, depuis Linux, ~6 h par job. Le meilleur « hands-on » gratuit pour déboguer un build récalcitrant. |
+| **Appetize.io** | freemium (quota de minutes) | On envoie le build simulateur, on interagit **dans le navigateur**. Pratique pour cliquer soi-même dans l'app. |
+| **Mac loué à l'heure** (Scaleway Mac mini, MacinCloud, EC2 mac) | ~0,1 €/h, facturation min. 24 h | Xcode complet, itération rapide. À sortir seulement si iOS-B traîne. |
+| **macOS en VM (OSX-KVM / Docker-OSX)** sur le homelab | 0 € | Techniquement faisable, mais **contraire à l'EULA Apple** (macOS hors matériel Apple), pas d'accél. GPU → simulateur lent, ~100 Go. Non retenu. |
+| **Corellium** | cher, accès filtré | Vraie virtualisation ARM d'iOS. Hors sujet ici. |
+
+Aucune de ces options ne remplace un test sur appareil : elles valident que **ça compile et que ça
+démarre**, pas que les notifications sonnent.
