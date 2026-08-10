@@ -41,6 +41,11 @@ lancée sur iPhone **muette sur les fins de délai**. Corrigé (§17.3 iOS-B). C
   l'arbre ne se pose jamais → helper `pumpUntil` dans `integration_test/parcours_test.dart`.
 - Sur iOS, `requestPermissions` ne se résout **qu'après** la réponse de l'utilisateur au dialogue
   système. Un `await` en CI = test figé. On déclenche sans attendre, et la preuve est visuelle.
+- **Les macros `permission_handler` (toutes les permissions à `0`) dans `post_install` bloquent
+  `integration_test`** : l'app démarre normalement, mais le **test host reste sur le splash**, Dart
+  ne démarre jamais et `flutter test` attend indéfiniment. Reproduit 2 runs de suite, vert sans.
+  Le bloc s'applique à **tous** les pods, celui d'`integration_test` compris. Retiré ; commentaire
+  d'avertissement laissé dans `ios/Podfile`.
 - `gh run watch` peut mourir sur une coupure réseau (`error connecting to api.github.com`) : son
   code de retour ne veut alors **pas** dire « le run a échoué ». Vérifier l'état réel du run.
 
