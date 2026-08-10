@@ -5,6 +5,55 @@
 
 ---
 
+## Point de reprise — 2026-08-10 (session 5 : **iOS**, le dernier écart au plan)
+
+**État : le trou iOS est bouché.** Cairn compile, démarre, enregistre et parle à iOS — vérifié
+**en CI à chaque run**, sans Mac ni iPhone. Spec complète : **`PLAN.md` §17**. Rien n'est publié :
+aucune release touchée, l'`.ipa` vit en artefact de run.
+
+### Les deux murs, et comment ils tombent
+- **Compiler** : impossible sous Linux → **runner `macos-latest` GitHub Actions, gratuit pour un
+  repo public**. Build complet en ~6 min.
+- **Installer** : iOS n'a **aucun** équivalent d'« autoriser les sources inconnues » → l'utilisateur
+  re-signe l'`.ipa` avec son **Apple ID gratuit** (Sideloadly / AltStore). **Expire à 7 jours.**
+  Décidé : ni App Store ni TestFlight, jamais.
+
+### Ce que la CI prouve maintenant (`.github/workflows/ios.yml`, 2 jobs)
+- `build` → `cairn-x.y.z-unsigned.ipa` (`Runner.app` 23,7 Mo), attaché à une release **seulement si
+  elle existe déjà** — le workflow n'en crée jamais une.
+- `smoke` → boot d'un iPhone simulé, install, lancement, captures, **puis `integration_test`** :
+  taper le galet fait apparaître le chrono « depuis la dernière » (donc **écriture + relecture
+  SQLite**), et `scheduleDelayEnd` fait apparaître le dialogue *« Cairn » Would Like to Send You
+  Notifications* (donc **le câblage Darwin atteint iOS**).
+
+### Le vrai trou fonctionnel trouvé en route
+`notification_service.dart` ne passait qu'un `AndroidInitializationSettings` : l'app se serait
+lancée sur iPhone **muette sur les fins de délai**. Corrigé (§17.3 iOS-B). Choix à retenir :
+**rien n'est demandé au lancement** (permission réclamée au premier délai), **pas de badge**, et
+**aucune modif d'`AppDelegate`** — le plugin s'enregistre lui-même comme délégué
+`UNUserNotificationCenter`, ce qui est précisément ce qui fait marcher l'affichage au premier plan.
+
+### Pièges rencontrés (à ne pas refaire)
+- `xcrun simctl launch --console-pty` **exige un vrai tty**, absent en CI : il ne lance rien et ne
+  dit rien. Lancé en arrière-plan avec `&`, son échec passe totalement inaperçu — les captures
+  montraient le bureau d'iOS et on croit à un plantage de l'app. Logs : `simctl spawn log stream`.
+- `pumpAndSettle` est **inutilisable** sur l'Écran 1 : le chrono planifie une frame par seconde,
+  l'arbre ne se pose jamais → helper `pumpUntil` dans `integration_test/parcours_test.dart`.
+- Sur iOS, `requestPermissions` ne se résout **qu'après** la réponse de l'utilisateur au dialogue
+  système. Un `await` en CI = test figé. On déclenche sans attendre, et la preuve est visuelle.
+- `gh run watch` peut mourir sur une coupure réseau (`error connecting to api.github.com`) : son
+  code de retour ne veut alors **pas** dire « le run a échoué ». Vérifier l'état réel du run.
+
+### Ce qui reste
+- **Non prouvé faute d'iPhone** : qu'une notification s'affiche vraiment à l'heure dite (personne ne
+  peut taper « Allow » depuis `simctl`), le partage, l'import de sauvegarde.
+- **Dettes** : `Podfile.lock` non versionné (ingénérable hors macOS) ; `open_filex` ne supporte pas
+  Swift Package Manager — warning aujourd'hui, **erreur demain**, pour un plugin qui ne sert qu'au
+  chemin d'update Android → le rendre Android-only.
+- À décider : joindre l'`.ipa` à une release publique, ou le transmettre à la main.
+
+---
+
 ## Point de reprise — 2026-08-06 (session 4b : §15 combat **v2** — régularité)
 
 **État : §15 recodé en v2 (exigence de régularité) — codé, testé, vérifié sur émulateur, et

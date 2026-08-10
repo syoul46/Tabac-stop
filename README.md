@@ -41,7 +41,7 @@ les sauvegarder toi-même.
 > publique de GitHub pour comparer les versions. Aucune donnée personnelle n'est transmise ; le
 > bandeau peut être ignoré.
 
-## Installation
+## Installation — Android
 
 Télécharge l'APK depuis la **[page des releases](https://github.com/syoul46/Tabac-stop/releases/latest)** :
 
@@ -53,6 +53,35 @@ Télécharge l'APK depuis la **[page des releases](https://github.com/syoul46/Ta
 Au premier install hors Play Store, Android affiche un avertissement « appli inconnue » →
 autorise l'installation. L'app est signée avec une clé de release (pas de blocage Play Protect).
 Une fois installée, elle te **signalera elle-même** les futures mises à jour.
+
+## Installation — iPhone (expérimental)
+
+Cairn ne passe **ni par l'App Store, ni par TestFlight**. La CI produit un
+`cairn-x.y.z-unsigned.ipa` — un binaire **non signé**, que tu signes toi-même avec ton propre
+Apple ID (un compte **gratuit** suffit, pas besoin des 99 $/an).
+
+> **Un `.ipa` ne s'installe pas en le téléchargeant sur le téléphone.** Ce n'est pas un APK :
+> iOS refuse tout binaire non signé. Il te faut un ordinateur, au moins la première fois.
+
+1. Sur un **PC Windows ou un Mac** : installe **[Sideloadly](https://sideloadly.io)** (gratuit).
+2. Branche l'iPhone en USB, glisse le `.ipa`, saisis ton Apple ID.
+3. Sur l'iPhone : **Réglages → Général → VPN et gestion de l'appareil** → fais confiance au
+   certificat qui vient d'apparaître.
+4. iOS 16+ : active **Réglages → Confidentialité et sécurité → Mode développeur**, puis redémarre.
+
+**L'app cesse de fonctionner au bout de 7 jours** et doit être re-signée — c'est la limite des
+comptes Apple gratuits (3 apps maximum, aussi). [AltStore](https://altstore.io) automatise ce
+rafraîchissement en WiFi ; Sideloadly non.
+
+### Ce que tu dois savoir avant d'essayer
+
+Le build iOS est vérifié **à chaque commit** sur un simulateur : il compile, il démarre, il
+enregistre en base, et la demande de permission de notification atteint bien le système. Mais
+**personne n'a jamais fait tourner Cairn sur un vrai iPhone** — il n'y en a pas dans l'équipe.
+En particulier, *qu'une notification s'affiche réellement à l'heure dite* n'est pas vérifié.
+
+Sur iPhone, l'app ne signale pas ses mises à jour (iOS ne permet aucune installation hors
+App Store) : il faut repasser par la [page des releases](https://github.com/syoul46/Tabac-stop/releases/latest).
 
 ## Pour les développeurs
 

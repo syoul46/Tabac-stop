@@ -585,55 +585,84 @@ d'une semaine. Ce n'est pas un APK.
 | **DMA / AltStore PAL** (UE) | 99 $/an + frais | **oui** (notarisation obligatoire) | lourd, Apple reste gatekeeper |
 | TrollStore / jailbreak | 0 € | non | public trop étroit (iOS ≤ 16.6.1) |
 
-### 17.3 Jalons
+### 17.3 Jalons (**tous codés** — session 5)
 
-**iOS-A — rendre le projet compilable.** `ios/` est le scaffold brut du jalon 0 : **pas de
-`Podfile`**, jamais compilé. Déjà bon : icônes iOS générées (`flutter_launcher_icons ios: true`),
-police Marcellus embarquée en asset (pas de fetch réseau), `bundle id` `com.syoul.cairn`.
-- Générer le `Podfile` au premier build sur le runner, **le committer** : `platform :ios, '14.0'`
-  (à ajuster au plus haut minimum exigé par drift / `sqlite3_flutter_libs` / `flutter_local_notifications`).
+**iOS-A — rendre le projet compilable. ✅** Surprise du premier build : le template Flutter suffisait
+tel quel (Xcode 26.6, CocoaPods 1.17, `pod install` en 1 s, zéro warning). Le conflit de deployment
+target qu'on redoutait n'a pas eu lieu. Déjà bon au départ : icônes iOS générées
+(`flutter_launcher_icons ios: true`), police Marcellus embarquée en asset (pas de fetch réseau),
+`bundle id` `com.syoul.cairn`.
+- **`ios/Podfile` versionné** — il était régénéré à chaque build : ça marchait, mais rien ne le
+  garantissait d'une image de runner à l'autre. `platform :ios, '13.0'`, aligné sur
+  l'`IPHONEOS_DEPLOYMENT_TARGET` du projet Xcode (donc aucun changement de comportement).
 - Bloc `GCC_PREPROCESSOR_DEFINITIONS` de **permission_handler** : **tout à `0`**. L'app n'utilise
-  `Permission.requestInstallPackages` que dans le chemin d'update **Android** — aucune permission
-  iOS ne doit être compilée (sinon code mort + manifeste de confidentialité inutilement large).
-- `IPHONEOS_DEPLOYMENT_TARGET` aligné dans `project.pbxproj`.
-- `Info.plist` : restreindre à **portrait seul** (les 3 orientations sont autorisées par défaut ;
-  le cairn n'est pas dessiné pour le paysage) + `ITSAppUsesNonExemptEncryption = false`
-  (Argon2id / XChaCha20 embarqués ; inutile hors App Store, mais posé une fois pour toutes).
+  `Permission.requestInstallPackages` que dans le chemin d'update **Android**, et les notifications
+  passent par `flutter_local_notifications` — le binaire ne doit pas porter des capacités qu'il
+  n'exerce jamais.
+- `Info.plist` : `ITSAppUsesNonExemptEncryption = false`.
+- ⚠️ **Correction d'une erreur de ce plan** : il disait « restreindre à portrait seul, comme
+  Android ». C'est faux — l'`AndroidManifest` **ne verrouille pas** l'orientation. Verrouiller iOS
+  aurait fait diverger les deux plateformes sur une décision produit que personne n'a prise. Laissé
+  en l'état ; à trancher pour les **deux** plateformes si le sujet revient.
 
-**iOS-B — parité fonctionnelle (le vrai travail de code).**
-- **Notifications : totalement absentes côté iOS.** `core/notifications/notification_service.dart`
-  ne passe qu'un `AndroidInitializationSettings`. À faire : `DarwinInitializationSettings`, demande
-  de permission explicite, `UNUserNotificationCenter.delegate` dans `AppDelegate` (affichage en
-  premier plan), vérif du fuseau. Les notifications **locales** ne demandent aucun entitlement :
-  elles marchent avec un certificat Apple ID gratuit.
-- **`downloadAndInstall`** (`core/update/update_service.dart`) : ajouter la garde `Platform.isAndroid`
-  — `requestInstallPackages` n'existe pas sur iOS. `checkForUpdate()` renvoie **déjà** `null` hors
-  Android → **silence total sur iOS en v1**, ce qui respecte la règle du produit (et de toute façon
-  iOS ne permet pas d'installer un `.ipa` depuis l'app).
-- **Export / partage** : `share_plus` exige un `sharePositionOrigin` sur iPad (sinon crash) ;
-  `file_picker` et `open_filex` passent par `UIDocumentPicker` → à repasser en revue.
+**iOS-B — parité fonctionnelle. ✅** Le trou était réel : `initialize()` ne recevait qu'un
+`AndroidInitializationSettings`, donc l'app se serait lancée sur iPhone **muette sur les fins de
+délai** — l'essentiel de ce qu'elle a le droit de dire.
+- `DarwinInitializationSettings` avec les trois `request*Permission` à **`false`** : rien n'est
+  demandé au lancement, la permission est réclamée **au premier délai lancé**. Une pop-up système au
+  démarrage ferait parler l'app avant qu'elle ait quoi que ce soit à dire.
+- `requestPermissions(alert, sound)` **sans badge** : l'app ne compte rien sur son icône.
+- `DarwinNotificationDetails(presentAlert/Banner/Sound)` : le rappel tombe souvent **app au premier
+  plan** (l'utilisateur regarde son chrono), il doit s'afficher quand même.
+- **Aucune modification d'`AppDelegate.swift`**, contrairement au snippet qu'on lit partout : le
+  plugin s'enregistre lui-même comme délégué `UNUserNotificationCenter`, et c'est justement ce qui
+  fait marcher l'affichage au premier plan. Poser `self` comme délégué risquait de le casser.
+- `downloadAndInstall` : garde `Platform.isAndroid` (`requestInstallPackages` n'existe pas sur iOS).
+  `checkForUpdate()` renvoyait déjà `null` ailleurs → **silence total sur iOS**.
+- Export : `sharePositionOrigin` pour la popover iPad (sinon exception).
 
-**iOS-C — CI (le dossier `.github/workflows/` n'existe pas encore).**
-- `ios.yml` sur `macos-latest`, déclenché sur tag `v*` :
-  `flutter build ios --release --no-codesign`, puis empaquetage
-  `Payload/Runner.app` → `cairn-<version>-unsigned.ipa`, attaché à la release GitHub.
-- Tant qu'on y est : `ci.yml` sur Linux (`flutter analyze` + `flutter test`) — la CI était déjà au
-  backlog du JOURNAL.
+**iOS-C — CI. ✅** `.github/workflows/ios.yml`, runner `macos-latest`, deux jobs parallèles.
+- `build` : `flutter build ios --release --no-codesign` → `Payload/Runner.app` zippé en
+  `cairn-<version>-unsigned.ipa`. **~6 min**, `Runner.app` de 23,7 Mo.
+- Déclenché sur tag `v*`, sur `release: published`, ou à la main. L'`.ipa` est **toujours** uploadé
+  en artefact du run ; il n'est attaché à une release **que si elle existe déjà** — le workflow n'en
+  crée jamais une, les notes et les APK restent écrits à la main.
 
-**iOS-D — validation sans appareil.** Sur le runner macOS : booter le **simulateur iOS**, installer
-le build et faire un **smoke test scripté** (`xcrun simctl`) avec captures d'écran en artefacts.
-Attrape les crashes au démarrage, les erreurs drift/SQLite, les polices manquantes.
-**N'attrape pas** : notifications réelles, partage, import de fichier, rendu encoche / Dynamic Island.
+**iOS-D — validation sans appareil. ✅** Job `smoke` : boot du dernier iPhone disponible, install,
+lancement, captures d'écran, **puis `integration_test` qui pilote l'app pour de vrai**.
+- Preuve n°1 — **taper le galet fait apparaître le chrono « depuis la dernière »**, qui ne s'affiche
+  que si la cigarette a été écrite en base **puis relue** : l'aller-retour drift/SQLite tient.
+- Preuve n°2 — `scheduleDelayEnd` appelé **sans `await`** (sur iOS la Future ne se résout qu'après
+  la réponse au dialogue système, que personne ne tape en CI) → le dialogue *« Cairn » Would Like to
+  Send You Notifications* apparaît. Il vit **hors de l'arbre Flutter**, donc invisible au test :
+  c'est une **boucle de captures lancée en parallèle** qui en ramène la preuve.
+- `pumpAndSettle` est inutilisable : le chrono planifie une frame par seconde, l'arbre ne se pose
+  jamais → helper `pumpUntil`.
+- Deux pièges de script, corrigés : `simctl launch --console-pty` exige un vrai tty (absent en CI) —
+  lancé en arrière-plan, son échec passait inaperçu ; et les logs se récupèrent via
+  `simctl spawn log stream`, pas via le pty.
 
-**iOS-E — doc.** Section « iOS » du README : fichiers, procédure Sideloadly/AltStore, et
-l'**avertissement honnête** — expiration 7 jours, 3 apps max par Apple ID gratuit, ordinateur requis
-à la première install, **binaire jamais testé sur matériel réel**. Entrée JOURNAL.
+**iOS-E — doc. ✅** Section « iOS » du README (procédure Sideloadly/AltStore, expiration 7 jours,
+3 apps max par Apple ID gratuit, ordinateur requis à la première install, **binaire jamais testé sur
+matériel réel**), ce §17, entrée JOURNAL.
 
-### 17.4 Limite assumée
+### 17.4 Ce qui est prouvé — et ce qui ne l'est pas
 
-**Pas d'iPhone dans l'équipe.** Le `.ipa` sera « compile et démarre au simulateur », pas
-« validé sur appareil ». C'est publiable — à condition de l'écrire noir sur blanc dans le README
-plutôt que de le laisser deviner.
+**Prouvé en CI, à chaque run** : ça compile · ça s'installe · **ça démarre** · l'icône est la bonne ·
+drift ouvre sa base · le tap **écrit et relit** en SQLite · la demande de permission de notification
+**atteint iOS**.
+
+**Toujours pas prouvé, faute d'iPhone** :
+- **qu'une notification s'affiche à l'heure dite** — personne ne peut taper « Allow » depuis
+  `simctl`, donc la permission n'est jamais accordée et rien n'est réellement planifié ;
+- le partage, l'import de sauvegarde, le rendu sur encoche / Dynamic Island.
+
+**Deux dettes connues** :
+- `Podfile.lock` n'est **pas** versionné (impossible à générer hors macOS) — les versions de pods
+  peuvent donc encore bouger d'un run à l'autre.
+- ⚠️ `open_filex` **ne supporte pas Swift Package Manager** ; Flutter en fait un warning
+  aujourd'hui, une **erreur** demain. Ce plugin ne sert qu'au chemin d'update **Android** : le jour
+  où ça durcit, le build iOS cassera pour un plugin dont iOS n'a aucun usage → le rendre Android-only.
 
 ### 17.5 Voir tourner l'app sans iPhone — ce qui existe vraiment
 
