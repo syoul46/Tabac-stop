@@ -47,33 +47,21 @@ end
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
-
-    # Écart 2 — permission_handler compile par défaut le code de TOUTES les
-    # permissions iOS (caméra, contacts, localisation…). Cairn n'en utilise
-    # aucune : `Permission.requestInstallPackages` est un chemin Android, et
-    # les notifications passent par flutter_local_notifications. On les coupe
-    # toutes, pour que le binaire ne porte pas des capacités que l'app
-    # n'exerce jamais.
-    target.build_configurations.each do |config|
-      config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= [
-        '$(inherited)',
-        'PERMISSION_EVENTS=0',
-        'PERMISSION_EVENTS_FULL_ACCESS=0',
-        'PERMISSION_REMINDERS=0',
-        'PERMISSION_CONTACTS=0',
-        'PERMISSION_CAMERA=0',
-        'PERMISSION_MICROPHONE=0',
-        'PERMISSION_SPEECH_RECOGNIZER=0',
-        'PERMISSION_PHOTOS=0',
-        'PERMISSION_LOCATION=0',
-        'PERMISSION_NOTIFICATIONS=0',
-        'PERMISSION_MEDIA_LIBRARY=0',
-        'PERMISSION_SENSORS=0',
-        'PERMISSION_BLUETOOTH=0',
-        'PERMISSION_APP_TRACKING_TRANSPARENCY=0',
-        'PERMISSION_CRITICAL_ALERTS=0',
-        'PERMISSION_ASSISTANT=0',
-      ]
-    end
   end
 end
+
+# ⚠️ Écart 2 RETIRÉ — n'y revenez pas sans mesurer.
+#
+# On avait ajouté ici le bloc `GCC_PREPROCESSOR_DEFINITIONS` documenté par
+# permission_handler (toutes les permissions iOS à `0`, puisque Cairn n'en
+# utilise aucune : `requestInstallPackages` est un chemin Android et les
+# notifications passent par flutter_local_notifications).
+#
+# Effet observé : l'app elle-même continuait de démarrer normalement, mais le
+# **test host d'`integration_test` restait bloqué sur le splash screen**, Dart
+# ne démarrant jamais — `flutter test` attendait alors indéfiniment. Reproduit
+# sur deux runs consécutifs (31359220605, 31362036419) ; vert sans le bloc.
+# Le bloc s'appliquait à **tous** les pods, celui d'`integration_test` compris.
+#
+# Le bénéfice (ne pas compiler du code de permission inutilisé) ne vaut pas la
+# perte du seul test qui pilote l'app sans iPhone.

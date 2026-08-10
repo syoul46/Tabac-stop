@@ -595,10 +595,12 @@ target qu'on redoutait n'a pas eu lieu. Déjà bon au départ : icônes iOS gén
 - **`ios/Podfile` versionné** — il était régénéré à chaque build : ça marchait, mais rien ne le
   garantissait d'une image de runner à l'autre. `platform :ios, '13.0'`, aligné sur
   l'`IPHONEOS_DEPLOYMENT_TARGET` du projet Xcode (donc aucun changement de comportement).
-- Bloc `GCC_PREPROCESSOR_DEFINITIONS` de **permission_handler** : **tout à `0`**. L'app n'utilise
-  `Permission.requestInstallPackages` que dans le chemin d'update **Android**, et les notifications
-  passent par `flutter_local_notifications` — le binaire ne doit pas porter des capacités qu'il
-  n'exerce jamais.
+- ⚠️ **Bloc `GCC_PREPROCESSOR_DEFINITIONS` de permission_handler : essayé, puis RETIRÉ.** Couper
+  toutes les permissions iOS (l'app n'en utilise aucune) semblait gratuit. Effet réel : l'app
+  démarrait toujours, mais le **test host d'`integration_test` restait bloqué sur le splash**,
+  Dart ne démarrant jamais — reproduit sur deux runs, vert sans le bloc. Il s'appliquait à **tous**
+  les pods, celui d'`integration_test` compris. Ne pas y revenir sans mesurer : le bénéfice ne vaut
+  pas la perte du seul test qui pilote l'app sans iPhone.
 - `Info.plist` : `ITSAppUsesNonExemptEncryption = false`.
 - ⚠️ **Correction d'une erreur de ce plan** : il disait « restreindre à portrait seul, comme
   Android ». C'est faux — l'`AndroidManifest` **ne verrouille pas** l'orientation. Verrouiller iOS
