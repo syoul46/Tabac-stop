@@ -12,6 +12,12 @@
 ##
 ## L'artefact est TOUJOURS uploadé sur le run, même quand aucune release
 ## n'existe : rien ne se perd si l'ordre tag/release est inversé.
+##
+## Deux jobs indépendants, en parallèle :
+##   - `build` : le .ipa distribuable (device arm64, non signé)
+##   - `smoke` : jalon iOS-D — on démarre vraiment l'app dans le simulateur et
+##     on en ramène des captures d'écran. Sans iPhone dans l'équipe, c'est la
+##     seule preuve qu'on a que le binaire fait autre chose que compiler.
 
 name: iOS (.ipa non signé)
 
@@ -135,3 +141,104 @@ jobs:
           fi
           gh release upload "$TAG" "$IPA" --clobber
           echo "::notice::$IPA attaché à la release $TAG."
+
+  # ── Jalon iOS-D ────────────────────────────────────────────────────────────
+  # « Est-ce que ça démarre ? » — la question à laquelle `build` ne répond pas.
+  # Build simulateur (toujours en debug : le simulateur n'accepte pas release),
+  # boot, install, lancement, captures d'écran. Échoue si le process meurt ou
+  # si une exception Dart remonte au démarrage.
+  smoke:
+    name: smoke (simulateur iOS)
+    runs-on: macos-latest
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Dépendances
+        run: flutter pub get
+
+      - name: Codegen (drift)
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Build simulateur
+        run: flutter build ios --simulator --debug
+
+      - name: Démarrer un iPhone
+        id: sim
+        run: |
+          set -euo pipefail
+          # Les runtimes sont listés par ordre croissant → le dernier iPhone
+          # de la liste est celui du runtime iOS le plus récent disponible.
+          line="$(xcrun simctl list devices available | grep -E '^[[:space:]]+iPhone' | tail -1)"
+          udid="$(printf '%s' "$line" | grep -oE '[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}')"
+          test -n "$udid" || { echo "::error::Aucun simulateur iPhone disponible"; exit 1; }
+          echo "Simulateur retenu : $line"
+          xcrun simctl boot "$udid"
+          xcrun simctl bootstatus "$udid" -b
+          echo "udid=$udid" >> "$GITHUB_OUTPUT"
+          xcrun simctl list devices | grep "$udid"
+
+      - name: Installer et lancer Cairn
+        env:
+          UDID: ${{ steps.sim.outputs.udid }}
+        run: |
+          set -euo pipefail
+          xcrun simctl install "$UDID" build/ios/iphonesimulator/Runner.app
+          # --console-pty rapatrie stdout/stderr de l'app (donc les erreurs Dart).
+          xcrun simctl launch --console-pty "$UDID" com.syoul.cairn > app.log 2>&1 &
+          sleep 12
+          xcrun simctl io "$UDID" screenshot demarrage.png
+          sleep 15
+          xcrun simctl io "$UDID" screenshot stabilise.png
+
+      - name: Verdict
+        if: always()
+        env:
+          UDID: ${{ steps.sim.outputs.udid }}
+        run: |
+          set -uo pipefail
+          fail=0
+
+          if pgrep -x Runner >/dev/null; then
+            echo "✅ Le process Runner est vivant après 27 s."
+          else
+            echo "::error::Runner n'est plus vivant — l'app a planté au démarrage."
+            ls -1 "$HOME/Library/Logs/DiagnosticReports" 2>/dev/null | head -20 || true
+            fail=1
+          fi
+
+          if grep -qiE "Unhandled Exception|Failed assertion|SQLITE_|DatabaseException" app.log 2>/dev/null; then
+            echo "::error::Erreur Dart au démarrage :"
+            grep -iE -A5 "Unhandled Exception|Failed assertion|SQLITE_|DatabaseException" app.log | head -40
+            fail=1
+          fi
+
+          {
+            echo "### 📱 Smoke test simulateur"
+            echo ""
+            echo "Captures : \`demarrage.png\` (12 s) et \`stabilise.png\` (27 s) dans les artefacts."
+            echo ""
+            echo '```'
+            tail -30 app.log 2>/dev/null || echo "(aucune sortie)"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          exit $fail
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: smoke-simulateur
+          path: |
+            demarrage.png
+            stabilise.png
+            app.log
+          if-no-files-found: warn
+          retention-days: 30
