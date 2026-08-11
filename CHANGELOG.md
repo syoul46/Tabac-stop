@@ -3,6 +3,27 @@
 Toutes les versions notables. App de sevrage tabagique, **local-first**.
 Format des dates : AAAA-MM-JJ.
 
+## v1.8.3 — 2026-08-11
+
+### Corrigé — important
+- **Tes Boss étaient presque imbattables.** Les cigarettes de ta semaine d'observation — celle où
+  l'app te dit explicitement de fumer normalement — comptaient comme des « jours craqués » et
+  soignaient le Boss avant même le début du combat. Un Boss annoncé à **3 jours** en demandait en
+  réalité **11**, et sa barre de points de vie restait figée pendant les 8 premiers : tu faisais
+  tout bien et il ne se passait rien. Le combat ne compte plus que **depuis le jour où tu choisis
+  ton mode**.
+- En réduction, **le nombre de cigarettes du jour** n'apparaissait que dans certains états — donc
+  presque jamais. Il est maintenant affiché en permanence.
+- Après un tap « je fume » hors délai, le bouton « Retarde de 10 min » disparaissait pendant
+  quelques secondes, et un « délai rompu » était enregistré alors qu'aucun délai ne tournait.
+
+### Sous le capot
+- Suppression de la dépendance `open_filex` : l'ouverture de l'APK de mise à jour passe désormais
+  par du code natif. Le chemin de mise à jour complet a été **testé de bout en bout** pour la
+  première fois.
+- Le README annonçait la révélation « après ≥ 3 jours » alors que l'app en demande **7** (et 30
+  cigarettes enregistrées). C'est corrigé — l'écran « règle du jeu » dans l'app, lui, était juste.
+
 ## v1.8.2 — 2026-08-11
 
 ### Corrigé
