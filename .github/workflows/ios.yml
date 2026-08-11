@@ -271,34 +271,45 @@ jobs:
           xcrun simctl terminate "$UDID" com.syoul.cairn 2>/dev/null || true
           mkdir -p captures
 
-          flutter test integration_test/parcours_test.dart -d "$UDID" --timeout 5x \
-            > integration.log 2>&1 &
-          test_pid=$!
+          # `flutter test` se fige parfois après un build réussi, test host
+          # bloqué sur le splash (~1 run sur 3, cf. PLAN §17.4 — cause inconnue,
+          # sans rapport avec le Podfile malgré une fausse piste). D'où le
+          # garde-fou, puis une seconde tentative après reboot du simulateur.
+          run_test() {
+            local tag="$1"
+            rm -f integration.log
+            flutter test integration_test/parcours_test.dart -d "$UDID" --timeout 5x \
+              > integration.log 2>&1 &
+            local pid=$!
+            local i=0 rc=""
+            while kill -0 "$pid" 2>/dev/null; do
+              i=$((i + 1))
+              xcrun simctl io "$UDID" screenshot \
+                "$(printf 'captures/%s-%03d.png' "$tag" "$i")" >/dev/null 2>&1 || true
+              if [ "$i" -gt 96 ]; then   # 96 × 5 s = 8 min, très large
+                echo "::warning::$tag : bloqué depuis 8 min, on coupe."
+                kill -9 "$pid" 2>/dev/null || true
+                rc=124
+                break
+              fi
+              sleep 5
+            done
+            [ -z "$rc" ] && { wait "$pid"; rc=$?; }
+            cat integration.log
+            return $rc
+          }
 
-          # On filme **tant que le test tourne**, pas pendant une durée fixe :
-          # `flutter test` peut rester muet très longtemps (compilation du test
-          # host), et en cas de blocage la dernière capture est la seule trace
-          # de ce qu'il y avait à l'écran.
-          i=0
-          rc=""
-          while kill -0 "$test_pid" 2>/dev/null; do
-            i=$((i + 1))
-            xcrun simctl io "$UDID" screenshot "$(printf 'captures/frame-%03d.png' "$i")" \
-              >/dev/null 2>&1 || true
-            if [ "$i" -gt 180 ]; then   # 180 × 5 s = 15 min sans rendre la main
-              echo "::error::flutter test est bloqué depuis 15 min — voir la dernière capture."
-              kill -9 "$test_pid" 2>/dev/null || true
-              rc=124
-              break
-            fi
-            sleep 5
-          done
-          if [ -z "$rc" ]; then wait "$test_pid"; rc=$?; fi
+          rc=0
+          if ! run_test essai1; then
+            echo "::warning::Première tentative en échec — on relance sur un simulateur neuf."
+            xcrun simctl shutdown "$UDID" 2>/dev/null || true
+            xcrun simctl boot "$UDID"
+            xcrun simctl bootstatus "$UDID" -b
+            xcrun simctl install "$UDID" build/ios/iphonesimulator/Runner.app
+            run_test essai2 || rc=$?
+          fi
 
-          cat integration.log
-
-          # L'essentiel des frames est identique (build en cours = bureau) :
-          # on ne garde que les changements d'écran.
+          # L'essentiel des frames est identique : on ne garde que les changements.
           prev=""
           for f in captures/*.png; do
             h="$(md5 -q "$f")"

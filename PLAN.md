@@ -640,12 +640,10 @@ target qu'on redoutait n'a pas eu lieu. Déjà bon au départ : icônes iOS gén
 - **`ios/Podfile` versionné** — il était régénéré à chaque build : ça marchait, mais rien ne le
   garantissait d'une image de runner à l'autre. `platform :ios, '13.0'`, aligné sur
   l'`IPHONEOS_DEPLOYMENT_TARGET` du projet Xcode (donc aucun changement de comportement).
-- ⚠️ **Bloc `GCC_PREPROCESSOR_DEFINITIONS` de permission_handler : essayé, puis RETIRÉ.** Couper
-  toutes les permissions iOS (l'app n'en utilise aucune) semblait gratuit. Effet réel : l'app
-  démarrait toujours, mais le **test host d'`integration_test` restait bloqué sur le splash**,
-  Dart ne démarrant jamais — reproduit sur deux runs, vert sans le bloc. Il s'appliquait à **tous**
-  les pods, celui d'`integration_test` compris. Ne pas y revenir sans mesurer : le bénéfice ne vaut
-  pas la perte du seul test qui pilote l'app sans iPhone.
+- **Bloc `GCC_PREPROCESSOR_DEFINITIONS` de permission_handler : essayé, puis retiré.** Couper toutes
+  les permissions iOS (l'app n'en utilise aucune) semblait gratuit. Il a été accusé d'un blocage du
+  test host — **à tort** : cf. §17.4, le blocage est intermittent et revient sans lui. Le bloc reste
+  retiré (bénéfice marginal), mais il n'a jamais été prouvé coupable.
 - `Info.plist` : `ITSAppUsesNonExemptEncryption = false`.
 - ⚠️ **Correction d'une erreur de ce plan** : il disait « restreindre à portrait seul, comme
   Android ». C'est faux — l'`AndroidManifest` **ne verrouille pas** l'orientation. Verrouiller iOS
@@ -703,6 +701,16 @@ drift ouvre sa base · le tap **écrit et relit** en SQLite · la demande de per
 - **qu'une notification s'affiche à l'heure dite** — personne ne peut taper « Allow » depuis
   `simctl`, donc la permission n'est jamais accordée et rien n'est réellement planifié ;
 - le partage, l'import de sauvegarde, le rendu sur encoche / Dynamic Island.
+
+**⚠️ Blocage intermittent du smoke `integration_test`** — après un `Xcode build done` réussi,
+`flutter test` reste parfois muet et le **test host se fige sur le splash** (Dart ne démarre
+jamais). L'app, elle, démarre normalement dans la même exécution : le job `build` et l'étape
+`Installer et lancer Cairn` passent. Observé sur ~1 run sur 3 (31359220605, 31362036419,
+31457923436), sans lien établi avec le contenu du Podfile — **on a cru un temps que les macros
+`permission_handler` en étaient la cause, c'était une corrélation sur deux points.** Parade en
+place : garde-fou de 8 min qui tue le test et ramène la dernière capture, puis **une seconde
+tentative après redémarrage du simulateur**. Un `.ipa` produit par le job `build` n'est jamais
+concerné.
 
 **Deux dettes connues** :
 - `Podfile.lock` n'est **pas** versionné (impossible à générer hors macOS) — les versions de pods

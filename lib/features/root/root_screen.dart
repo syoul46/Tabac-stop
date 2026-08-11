@@ -62,15 +62,21 @@ class RootScreen extends ConsumerWidget {
     // Le bandeau de mise à jour est global : une release dispo est un « fait à
     // révéler » (raison légitime de parler), et doit s'afficher quelle que soit
     // la phase — y compris l'Écran 1 d'un install neuf sans données.
-    return Stack(
-      children: [
-        Positioned.fill(child: screen),
-        if (inMode) const MilestoneReveal(),
-        // La victoire de Boss prime sur le palier santé si les deux tombent.
-        if (inMode) const BossVictoryReveal(),
-        const UpdateBanner(),
-        const VersionTag(),
-      ],
+    // Les surcouches (bandeaux, filigrane) vivent AU-DESSUS du Scaffold, donc
+    // hors de tout ancêtre Material : leurs textes s'affichaient soulignés de
+    // jaune en debug, ce qui parasitait chaque capture de vérification.
+    return Material(
+      type: MaterialType.transparency,
+      child: Stack(
+        children: [
+          Positioned.fill(child: screen),
+          if (inMode) const MilestoneReveal(),
+          // La victoire de Boss prime sur le palier santé si les deux tombent.
+          if (inMode) const BossVictoryReveal(),
+          const UpdateBanner(),
+          const VersionTag(),
+        ],
+      ),
     );
   }
 }
@@ -86,24 +92,25 @@ class _WithBackupAccess extends ConsumerWidget {
   /// pour ne jamais l'empiler avec un bandeau contextuel d'un mode.
   final bool showPrompt;
 
-  void _openBackup(BuildContext context) => Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const BackupScreen()),
-      );
+  void _openBackup(BuildContext context) => Navigator.of(
+    context,
+  ).push(MaterialPageRoute(builder: (_) => const BackupScreen()));
 
-  void _openStats(BuildContext context) => Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const StatsScreen()),
-      );
+  void _openStats(BuildContext context) => Navigator.of(
+    context,
+  ).push(MaterialPageRoute(builder: (_) => const StatsScreen()));
 
-  void _openHelp(BuildContext context) => Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const HowItWorksScreen()),
-      );
+  void _openHelp(BuildContext context) => Navigator.of(
+    context,
+  ).push(MaterialPageRoute(builder: (_) => const HowItWorksScreen()));
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cigs =
         ref.watch(allCigarettesProvider).asData?.value ?? const <Cigarette>[];
     final events =
-        ref.watch(journeyEventsProvider).asData?.value ?? const <JourneyEvent>[];
+        ref.watch(journeyEventsProvider).asData?.value ??
+        const <JourneyEvent>[];
     final offer = showPrompt && shouldOfferBackup(cigs, events);
 
     return Stack(
@@ -118,10 +125,9 @@ class _WithBackupAccess extends ConsumerWidget {
                 IconButton(
                   icon: Icon(
                     Icons.bar_chart,
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onSurface
-                        .withValues(alpha: 0.55),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.55),
                   ),
                   tooltip: 'Tes chiffres',
                   onPressed: () => _openStats(context),
@@ -129,10 +135,9 @@ class _WithBackupAccess extends ConsumerWidget {
                 IconButton(
                   icon: Icon(
                     Icons.help_outline,
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onSurface
-                        .withValues(alpha: 0.55),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.55),
                   ),
                   tooltip: 'La règle du jeu',
                   onPressed: () => _openHelp(context),
@@ -148,8 +153,9 @@ class _WithBackupAccess extends ConsumerWidget {
             child: IconButton(
               icon: Icon(
                 Icons.shield_outlined,
-                color:
-                    Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.55),
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.55),
               ),
               tooltip: 'Sauvegarde',
               onPressed: () => _openBackup(context),
@@ -160,7 +166,9 @@ class _WithBackupAccess extends ConsumerWidget {
           Positioned(
             left: 16,
             right: 16,
-            bottom: 0,
+            // Laisse passer le filigrane de version, dessiné par-dessus depuis
+            // le Stack racine : à `bottom: 0`, le bandeau l'avalait.
+            bottom: 22,
             child: SafeArea(
               child: _BackupPrompt(
                 days: distinctLogicalDays(cigs),
@@ -180,8 +188,11 @@ class _WithBackupAccess extends ConsumerWidget {
 
 /// Bandeau du J4 : proposé une seule fois. Factuel, pas culpabilisant.
 class _BackupPrompt extends StatelessWidget {
-  const _BackupPrompt(
-      {required this.days, required this.onLater, required this.onSave});
+  const _BackupPrompt({
+    required this.days,
+    required this.onLater,
+    required this.onSave,
+  });
   final int days;
   final VoidCallback onLater;
   final VoidCallback onSave;
@@ -204,9 +215,10 @@ class _BackupPrompt extends StatelessWidget {
             'Tu as $days jours d’historique. Sauvegarde-les — chiffré, '
             'sur ton téléphone.',
             style: TextStyle(
-                fontSize: 13.5,
-                height: 1.35,
-                color: c.onSurface.withValues(alpha: 0.85)),
+              fontSize: 13.5,
+              height: 1.35,
+              color: c.onSurface.withValues(alpha: 0.85),
+            ),
           ),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
@@ -214,14 +226,17 @@ class _BackupPrompt extends StatelessWidget {
               TextButton(
                 onPressed: onLater,
                 style: TextButton.styleFrom(
-                    foregroundColor: c.onSurface.withValues(alpha: 0.6)),
+                  foregroundColor: c.onSurface.withValues(alpha: 0.6),
+                ),
                 child: const Text('Plus tard'),
               ),
               const SizedBox(width: 4),
               FilledButton(
                 onPressed: onSave,
                 style: FilledButton.styleFrom(
-                    backgroundColor: c.primary, foregroundColor: c.onPrimary),
+                  backgroundColor: c.primary,
+                  foregroundColor: c.onPrimary,
+                ),
                 child: const Text('Sauvegarder'),
               ),
             ],

@@ -50,18 +50,18 @@ post_install do |installer|
   end
 end
 
-# ⚠️ Écart 2 RETIRÉ — n'y revenez pas sans mesurer.
+# ⚠️ Écart 2 RETIRÉ — mais pas pour la raison qu'on a d'abord cru.
 #
 # On avait ajouté ici le bloc `GCC_PREPROCESSOR_DEFINITIONS` documenté par
 # permission_handler (toutes les permissions iOS à `0`, puisque Cairn n'en
 # utilise aucune : `requestInstallPackages` est un chemin Android et les
 # notifications passent par flutter_local_notifications).
 #
-# Effet observé : l'app elle-même continuait de démarrer normalement, mais le
-# **test host d'`integration_test` restait bloqué sur le splash screen**, Dart
-# ne démarrant jamais — `flutter test` attendait alors indéfiniment. Reproduit
-# sur deux runs consécutifs (31359220605, 31362036419) ; vert sans le bloc.
-# Le bloc s'appliquait à **tous** les pods, celui d'`integration_test` compris.
+# Deux runs consécutifs se sont bloqués avec ce bloc (test host d'integration_test
+# figé sur le splash), et un run vert sans → on l'a accusé. **C'était faux** : le
+# même blocage est revenu sans lui (run 31457923436). C'est un aléa du couple
+# `flutter test` + simulateur, pas ce bloc. Cf. PLAN §17.4.
 #
-# Le bénéfice (ne pas compiler du code de permission inutilisé) ne vaut pas la
-# perte du seul test qui pilote l'app sans iPhone.
+# Le bloc reste retiré — son bénéfice est marginal et on n'a aucune raison de le
+# réintroduire — mais si quelqu'un veut le remettre, qu'il sache qu'il n'a jamais
+# été prouvé coupable.

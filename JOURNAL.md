@@ -42,7 +42,17 @@ un record.
 - Le sélecteur d'heure s'ouvrait en **AM/PM** → `alwaysUse24HourFormat` forcé (l'app dit « 7 h 10 »).
 
 Méthode : `adb install` du build debug, `adb shell input tap` pour taper le galet et ouvrir les
-écrans, `adb exec-out screencap`. Bien plus rapide que de livrer à l'aveugle.
+écrans, `adb exec-out screencap`. Bien plus rapide que de livrer à l'aveugle. Avec
+`--dart-define=SEED=true`, on atteint la révélation puis n'importe quel mode en trois taps.
+
+**Puis (non publié)** :
+- « Recommencer l'observation » était masqué dès qu'un mode existait — or `undecided` **est** un
+  mode : le bouton disparaissait pour ceux qui observent encore, c'est-à-dire exactement son public.
+  Condition élargie à « aucun mode **engagé** » (`null`, `undecided`, `observing`).
+- Le bandeau de sauvegarde J4 (`bottom: 0`) **avalait le filigrane de version** → `bottom: 22`.
+- Les surcouches du `Stack` racine vivent hors de tout ancêtre `Material` : leurs textes
+  s'affichaient **soulignés de jaune en debug** et parasitaient chaque capture →
+  `Material(type: MaterialType.transparency)` autour du Stack racine.
 
 ---
 
@@ -120,11 +130,13 @@ lancée sur iPhone **muette sur les fins de délai**. Corrigé (§17.3 iOS-B). C
   l'arbre ne se pose jamais → helper `pumpUntil` dans `integration_test/parcours_test.dart`.
 - Sur iOS, `requestPermissions` ne se résout **qu'après** la réponse de l'utilisateur au dialogue
   système. Un `await` en CI = test figé. On déclenche sans attendre, et la preuve est visuelle.
-- **Les macros `permission_handler` (toutes les permissions à `0`) dans `post_install` bloquent
-  `integration_test`** : l'app démarre normalement, mais le **test host reste sur le splash**, Dart
-  ne démarre jamais et `flutter test` attend indéfiniment. Reproduit 2 runs de suite, vert sans.
-  Le bloc s'applique à **tous** les pods, celui d'`integration_test` compris. Retiré ; commentaire
-  d'avertissement laissé dans `ios/Podfile`.
+- **Le smoke `integration_test` se bloque ~1 fois sur 3** : après un `Xcode build done` réussi,
+  `flutter test` reste muet et le test host se fige sur le splash. L'app démarre pourtant bien dans
+  la même exécution. **Erreur de diagnostic à ne pas refaire** : on a accusé les macros
+  `permission_handler` sur la foi de 2 runs bloqués avec / 1 vert sans, et écrit cette conclusion
+  dans le Podfile, le PLAN et ici — le blocage est revenu **sans** elles (31457923436). Deux points
+  ne font pas une causalité. Parade : garde-fou 8 min + une seconde tentative après reboot du
+  simulateur.
 - `gh run watch` peut mourir sur une coupure réseau (`error connecting to api.github.com`) : son
   code de retour ne veut alors **pas** dire « le run a échoué ». Vérifier l'état réel du run.
 
