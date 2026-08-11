@@ -9,6 +9,7 @@ import '../../data/cigarette_repository.dart';
 import '../../data/database.dart';
 import '../../data/journey_repository.dart';
 import '../../domain/metrics/hourly.dart';
+import '../../domain/models/enums.dart';
 import '../cairn/cairn_view.dart';
 import '../help/how_it_works_screen.dart';
 import '../observation/hourly_curve.dart';
@@ -105,10 +106,16 @@ class _TapScreenState extends ConsumerState<TapScreen> {
         ref.watch(todaysCigarettesProvider).asData?.value ??
         const <Cigarette>[];
     final first = ref.watch(firstCigaretteProvider).asData?.value;
-    // Le reset ne concerne QUE la vraie observation : dès qu'un mode est choisi,
-    // le journal porte des jours-propres et un record d'écart max — on n'y touche
-    // pas depuis un bouton de correction.
+    // Le reset ne concerne que **l'observation**, au sens produit : aucun mode
+    // engagé. « Je ne sais pas encore » et « observing » en font partie — on
+    // observe toujours, et c'est justement là que des premiers jours mal tapés
+    // se corrigent. Seuls réduction et arrêt net ferment la porte : leur journal
+    // porte des jours-propres cumulés et un record d'écart max, auxquels aucun
+    // bouton de correction ne doit pouvoir toucher.
     final mode = ref.watch(currentModeProvider).asData?.value;
+    final stillObserving = mode == null ||
+        mode == JourneyMode.undecided ||
+        mode == JourneyMode.observing;
     final all =
         ref.watch(allCigarettesProvider).asData?.value ?? const <Cigarette>[];
 
@@ -178,7 +185,7 @@ class _TapScreenState extends ConsumerState<TapScreen> {
                         // Sortie de secours quand les premiers jours n'ont pas
                         // été tapés fidèlement : plus discrète qu'« Annuler »,
                         // et jamais proposée par l'app d'elle-même.
-                        if (mode == null)
+                        if (stillObserving)
                           TextButton(
                             onPressed: () => _resetObservation(all.length),
                             style: TextButton.styleFrom(
