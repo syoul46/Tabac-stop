@@ -3,6 +3,27 @@
 Toutes les versions notables. App de sevrage tabagique, **local-first**.
 Format des dates : AAAA-MM-JJ.
 
+## v1.7.0 — 2026-08-11
+
+### Nouveautés
+- **« Je ne sais pas encore » n'est plus un cul-de-sac.** Répondre ça à la révélation te laissait en
+  observation muette **définitivement** : rien ne reproposait jamais le choix. La question t'est
+  maintenant reposée **une fois tous les 5 jours** — et répondre à nouveau « je ne sais pas »
+  réarme simplement le délai. Rien ne te bloque, jamais.
+- **« Annuler » partout.** Le bouton qui supprime la dernière cigarette n'existait que pendant
+  l'observation. Il est maintenant aussi en **réduction** (où la cigarette resoigne le Boss) et en
+  **arrêt net** (où un tap par erreur remet le streak à zéro).
+- **« Recommencer l'observation »** (bouton discret, uniquement tant qu'aucun mode n'est choisi) :
+  si tes premiers jours n'ont pas été tapés fidèlement, le portrait est faux — et c'est sur ce
+  portrait que l'app nommera ton Boss. Tu peux repartir d'une semaine vraie. Confirmation explicite
+  et dissymétrique, avec le nombre de cigarettes annoncé.
+
+### Sous le capot
+- **Build iOS** : l'app compile, démarre et enregistre sur iPhone, vérifié à chaque commit sur un
+  simulateur (cf. `PLAN.md` §17). Un `.ipa` **non signé** est produit par la CI, à re-signer soi-même
+  avec un Apple ID gratuit. **Jamais testé sur un vrai iPhone** — voir le README.
+- **Notifications iOS** câblées (elles n'existaient que côté Android).
+
 ## v1.6.0 — 2026-08-06
 
 ### Nouveautés
