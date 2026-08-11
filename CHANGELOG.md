@@ -3,6 +3,22 @@
 Toutes les versions notables. App de sevrage tabagique, **local-first**.
 Format des dates : AAAA-MM-JJ.
 
+## v1.8.0 — 2026-08-11
+
+### Nouveautés
+- **« J'ai oublié de taper »** (bouton discret, sur les trois écrans). Deux corrections :
+  - **Ajouter une cigarette oubliée** — tu te souviens de l'heure (« il est 18 h, je n'ai pas tapé
+    celle de 17 h »). L'heure étant vraie, elle nourrit correctement la détection de tes Boss.
+  - **Déclarer une journée entière non tapée** — aucune heure inventée. La journée devient
+    **neutre** : ni propre, ni fumée. Le cairn ne perd pas de pierre, il **se met en pause**.
+
+### Corrigé
+- **Une journée oubliée était comptée comme une journée sans tabac.** Elle gonflait tes
+  « jours propres cumulés » et pouvait même décrocher un faux « plus haut cairn » — or ces deux
+  compteurs ne redescendent jamais, donc l'erreur était définitive. Une journée déclarée non tapée
+  ne compte plus comme une victoire, et aucun écart qui l'enjambe ne peut devenir un record.
+  *(La détection des Boss, elle, n'était pas affectée : elle ne compte que les jours observés.)*
+
 ## v1.7.0 — 2026-08-11
 
 ### Nouveautés
