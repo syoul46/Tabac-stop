@@ -546,7 +546,15 @@ l'heure) ; **bonus de durée** — si l'utilisateur tient au-delà des 10 min sa
 20 min, +1 à 30 min** (plafond **+2**, soit 3 pierres max pour une manche). Le cairn ne recule jamais.
 
 **Réalisé (code v2) :**
-- `domain/boss/victory.dart` : `bossHp(boss, cigs, events)` = `PVmax − daysEngaged + daysCracked` borné.
+- `domain/boss/victory.dart` : `bossHp(boss, cigs, events, {since})` = `PVmax − daysEngaged +
+  daysCracked` borné.
+  - ⚠️ **`since` = début du combat (dernier `modeChanged`), non optionnel en pratique.** Sans lui,
+    les cigarettes de la **semaine d'observation** — celle où l'app dit explicitement de fumer
+    normalement — comptent comme des jours craqués. Or un Boss revient par définition sur ≥ 60 % des
+    jours observés : chacun démarrait avec une dette égale à son nombre de jours d'observation.
+    Mesuré : Boss fragile (3 PV) → **11 jours parfaits** pour tomber, barre figée à 3/3 pendant les
+    8 premiers, le `clamp` masquant tout. Régression couverte dans `boss_combat_test.dart`.
+  - Comparaison sur l'**instant**, pas le jour logique : rien de ce qui précède la décision ne pénalise.
   Helpers `bossWindowContains`, `daysEngaged`, `daysCracked`, `engagedToday` (via `logical_day.dart` +
   heure murale). `kBossWindowMin = 30`. Signatures `defeatedBossKeys`/`pendingBossVictory`/`isBossDefeated`
   passées à `(…, cigs, events)`. Le heal est dérivé des horodatages des cigarettes.

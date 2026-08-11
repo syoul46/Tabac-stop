@@ -5,6 +5,50 @@
 
 ---
 
+## Point de reprise — 2026-08-11 (session 10 : audit — 4 correctifs)
+
+Audit demandé par le user. Quatre points, du plus grave au plus bénin.
+
+### 🔴 Les Boss étaient pratiquement imbattables
+`bossHp = PVmax − joursEntamés + joursCraqués`, et `daysCracked` comptait **tout l'historique, y
+compris la semaine d'observation**. Or un Boss est par définition une cigarette qui revient sur
+≥ 60 % des jours observés : chaque Boss démarrait donc avec une dette égale au nombre de jours où on
+l'avait fumé pendant qu'on nous disait de fumer normalement.
+
+Mesuré : Boss fragile (3 PV) fumé sur 8 jours d'observation → **11 jours parfaits** pour tomber, et
+la barre affichait **3/3 pendant les 8 premiers**. Le `clamp` masquait tout. C'était le pire échec
+possible ici : faire tout juste et ne rien voir se passer.
+
+**Correctif** : `since` (dernier `modeChanged`) sur `daysEngaged`/`daysCracked`/`bossHp`/
+`isBossDefeated`/`defeatedBossKeys`/`pendingBossVictory`, alimenté par `currentModeSinceProvider`.
+Comparaison sur l'**instant**, pas le jour logique. 4 tests de régression.
+
+### 🟠 Événement fantôme `delayBroken`
+`_onTapStone` appelait `markDelayBroken()` **même sans manche en cours** → journal (source de vérité)
+pollué d'événements qui n'ont pas eu lieu, et `resolveDelay` renvoyait `broken` pendant 6 s, donc le
+bouton « Retarde de 10 min » disparaissait après chaque tap. Aggravé la veille en sortant le compte
+du jour de `_Action`. Corrigé : `markDelayBroken()` sous `if (running)`.
+
+### 🟡 Un invariant documenté mentait
+`cumulativeCleanDays` / `recordGap` portaient « ne décroît JAMAIS ». Depuis la session 7, deux gestes
+les font baisser : déclarer un jour non tapé, recommencer l'observation. Légitime — on retire une
+victoire qui n'a jamais eu lieu — mais les commentaires distinguent désormais ce qui ne peut pas les
+faire baisser (le temps, une rechute) de ce qui le peut (une correction explicite de l'utilisateur).
+
+### 🟡 README en contradiction avec le code
+Il promettait la révélation « après ≥ 3 jours » alors que `kObservationDays = 7` — donc des gens
+l'attendaient au 3ᵉ jour. Corrigé, avec le seuil des 30 taps. Idem « Décisions verrouillées » et la
+ligne du seed (8 jours, pas 3). L'écran « règle du jeu » **in-app** disait déjà 7.
+
+### Vérifié sain
+Fuseaux (`wallTimeOf` normalise, testé à offset +120) · comparaison de versions (`1.10 > 1.9`) ·
+ordre des événements (les deux `watchAll()` trient, `pendingBonusStones` en dépend) · fenêtre du Boss
+au passage de minuit · détection des Boss insensible aux jours non tapés.
+
+**121 tests verts.** Non publié.
+
+---
+
 ## Point de reprise — 2026-08-11 (session 9 : compte du jour en réduction)
 
 **Signalé par le user** : en mode réduction, le nombre de cigarettes du jour n'apparaît pas.
