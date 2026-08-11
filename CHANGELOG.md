@@ -3,6 +3,15 @@
 Toutes les versions notables. App de sevrage tabagique, **local-first**.
 Format des dates : AAAA-MM-JJ.
 
+## v1.8.1 — 2026-08-11
+
+### Corrigé
+- **« Annuler » et « J'ai oublié de taper » côte à côte.** Empilés, ils poussaient le contenu
+  jusque sur la courbe des cigarettes de la journée.
+- La feuille de correction s'ouvrait en **gris-vert** au lieu du sable de l'app.
+- Le sélecteur d'heure s'ouvrait en **AM/PM** : il est maintenant en 24 h, comme le reste de l'app
+  (« le Café de 7 h 10 »).
+
 ## v1.8.0 — 2026-08-11
 
 ### Nouveautés
