@@ -10,10 +10,12 @@ import '../../data/database.dart';
 import '../../data/journey_repository.dart';
 import '../../domain/boss/victory.dart';
 import '../../domain/health/milestones.dart';
+import '../../domain/journey/not_logged.dart';
 import '../../domain/metrics/metrics.dart';
 import '../../domain/models/enums.dart';
 import '../cairn/cairn_view.dart';
 import '../health/altitude_view.dart';
+import '../tap/forgot_sheet.dart';
 import '../tap/tap_stone.dart';
 import '../tap/undo_last_button.dart';
 
@@ -82,8 +84,12 @@ class _ColdTurkeyHomeState extends ConsumerState<ColdTurkeyHome> {
     final streak = last == null
         ? Duration.zero
         : now.difference(last.occurredAtUtc.toLocal());
-    final cleanDays = cumulativeCleanDays(cigs, now);
-    final record = recordGap(cigs, now);
+    // Les jours déclarés « pas tapés » sont neutres : ils ne peuvent ni offrir
+    // un jour propre, ni décrocher un record — les deux compteurs qui ne
+    // redescendent jamais ne doivent pas pouvoir mentir.
+    final skipped = notLoggedDays(events);
+    final cleanDays = cumulativeCleanDays(cigs, now, notLogged: skipped);
+    final record = recordGap(cigs, now, notLogged: skipped);
 
     // Le cairn monte avec l'altitude : une pierre de fondation + une par palier
     // santé atteint ; la pierre en formation progresse vers le prochain palier.
@@ -151,6 +157,7 @@ class _ColdTurkeyHomeState extends ConsumerState<ColdTurkeyHome> {
                   // streak à zéro. (Les jours propres cumulés et le plus haut
                   // cairn, eux, ne bougent jamais — invariant.)
                   const UndoLastButton(),
+                  const ForgotButton(),
                   if (_showOffer) ...[
                     const SizedBox(height: 24),
                     _ReductionOffer(

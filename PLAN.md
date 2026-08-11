@@ -240,6 +240,21 @@ referme simplement plus sur un silence définitif.
   composant unique `features/tap/undo_last_button.dart`. Ne défait **que** la cigarette — les
   événements déjà journalisés (délai rompu…) restent : faire ressusciter un délai interrompu
   ouvrirait une porte pour gagner un Boss sans l'avoir tenu.
+- **« J'ai oublié de taper »** (bouton discret, les 3 écrans de tap) — traite le **trou** :
+  une journée non tapée est aujourd'hui **indiscernable d'une journée sans tabac**, donc comptée
+  comme une victoire. Or `cumulativeCleanDays` et `recordGap` sont les deux seuls compteurs qui ne
+  redescendent **jamais** : le mensonge serait définitif et incorrigible.
+  - **Ajouter une cigarette oubliée** (heure connue) : l'horodatage est **vrai** (« il est 18 h, je
+    n'ai pas tapé celle de 17 h »), il peut donc nourrir la détection des Boss sans la fausser.
+    À ne jamais confondre avec l'invention en masse d'horaires, qui abîmerait le clustering.
+  - **Déclarer une journée non tapée** (`journey_events.dayNotLogged`, payload `{day}`) :
+    **aucune heure inventée**. Le jour devient **neutre** — ni propre, ni fumé. C'est la métaphore
+    du cairn appliquée à l'ignorance : il ne gagne pas de pierre, il n'en perd pas, **il se met en
+    pause**, exactement comme à la rechute.
+  - Conséquences (fonctions pures, `domain/journey/not_logged.dart`) : le jour ne compte pas comme
+    propre, et **tout écart qui l'enjambe est disqualifié du record**. Pas de preuve, pas de trophée.
+  - La **détection des Boss n'a jamais eu besoin de ça** : `totalDays = distinctLogicalDays(cigs)`
+    exclut déjà les jours non tapés des deux côtés de la fraction d'ancrage.
 - **« Recommencer l'observation »** (bouton discret, `tap_screen`) : efface toutes les cigarettes
   et repart de zéro. Raison d'être : des premiers jours **mal tapés** (on découvre l'app, on oublie)
   produisent un **faux portrait**, et c'est sur ce portrait que l'app nommera un Boss. Mieux vaut une

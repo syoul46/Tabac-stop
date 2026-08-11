@@ -5,6 +5,37 @@
 
 ---
 
+## Point de reprise — 2026-08-11 (session 7 : le trou d'une journée non tapée)
+
+**Problème posé par le user** : on oublie de taper pendant une journée, on reprend le lendemain.
+
+**Ce que le trou casse vraiment** (vérifié dans le code, pas supposé) :
+- Détection des Boss : **rien**. `boss.dart` calcule `totalDays = distinctLogicalDays(cigs)` — les
+  jours *observés*. Le ratio d'ancrage `daysPresent / totalDays` est insensible au trou. Idem pour
+  `perDay`. Le joyau du produit était déjà immunisé.
+- `cumulativeCleanDays` : ❌ **le trou est compté comme un jour propre** (`metrics.dart` parcourait
+  le calendrier et comptait propre tout jour absent de `smoky`).
+- `recordGap` : ❌ **le trou devient un faux « plus haut cairn »**.
+- Ce sont **les deux seuls compteurs qui ne redescendent jamais** → le mensonge était définitif.
+
+**Solution** : `JourneyEventKind.dayNotLogged` (payload `{day}`), déclaré par l'utilisateur. Le jour
+devient **neutre** : ni propre, ni fumé, et tout écart qui l'enjambe est disqualifié du record.
+Métaphore respectée — le cairn ne perd pas de pierre, il **se met en pause**, comme à la rechute.
+
+**UI** : une seule entrée discrète « J'ai oublié de taper » (`features/tap/forgot_sheet.dart`) sur
+les **3** écrans de tap, ouvrant deux corrections — ajouter une cigarette à une heure connue
+(horodatage **vrai** → nourrit les Boss sans les fausser) et déclarer une journée entière
+(**aucune heure inventée**). Une seule entrée plutôt que deux boutons : l'Écran 1 reste un bouton.
+
+**Piège évité** : `recordGap` mesure la durée sur `occurredAtUtc` (absolu) et n'utilise les heures
+murales que pour savoir *quels jours* l'écart traverse — sinon un changement de fuseau rallongerait
+un record.
+
+**117 tests verts** (7 nouveaux, dont un qui documente le bug d'origine).
+**Non vérifié à l'écran.**
+
+---
+
 ## Point de reprise — 2026-08-11 (session 6 : « Recommencer l'observation »)
 
 **Ajouté** : un bouton discret sur l'écran d'observation qui **efface toutes les cigarettes et

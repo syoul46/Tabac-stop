@@ -14,6 +14,7 @@ import '../../domain/journey/delay.dart';
 import '../boss/boss_face.dart';
 import '../cairn/cairn_view.dart';
 import '../tap/tap_stone.dart';
+import '../tap/forgot_sheet.dart';
 import '../tap/undo_last_button.dart';
 
 /// Mode réduction — **combat de Boss (spec §15)**. On attaque le plus fragile ;
@@ -167,6 +168,7 @@ class _ReductionHomeState extends ConsumerState<ReductionHome> {
                     // (+1 PV). Il manquait la même sortie qu'en observation.
                     const SizedBox(height: 2),
                     const UndoLastButton(),
+                    const ForgotButton(),
                   ],
                 ),
               ),

@@ -29,6 +29,16 @@ enum JourneyEventKind {
   /// les PV du Boss (un Boss ne se blesse qu'une fois/jour).
   bonusStone,
 
+  /// L'utilisateur déclare n'avoir **rien tapé** ce jour-là. Payload
+  /// `{day: 'AAAA-MM-JJ'}` (jour logique, bascule 04:00).
+  ///
+  /// Sans ça, un jour sans tap est indiscernable d'un jour sans tabac : il
+  /// serait compté **propre** et pourrait offrir un faux record d'écart — or ce
+  /// sont les deux seuls compteurs qui ne redescendent jamais. Un jour déclaré
+  /// devient **neutre** : ni propre, ni fumé. Le cairn se met en pause, comme
+  /// pour une rechute — il ne gagne pas de pierre, il n'en perd pas.
+  dayNotLogged,
+
   /// L'utilisateur a remis l'observation à zéro : les cigarettes enregistrées
   /// jusque-là ont été effacées. Payload `{deleted}` = combien.
   ///

@@ -4,6 +4,8 @@ import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
+import '../core/time/logical_day.dart';
+import '../domain/journey/not_logged.dart';
 import '../domain/models/enums.dart';
 import 'database.dart';
 import 'database_provider.dart';
@@ -35,6 +37,27 @@ class JourneyRepository {
       ..orderBy([(t) => OrderingTerm.desc(t.occurredAtUtc)])
       ..limit(1);
     return q.watchSingleOrNull().map(_modeFromEvent);
+  }
+
+  /// Déclare qu'aucun tap n'a été fait le jour logique [day] : la journée
+  /// devient **neutre** (ni propre, ni fumée). Idempotent — redéclarer le même
+  /// jour n'ajoute rien.
+  Future<void> declareDayNotLogged(DateTime day) async {
+    final key = dayKey(LogicalDay.dayOf(day));
+    final existing = await (_db.select(_db.journeyEvents)
+          ..where((t) => t.kind.equals(JourneyEventKind.dayNotLogged.name)))
+        .get();
+    final already = notLoggedDays(existing).contains(LogicalDay.dayOf(day));
+    if (already) return;
+
+    await _db.into(_db.journeyEvents).insert(
+          JourneyEventsCompanion.insert(
+            id: _uuid.v4(),
+            occurredAtUtc: DateTime.now().toUtc(),
+            kind: JourneyEventKind.dayNotLogged.name,
+            payload: Value(jsonEncode({'day': key})),
+          ),
+        );
   }
 
   /// Quand le mode courant a été choisi (dernier `modeChanged`), ou null si

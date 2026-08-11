@@ -119,7 +119,16 @@ int? busiestHour(List<int> counts) {
 /// aujourd'hui) sans aucune cigarette, depuis le tout premier tap. Ne décroît
 /// JAMAIS avec le temps — c'est le compteur qui empêche l'effondrement « tout
 /// est foutu » après une rechute (le cairn ne perd pas ses pierres).
-int cumulativeCleanDays(Iterable<Cigarette> cigs, DateTime now) {
+///
+/// [notLogged] = jours logiques que l'utilisateur a déclarés « pas tapés ». Ils
+/// sont **neutres** : ni propres, ni fumés. Sans eux, une journée oubliée serait
+/// comptée comme une victoire — et comme ce compteur ne redescend jamais, le
+/// mensonge serait définitif.
+int cumulativeCleanDays(
+  Iterable<Cigarette> cigs,
+  DateTime now, {
+  Set<DateTime> notLogged = const {},
+}) {
   final list = cigs.toList();
   if (list.isEmpty) return 0;
 
@@ -136,7 +145,7 @@ int cumulativeCleanDays(Iterable<Cigarette> cigs, DateTime now) {
   for (var d = firstDay!;
       d.isBefore(today);
       d = DateTime(d.year, d.month, d.day + 1)) {
-    if (!smoky.contains(d)) clean++;
+    if (!smoky.contains(d) && !notLogged.contains(d)) clean++;
   }
   return clean;
 }
@@ -144,18 +153,46 @@ int cumulativeCleanDays(Iterable<Cigarette> cigs, DateTime now) {
 /// **Record d'écart max** : le plus long intervalle jamais atteint entre deux
 /// cigarettes, en incluant l'abstinence en cours ([now] − dernière). Ne décroît
 /// jamais : une rechute remet le streak à zéro mais laisse ce record intact.
-Duration recordGap(Iterable<Cigarette> cigs, DateTime now) {
+/// [notLogged] : un écart qui **enjambe** un jour déclaré « pas tapé » ne peut
+/// pas devenir un record — on ne sait simplement pas ce qui s'y est passé.
+/// C'est la contrepartie du silence : pas de preuve, pas de trophée.
+Duration recordGap(
+  Iterable<Cigarette> cigs,
+  DateTime now, {
+  Set<DateTime> notLogged = const {},
+}) {
   final list = [...cigs]
     ..sort((a, b) => a.occurredAtUtc.compareTo(b.occurredAtUtc));
   var maxG = Duration.zero;
-  for (final g in gapsOf(list)) {
+  for (var i = 1; i < list.length; i++) {
+    // Les heures murales servent à savoir QUELS jours l'écart traverse ; sa
+    // durée, elle, se mesure en absolu (un changement de fuseau ne doit pas
+    // rallonger un record).
+    if (_spansNotLogged(
+        wallTimeOf(list[i - 1]), wallTimeOf(list[i]), notLogged)) {
+      continue;
+    }
+    final g = list[i].occurredAtUtc.difference(list[i - 1].occurredAtUtc);
     if (g > maxG) maxG = g;
   }
   if (list.isNotEmpty) {
-    final current = now.difference(list.last.occurredAtUtc.toLocal());
-    if (current > maxG) maxG = current;
+    if (!_spansNotLogged(wallTimeOf(list.last), now, notLogged)) {
+      final current = now.difference(list.last.occurredAtUtc.toLocal());
+      if (current > maxG) maxG = current;
+    }
   }
   return maxG;
+}
+
+/// Vrai si l'intervalle [from]..[to] (heures murales) touche un jour déclaré.
+bool _spansNotLogged(DateTime from, DateTime to, Set<DateTime> notLogged) {
+  if (notLogged.isEmpty) return false;
+  for (var d = LogicalDay.dayOf(from);
+      !d.isAfter(LogicalDay.dayOf(to));
+      d = DateTime(d.year, d.month, d.day + 1)) {
+    if (notLogged.contains(d)) return true;
+  }
+  return false;
 }
 
 /// Calcule le portrait chiffré. [windowWidth] = largeur du créneau chargé (h).

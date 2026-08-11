@@ -8,6 +8,7 @@ import '../../data/journey_repository.dart';
 import '../../domain/boss/boss.dart';
 import '../../domain/boss/victory.dart';
 import '../../domain/health/milestones.dart';
+import '../../domain/journey/not_logged.dart';
 import '../../domain/journey/delay.dart';
 import '../../domain/journey/reveal_gate.dart';
 import '../../domain/metrics/hourly.dart';
@@ -34,8 +35,9 @@ class StatsScreen extends ConsumerWidget {
     final m = ref.watch(metricsProvider);
     final report = ref.watch(bossReportProvider);
 
-    final record = recordGap(cigs, now);
-    final cleanDays = cumulativeCleanDays(cigs, now);
+    final skipped = notLoggedDays(events);
+    final record = recordGap(cigs, now, notLogged: skipped);
+    final cleanDays = cumulativeCleanDays(cigs, now, notLogged: skipped);
     final abstinence = currentAbstinence(cigs, now);
     final current = milestoneAt(abstinence);
     final next = nextMilestoneAfter(abstinence);
