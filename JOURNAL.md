@@ -5,6 +5,20 @@
 
 ---
 
+## Point de reprise — 2026-08-11 (session 9 : compte du jour en réduction)
+
+**Signalé par le user** : en mode réduction, le nombre de cigarettes du jour n'apparaît pas.
+
+Vérifié : `_Action` n'affichait `« N aujourd'hui »` que sur les états `held`/`broken`/`elapsed` —
+donc **jamais** quand un délai est disponible ou en cours, c'est-à-dire la quasi-totalité du temps.
+Le compte est sorti de `_Action` pour devenir une **ligne permanente** sous l'action ; `_Action` ne
+porte plus que l'action (bouton « Retarde de 10 min », ou « tape seulement si tu craques »).
+
+Vérifié sur émulateur dans les deux états auparavant muets (délai disponible, délai en cours).
+Au passage, la demande de permission de notification Android se déclenche bien au lancement du délai.
+
+---
+
 ## Point de reprise — 2026-08-11 (session 8 : dette open_filex payée)
 
 `open_filex` ne livrait pas de `Package.swift` → warning « does not support Swift Package Manager,
@@ -25,6 +39,15 @@ bandeau → téléchargement de 22 119 321 octets dans le cache → **l'installe
 (`com.google.android.packageinstaller` prend le focus). Seule l'installation finale n'aboutit pas,
 pour une raison de montage de test : l'APK téléchargé est arm64 signé release, l'app installée est
 un debug x86_64.
+
+**Retournement** : le run iOS de vérification a **échoué**. Sans `open_filex`, tous les plugins iOS
+sont des Swift Packages → Flutter veut lâcher CocoaPods, mais refuse de migrer seul (« your project
+uses a non-standard Podfile » : le nôtre, versionné au jalon iOS-A) et l'intégration CocoaPods
+résiduelle du projet Xcode fait échouer le build (`sandbox is not in sync with the Podfile.lock`).
+**Payer la dette a rendu la migration SPM à la fois possible et inévitable.** On reste sur CocoaPods
+par opt-out explicite dans `pubspec.yaml` (`flutter: config: enable-swift-package-manager: false`) —
+la configuration de toutes les builds vertes. Vérifié après coup : **0 occurrence** de
+« Swift Package Manager » et de « open_filex » dans les logs, les deux jobs verts.
 
 **Pièges du test** :
 - `UpdateOnResume` est **throttlé à 2 min** : un cycle arrière-plan/premier-plan plus rapide ne

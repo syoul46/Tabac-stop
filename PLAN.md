@@ -721,6 +721,14 @@ concerné.
   une implémentation iOS et s'invitait donc dans tous les builds iOS — où installer un APK n'a aucun
   sens — en bloquant la migration SPM. **Vérifié de bout en bout sur émulateur** : bandeau →
   téléchargement (22 Mo) → installeur système ouvert.
+- ⚠️ **Nouvelle dette, née de la précédente : la migration Swift Package Manager.** Sans
+  `open_filex`, **tous** les plugins iOS sont des Swift Packages → Flutter veut lâcher CocoaPods,
+  refuse de migrer automatiquement (« your project uses a non-standard Podfile » — le nôtre, celui
+  du jalon iOS-A) et le build casse sur `The sandbox is not in sync with the Podfile.lock`.
+  On tient donc CocoaPods par un **opt-out explicite** dans `pubspec.yaml` :
+  `flutter: config: enable-swift-package-manager: false`. Migrer demandera de retirer l'intégration
+  CocoaPods du projet Xcode (phases `[CP]`, xcconfig) — **intestable hors macOS**, donc un chantier
+  à part, à mener quand Flutter forcera SPM. Rien ne le bloque plus côté plugins.
 
 ### 17.5 Voir tourner l'app sans iPhone — ce qui existe vraiment
 

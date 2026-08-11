@@ -158,10 +158,17 @@ class _ReductionHomeState extends ConsumerState<ReductionHome> {
                               color: c.onSurface.withValues(alpha: 0.5))),
                     ),
                     const SizedBox(height: 18),
-                    _Action(
-                      delay: delay,
-                      todayCount: todays.length,
-                      onStart: _startDelay,
+                    _Action(delay: delay, onStart: _startDelay),
+                    const SizedBox(height: 12),
+                    // Le compte du jour était noyé dans `_Action` : invisible
+                    // dès qu'un délai était disponible ou en cours, donc la
+                    // plupart du temps. C'est pourtant le seul chiffre qui dit
+                    // où on en est aujourd'hui — il reste là en permanence.
+                    Text(
+                      '${todays.length} aujourd’hui',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: c.onSurface.withValues(alpha: 0.6),
+                      ),
                     ),
                     // Un mis-tap coûte cher ici : la cigarette resoigne le Boss
                     // (+1 PV). Il manquait la même sortie qu'en observation.
@@ -257,13 +264,8 @@ class _Header extends StatelessWidget {
 
 /// Zone d'action sous le bouton : proposer le délai, ou l'info du jour.
 class _Action extends StatelessWidget {
-  const _Action({
-    required this.delay,
-    required this.todayCount,
-    required this.onStart,
-  });
+  const _Action({required this.delay, required this.onStart});
   final DelayState delay;
-  final int todayCount;
   final VoidCallback onStart;
 
   @override
@@ -289,8 +291,9 @@ class _Action extends StatelessWidget {
       case DelayStatus.held:
       case DelayStatus.broken:
       case DelayStatus.elapsed:
-        return Text('$todayCount aujourd’hui',
-            style: TextStyle(color: c.onSurface.withValues(alpha: 0.6)));
+        // Rien à proposer sur ces états : le compte du jour, lui, est affiché
+        // en permanence par l'écran, plus seulement ici.
+        return const SizedBox.shrink();
     }
   }
 }
