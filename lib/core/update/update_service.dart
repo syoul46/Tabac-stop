@@ -2,9 +2,9 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
-import 'package:open_filex/open_filex.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -154,15 +154,24 @@ Future<void> downloadAndInstall(
     client.close();
   }
 
-  // 3. Ouvre l'APK → installeur système.
-  final result = await OpenFilex.open(
-    file.path,
-    type: 'application/vnd.android.package-archive',
-  );
-  if (result.type != ResultType.done) {
-    throw UpdateException("Ouverture de l'installeur impossible : ${result.message}");
+  // 3. Ouvre l'APK → installeur système, via le canal natif (MainActivity.kt).
+  //    Un plugin faisait ça avant, mais il déclarait une implémentation iOS et
+  //    s'invitait donc dans tous les builds iOS — où installer un APK n'a aucun
+  //    sens — en bloquant au passage la migration vers Swift Package Manager.
+  try {
+    await _installer.invokeMethod<void>('openApk', {'path': file.path});
+  } on PlatformException catch (e) {
+    throw UpdateException(
+        "Ouverture de l'installeur impossible : ${e.message ?? e.code}");
+  } on MissingPluginException {
+    throw const UpdateException(
+        "Ouverture de l'installeur impossible sur cet appareil.");
   }
 }
+
+/// Canal vers `MainActivity.kt`. Android uniquement — appelé après la garde
+/// `Platform.isAndroid` de [downloadAndInstall].
+const _installer = MethodChannel('cairn/installer');
 
 class UpdateException implements Exception {
   const UpdateException(this.message);

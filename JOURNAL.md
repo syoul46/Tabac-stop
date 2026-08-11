@@ -5,6 +5,36 @@
 
 ---
 
+## Point de reprise — 2026-08-11 (session 8 : dette open_filex payée)
+
+`open_filex` ne livrait pas de `Package.swift` → warning « does not support Swift Package Manager,
+this will become an error » à **chaque build iOS**, pour un plugin qui ne sert qu'à ouvrir l'APK de
+mise à jour… côté **Android**. Il déclarait `platforms: {android, ios}`, donc Flutter l'embarquait
+dans tous les builds iOS et on ne peut pas exclure une dépendance par plateforme dans un `pubspec`.
+
+**Supprimé, remplacé par ~40 lignes de Kotlin** :
+- `MainActivity.kt` : `MethodChannel('cairn/installer')`, méthode `openApk` → URI de `FileProvider`
+  + `ACTION_VIEW` + `FLAG_GRANT_READ_URI_PERMISSION` (une URI `file://` est refusée depuis Android 7).
+- Manifeste : `<provider androidx.core.content.FileProvider>`, autorité `${applicationId}.updates`.
+- `res/xml/file_paths.xml` : `<cache-path>` — l'APK est écrit par `getTemporaryDirectory()`.
+- `androidx.core:core-ktx` ajouté aux dépendances Gradle.
+
+**Testé pour de vrai**, ce qu'aucun test unitaire ne pouvait faire : APK construit avec
+`--build-name=1.8.0` (donc plus ancien que la release publiée) → il voit la v1.8.2 sur GitHub →
+bandeau → téléchargement de 22 119 321 octets dans le cache → **l'installeur système s'ouvre**
+(`com.google.android.packageinstaller` prend le focus). Seule l'installation finale n'aboutit pas,
+pour une raison de montage de test : l'APK téléchargé est arm64 signé release, l'app installée est
+un debug x86_64.
+
+**Pièges du test** :
+- `UpdateOnResume` est **throttlé à 2 min** : un cycle arrière-plan/premier-plan plus rapide ne
+  relance pas la vérification, et on croit que le bandeau ne marche pas.
+- Le lien réseau de l'émulateur plafonne à ~1 Mbps : compter **3 à 5 min** pour les 22 Mo.
+- `adb shell run-as <pkg> ls cache` (build debug seulement) montre l'APK grossir — bien plus fiable
+  que d'attendre un changement à l'écran.
+
+---
+
 ## Point de reprise — 2026-08-11 (session 7 : le trou d'une journée non tapée)
 
 **Problème posé par le user** : on oublie de taper pendant une journée, on reprend le lendemain.

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Chemins que le FileProvider a le droit de partager. Un seul cas : l'APK de
+     mise à jour, écrit dans le cache par `getTemporaryDirectory()`. -->
+<paths>
+    <cache-path name="updates" path="." />
+</paths>

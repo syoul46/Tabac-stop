@@ -715,9 +715,12 @@ concerné.
 **Deux dettes connues** :
 - `Podfile.lock` n'est **pas** versionné (impossible à générer hors macOS) — les versions de pods
   peuvent donc encore bouger d'un run à l'autre.
-- ⚠️ `open_filex` **ne supporte pas Swift Package Manager** ; Flutter en fait un warning
-  aujourd'hui, une **erreur** demain. Ce plugin ne sert qu'au chemin d'update **Android** : le jour
-  où ça durcit, le build iOS cassera pour un plugin dont iOS n'a aucun usage → le rendre Android-only.
+- ~~`open_filex` ne supporte pas Swift Package Manager~~ → **réglé** : la dépendance est supprimée.
+  Ouvrir l'APK téléchargé passe désormais par un canal natif (`MainActivity.kt` + `FileProvider`,
+  autorité `${applicationId}.updates`, chemins dans `res/xml/file_paths.xml`). Le plugin déclarait
+  une implémentation iOS et s'invitait donc dans tous les builds iOS — où installer un APK n'a aucun
+  sens — en bloquant la migration SPM. **Vérifié de bout en bout sur émulateur** : bandeau →
+  téléchargement (22 Mo) → installeur système ouvert.
 
 ### 17.5 Voir tourner l'app sans iPhone — ce qui existe vraiment
 
