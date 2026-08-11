@@ -3,6 +3,21 @@
 Toutes les versions notables. App de sevrage tabagique, **local-first**.
 Format des dates : AAAA-MM-JJ.
 
+## v1.9.0 — 2026-08-11
+
+### Nouveautés
+- **« Ce que tu as évité »**, dans tes chiffres. À partir de ton rythme de la semaine d'observation,
+  une estimation de ce que tu n'as pas fumé : aujourd'hui, et depuis que tu as choisi ton mode.
+  **La référence est figée** — plus tu réduis, plus le chiffre monte. Elle ne s'affiche que si tes
+  données permettent une estimation honnête, et fumer plus que ton rythme d'avant ne crée jamais
+  de dette.
+- **Le galet respire pendant les 10 minutes de délai** : il enfle lentement, puis redescend. Aucun
+  texte, aucune consigne, aucun son — de quoi surfer l'envie au lieu de fixer un compte à rebours.
+  Tu peux le suivre ou l'ignorer. Le réglage « réduire les animations » d'Android est respecté.
+- **Un widget d'écran d'accueil** (Android) : le temps depuis ta dernière cigarette et le compte du
+  jour, sur fond sable. Il avance tout seul, sans ouvrir l'app. À poser depuis le sélecteur de
+  widgets de ton téléphone.
+
 ## v1.8.3 — 2026-08-11
 
 ### Corrigé — important
