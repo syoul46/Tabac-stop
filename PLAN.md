@@ -248,7 +248,12 @@ referme simplement plus sur un silence définitif.
     jours-propres cumulés et un record d'écart max : **on n'y touche pas depuis un bouton de
     correction** — l'invariant prime.
   - **Jamais proposé par l'app** : c'est une sortie de secours, pas un conseil. Copie strictement
-    factuelle (« Les N cigarettes enregistrées seront effacées »), aucun « tu as oublié de taper ».
+    factuelle (« Tes N cigarettes enregistrées seront effacées… C'est définitif »), aucun « tu as
+    oublié de taper ».
+  - **Confirmation dissymétrique** : « Garder mes données » en `FilledButton` (l'issue sûre se
+    touche sans réfléchir), « Tout effacer » en texte teinté `colorScheme.error` — seul endroit de
+    l'app où cette couleur sert. Le nombre exact est annoncé : effacer 9 jours de vraies données
+    par mégarde coûterait bien plus cher que le mauvais portrait qu'on cherche à corriger.
   - L'effacement et sa trace (`journey_events.observationReset`, payload `{deleted}`) tombent dans
     **la même transaction** : un journal vidé sans trace serait un trou dans l'histoire.
 

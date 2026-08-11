@@ -66,19 +66,26 @@ class _TapScreenState extends ConsumerState<TapScreen> {
         title: const Text('Recommencer l’observation ?'),
         content: Text(
           count <= 1
-              ? 'La cigarette enregistrée sera effacée. '
-                    'L’observation repartira de ton prochain tap.'
-              : 'Les $count cigarettes enregistrées seront effacées. '
-                    'L’observation repartira de ton prochain tap.',
+              ? 'La cigarette enregistrée sera effacée, et l’observation '
+                    'repartira de ton prochain tap.\n\nC’est définitif.'
+              : 'Tes $count cigarettes enregistrées seront effacées, et '
+                    'l’observation repartira de ton prochain tap.'
+                    '\n\nC’est définitif.',
         ),
         actions: [
-          TextButton(
+          // « Garder » d'abord et en pleine couleur : c'est l'issue sûre, et
+          // c'est elle qui doit se toucher sans réfléchir. L'effacement est
+          // teinté en erreur — le seul endroit de l'app où cette couleur sert.
+          FilledButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Non'),
+            child: const Text('Garder mes données'),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Recommencer'),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(ctx).colorScheme.error,
+            ),
+            child: const Text('Tout effacer'),
           ),
         ],
       ),
