@@ -15,9 +15,8 @@ import '../../domain/metrics/metrics.dart';
 import '../../domain/models/enums.dart';
 import '../cairn/cairn_view.dart';
 import '../health/altitude_view.dart';
-import '../tap/forgot_sheet.dart';
+import '../tap/corrections_row.dart';
 import '../tap/tap_stone.dart';
-import '../tap/undo_last_button.dart';
 
 /// Au-delà de ce streak rompu, on propose (sans insister) de souffler en réduction.
 const _relapseOfferThreshold = Duration(hours: 1);
@@ -156,8 +155,7 @@ class _ColdTurkeyHomeState extends ConsumerState<ColdTurkeyHome> {
                   // C'est ici que le mis-tap coûte le plus cher : il remet le
                   // streak à zéro. (Les jours propres cumulés et le plus haut
                   // cairn, eux, ne bougent jamais — invariant.)
-                  const UndoLastButton(),
-                  const ForgotButton(),
+                  const CorrectionsRow(),
                   if (_showOffer) ...[
                     const SizedBox(height: 24),
                     _ReductionOffer(

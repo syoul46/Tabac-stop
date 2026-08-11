@@ -23,12 +23,17 @@ class ForgotButton extends ConsumerWidget {
       onPressed: () => showModalBottomSheet<void>(
         context: context,
         showDragHandle: true,
+        // Material 3 peint les feuilles avec `surfaceContainerLow`, dérivé de la
+        // couleur graine : sans ça, la feuille arrive en gris-vert et ne
+        // ressemble plus à Cairn. Le sable domine, y compris ici.
+        backgroundColor: Theme.of(context).colorScheme.surface,
         builder: (_) => const _ForgotSheet(),
       ),
       style: TextButton.styleFrom(
         foregroundColor: onSurface.withValues(alpha: 0.38),
-        textStyle: const TextStyle(fontSize: 12),
+        textStyle: const TextStyle(fontSize: 12.5),
         visualDensity: VisualDensity.compact,
+        padding: const EdgeInsets.symmetric(horizontal: 10),
       ),
       child: const Text('J’ai oublié de taper'),
     );
@@ -45,8 +50,15 @@ class _ForgotSheet extends ConsumerWidget {
     final now = DateTime.now();
     final picked = await showTimePicker(
       context: context,
-      initialTime: TimeOfDay.fromDateTime(now.subtract(const Duration(hours: 1))),
+      initialTime:
+          TimeOfDay.fromDateTime(now.subtract(const Duration(hours: 1))),
       helpText: 'Elle était à quelle heure ?',
+      // L'app parle en « 7 h 10 » : un sélecteur AM/PM jurerait, et obligerait
+      // à traduire mentalement l'heure qu'on cherche justement à saisir juste.
+      builder: (ctx, child) => MediaQuery(
+        data: MediaQuery.of(ctx).copyWith(alwaysUse24HourFormat: true),
+        child: child!,
+      ),
     );
     if (picked == null || !context.mounted) return;
 

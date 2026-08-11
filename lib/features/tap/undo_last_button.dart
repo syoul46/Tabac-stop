@@ -45,10 +45,13 @@ class UndoLastButton extends ConsumerWidget {
     final onSurface = Theme.of(context).colorScheme.onSurface;
     return TextButton.icon(
       onPressed: () => _undo(context, ref),
-      icon: const Icon(Icons.undo, size: 16),
+      icon: const Icon(Icons.undo, size: 15),
       label: const Text('Annuler'),
       style: TextButton.styleFrom(
         foregroundColor: onSurface.withValues(alpha: 0.5),
+        textStyle: const TextStyle(fontSize: 12.5),
+        visualDensity: VisualDensity.compact,
+        padding: const EdgeInsets.symmetric(horizontal: 10),
       ),
     );
   }

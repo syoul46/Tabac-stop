@@ -14,9 +14,8 @@ import '../help/how_it_works_screen.dart';
 import '../observation/hourly_curve.dart';
 import '../observation/observation_banner.dart';
 import 'context_picker.dart';
-import 'forgot_sheet.dart';
+import 'corrections_row.dart';
 import 'tap_stone.dart';
-import 'undo_last_button.dart';
 
 /// Fenêtre pendant laquelle les icônes de contexte restent proposées après un tap.
 const _contextWindow = Duration(seconds: 6);
@@ -174,9 +173,8 @@ class _TapScreenState extends ConsumerState<TapScreen> {
                               .read(cigaretteRepositoryProvider)
                               .setContext(last.id, ctx),
                         ),
-                        const SizedBox(height: 6),
-                        const UndoLastButton(),
-                        const ForgotButton(),
+                        const SizedBox(height: 2),
+                        const CorrectionsRow(),
                         // Sortie de secours quand les premiers jours n'ont pas
                         // été tapés fidèlement : plus discrète qu'« Annuler »,
                         // et jamais proposée par l'app d'elle-même.

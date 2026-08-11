@@ -32,7 +32,17 @@ murales que pour savoir *quels jours* l'écart traverse — sinon un changement 
 un record.
 
 **117 tests verts** (7 nouveaux, dont un qui documente le bug d'origine).
-**Non vérifié à l'écran.**
+
+**Vérifié sur émulateur** (enfin) — trois défauts que seuls des captures montraient :
+- « Annuler » et « J'ai oublié » **empilés** poussaient le contenu sur la courbe horaire →
+  `features/tap/corrections_row.dart`, les deux côte à côte sur les 3 écrans.
+- La feuille arrivait en **gris-vert** : Material 3 peint les bottom sheets avec
+  `surfaceContainerLow`, dérivé de la couleur graine, et **ignore** le `surface` du thème →
+  `backgroundColor: colorScheme.surface` explicite (sable `#F1E4CC`, vérifié au pixel).
+- Le sélecteur d'heure s'ouvrait en **AM/PM** → `alwaysUse24HourFormat` forcé (l'app dit « 7 h 10 »).
+
+Méthode : `adb install` du build debug, `adb shell input tap` pour taper le galet et ouvrir les
+écrans, `adb exec-out screencap`. Bien plus rapide que de livrer à l'aveugle.
 
 ---
 
