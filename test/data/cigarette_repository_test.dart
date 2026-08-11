@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:cairn/data/cigarette_repository.dart';
 import 'package:cairn/data/database.dart';
+import 'package:cairn/domain/models/enums.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -40,5 +43,27 @@ void main() {
     expect(await repo.undoLastCigarette(), isTrue); // supprime celle de 9 h
     expect(await repo.watchLast().first, isNull);
     expect(await repo.undoLastCigarette(), isFalse); // plus rien à annuler
+  });
+
+  test('resetObservation efface tout et laisse une trace au journal', () async {
+    for (var h = 8; h < 14; h++) {
+      await repo.logSmoke(at: DateTime(2026, 7, 25, h, 0));
+    }
+
+    expect(await repo.resetObservation(), 6);
+    expect(await repo.watchLast().first, isNull); // on repart de zéro
+
+    final events = await db.select(db.journeyEvents).get();
+    final reset = events
+        .where((e) => e.kind == JourneyEventKind.observationReset.name)
+        .toList();
+    expect(reset, hasLength(1)); // le journal garde la trace du redémarrage
+    expect(jsonDecode(reset.single.payload!)['deleted'], 6);
+  });
+
+  test('resetObservation à vide n\'efface rien mais se journalise', () async {
+    expect(await repo.resetObservation(), 0);
+    final events = await db.select(db.journeyEvents).get();
+    expect(events, hasLength(1));
   });
 }

@@ -226,6 +226,17 @@ Guard central : **on ne bloque jamais** sur la question du mode — la 3ᵉ port
   - **record d'écart max** → intact ;
   - proposition douce de repasser en réduction quelques jours.
 - **Notifications** : uniquement pour le délai du Boss (une locale à T+10 min). Sinon, silence.
+- **« Recommencer l'observation »** (bouton discret, `tap_screen`) : efface toutes les cigarettes
+  et repart de zéro. Raison d'être : des premiers jours **mal tapés** (on découvre l'app, on oublie)
+  produisent un **faux portrait**, et c'est sur ce portrait que l'app nommera un Boss. Mieux vaut une
+  semaine vraie qu'une révélation tirée de données fausses.
+  - **Uniquement tant qu'aucun mode n'est choisi** (`mode == null`). Après, le journal porte des
+    jours-propres cumulés et un record d'écart max : **on n'y touche pas depuis un bouton de
+    correction** — l'invariant prime.
+  - **Jamais proposé par l'app** : c'est une sortie de secours, pas un conseil. Copie strictement
+    factuelle (« Les N cigarettes enregistrées seront effacées »), aucun « tu as oublié de taper ».
+  - L'effacement et sa trace (`journey_events.observationReset`, payload `{deleted}`) tombent dans
+    **la même transaction** : un journal vidé sans trace serait un trou dans l'histoire.
 
 ---
 

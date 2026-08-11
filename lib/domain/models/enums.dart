@@ -28,6 +28,15 @@ enum JourneyEventKind {
   /// 30 min ; plafond +2 par manche). Ne compte QUE pour le cairn — jamais pour
   /// les PV du Boss (un Boss ne se blesse qu'une fois/jour).
   bonusStone,
+
+  /// L'utilisateur a remis l'observation à zéro : les cigarettes enregistrées
+  /// jusque-là ont été effacées. Payload `{deleted}` = combien.
+  ///
+  /// Des premiers jours mal tapés produisent un **faux portrait** — et la
+  /// détection des Boss, elle, sera prise au sérieux. Mieux vaut repartir d'une
+  /// semaine vraie que nommer un Boss tiré de données fausses. Cet événement
+  /// reste au journal : c'est la trace que la fenêtre a été redémarrée.
+  observationReset,
 }
 
 /// Mode courant du parcours. `undecided` = 3ᵉ porte de la révélation : on ne

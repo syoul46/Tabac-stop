@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/time/format.dart';
 import '../../data/cigarette_repository.dart';
 import '../../data/database.dart';
+import '../../data/journey_repository.dart';
 import '../../domain/metrics/hourly.dart';
 import '../cairn/cairn_view.dart';
 import '../help/how_it_works_screen.dart';
@@ -76,6 +77,41 @@ class _TapScreenState extends ConsumerState<TapScreen> {
     await ref.read(cigaretteRepositoryProvider).undoLastCigarette();
   }
 
+  /// Remet la fenêtre d'observation à zéro (premiers jours mal tapés → portrait
+  /// faux → Boss faux). Destructif et irréversible : confirmation explicite,
+  /// avec le nombre en clair.
+  ///
+  /// Copie strictement **factuelle** : on ne dit pas « tu as oublié de taper ».
+  /// Personne n'a fauté — la fenêtre redémarre, c'est tout.
+  Future<void> _resetObservation(int count) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Recommencer l’observation ?'),
+        content: Text(
+          count <= 1
+              ? 'La cigarette enregistrée sera effacée. '
+                    'L’observation repartira de ton prochain tap.'
+              : 'Les $count cigarettes enregistrées seront effacées. '
+                    'L’observation repartira de ton prochain tap.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Non'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Recommencer'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    unawaited(HapticFeedback.selectionClick());
+    await ref.read(cigaretteRepositoryProvider).resetObservation();
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -86,6 +122,12 @@ class _TapScreenState extends ConsumerState<TapScreen> {
         ref.watch(todaysCigarettesProvider).asData?.value ??
         const <Cigarette>[];
     final first = ref.watch(firstCigaretteProvider).asData?.value;
+    // Le reset ne concerne QUE la vraie observation : dès qu'un mode est choisi,
+    // le journal porte des jours-propres et un record d'écart max — on n'y touche
+    // pas depuis un bouton de correction.
+    final mode = ref.watch(currentModeProvider).asData?.value;
+    final all =
+        ref.watch(allCigarettesProvider).asData?.value ?? const <Cigarette>[];
 
     if (last == null) return _firstLaunch(onSurface);
 
@@ -159,6 +201,19 @@ class _TapScreenState extends ConsumerState<TapScreen> {
                             foregroundColor: onSurface.withValues(alpha: 0.5),
                           ),
                         ),
+                        // Sortie de secours quand les premiers jours n'ont pas
+                        // été tapés fidèlement : plus discrète qu'« Annuler »,
+                        // et jamais proposée par l'app d'elle-même.
+                        if (mode == null)
+                          TextButton(
+                            onPressed: () => _resetObservation(all.length),
+                            style: TextButton.styleFrom(
+                              foregroundColor: onSurface.withValues(alpha: 0.38),
+                              textStyle: const TextStyle(fontSize: 12),
+                              visualDensity: VisualDensity.compact,
+                            ),
+                            child: const Text('Recommencer l’observation'),
+                          ),
                       ],
                     ),
                   ),

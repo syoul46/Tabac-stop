@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
@@ -46,6 +48,33 @@ class CigaretteRepository {
     if (last == null) return false;
     await (_db.delete(_db.cigarettes)..where((t) => t.id.equals(last.id))).go();
     return true;
+  }
+
+  /// Remet la **période d'observation** à zéro : efface toutes les cigarettes
+  /// enregistrées et journalise un [JourneyEventKind.observationReset].
+  /// Renvoie le nombre de cigarettes effacées.
+  ///
+  /// À n'offrir que **tant qu'aucun mode n'est choisi**. Une observation faussée
+  /// (premiers jours mal tapés) produit un faux portrait, et c'est sur ce
+  /// portrait que l'app nommera un Boss — mieux vaut une semaine vraie qu'une
+  /// révélation tirée de données fausses.
+  ///
+  /// Écrit l'événement de parcours ici, et pas via [JourneyRepository], pour que
+  /// l'effacement et sa trace tombent dans **la même transaction** : un journal
+  /// vidé sans trace serait un trou dans l'histoire.
+  Future<int> resetObservation() async {
+    return _db.transaction(() async {
+      final deleted = await _db.delete(_db.cigarettes).go();
+      await _db.into(_db.journeyEvents).insert(
+            JourneyEventsCompanion.insert(
+              id: _uuid.v4(),
+              occurredAtUtc: DateTime.now().toUtc(),
+              kind: JourneyEventKind.observationReset.name,
+              payload: Value(jsonEncode({'deleted': deleted})),
+            ),
+          );
+      return deleted;
+    });
   }
 
   /// La dernière cigarette enregistrée (ou null si aucune), en flux réactif.

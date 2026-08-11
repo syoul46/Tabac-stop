@@ -5,6 +5,25 @@
 
 ---
 
+## Point de reprise — 2026-08-11 (session 6 : « Recommencer l'observation »)
+
+**Ajouté** : un bouton discret sur l'écran d'observation qui **efface toutes les cigarettes et
+repart de zéro**. Cas d'usage réel : on découvre l'app, on oublie de taper les premiers jours →
+le portrait est faux → le Boss nommé serait faux. Spec : **`PLAN.md` §4**.
+
+- `JourneyEventKind.observationReset` (payload `{deleted}`) + `CigaretteRepository.resetObservation()`
+  — suppression et trace dans **la même transaction** (un journal vidé sans trace = trou d'histoire).
+- **Visible seulement tant que `mode == null`.** Après le choix d'un mode, le journal porte les
+  jours-propres cumulés et le record d'écart max : pas de bouton de correction qui puisse y toucher.
+- Confirmation explicite avec le nombre en clair, copie factuelle (aucun « tu as oublié de taper » :
+  personne n'a fauté). Jamais proposé par l'app d'elle-même.
+- `resolvePhase` renvoie `firstLaunch` sur journal vide → l'app revient d'elle-même à l'Écran 1,
+  sans code de transition dédié.
+- **107 tests verts** (2 nouveaux sur `resetObservation`), `flutter analyze` propre.
+  **Non vérifié sur émulateur/appareil** à ce stade.
+
+---
+
 ## Point de reprise — 2026-08-10 (session 5 : **iOS**, le dernier écart au plan)
 
 **État : le trou iOS est bouché.** Cairn compile, démarre, enregistre et parle à iOS — vérifié
