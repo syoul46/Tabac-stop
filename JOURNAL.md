@@ -11,6 +11,12 @@
 **en CI à chaque run**, sans Mac ni iPhone. Spec complète : **`PLAN.md` §17**. Rien n'est publié :
 aucune release touchée, l'`.ipa` vit en artefact de run.
 
+**Dernier run vert : [31364435969](https://github.com/syoul46/Tabac-stop/actions/runs/31364435969)**
+— `build` 5 min, `smoke` 14 min, 2 tests d'intégration passés. **11 commits sur `main`**
+(`a16ecb6` → `afb1da2`), arbre propre, tout poussé. Jalons **iOS-A → iOS-E tous faits** :
+`ios/Podfile` versionné (`platform :ios, '13.0'`) · notifications iOS câblées · workflow `.ipa` ·
+smoke + `integration_test` · README/PLAN/JOURNAL.
+
 ### Les deux murs, et comment ils tombent
 - **Compiler** : impossible sous Linux → **runner `macos-latest` GitHub Actions, gratuit pour un
   repo public**. Build complet en ~6 min.
@@ -342,6 +348,17 @@ flutter run -d emulator-5554 --dart-define=SEED=true  # injecte 3 j de faux hist
 **Capturer un écran** : `adb exec-out screencap -p > screen.png`
 **Réinitialiser les données** : `adb shell pm clear com.syoul.cairn`
 
+**iOS — tout passe par la CI** (aucun build iOS possible sous Linux, cf. `PLAN.md` §17) :
+```bash
+gh workflow run ios.yml --ref main            # build .ipa + smoke simulateur (~15 min)
+gh run list --workflow=ios.yml --limit 3      # suivre
+gh run download <run-id> -n cairn-1.6.0-unsigned.ipa -D /tmp/ipa   # récupérer le binaire
+gh run download <run-id> -n smoke-simulateur  -D /tmp/smoke        # captures + logs du smoke
+```
+`gh run watch` meurt sur une coupure réseau : préférer une boucle qui interroge
+`gh run view <id> --json status`. Le job `smoke` dure ~14 min ; au-delà de 20, quelque chose
+est bloqué → regarder la **dernière capture** de `captures/`, c'est elle qui parle.
+
 ---
 
 ## Pièges rencontrés (à ne pas refaire)
@@ -373,5 +390,11 @@ flutter run -d emulator-5554 --dart-define=SEED=true  # injecte 3 j de faux hist
 ```
 ✅ 0 scaffold  ✅ 1 bouton  ✅ 2 observation  ✅ 3 métriques  ✅ 4 Boss  ✅ 5 révélation
 ✅ 6 machine à états   ✅ 7 défi J4-7 (délai + notif)   ✅ 8 rechute   ✅ 9 sauvegarde chiffrée   ✅ 10 polish
+✅ iOS A→E (Podfile · notifications · workflow .ipa · smoke simulateur · doc)
 ```
-Détail de chaque jalon : `PLAN.md` §8.
+Détail de chaque jalon : `PLAN.md` §8. iOS : **`PLAN.md` §17**.
+
+**Reste sur iOS** : rien ne prouve qu'une notification s'affiche vraiment à l'heure dite (personne
+ne peut taper « Allow » depuis `simctl`), ni le partage, ni l'import de sauvegarde — il faut un
+iPhone. Dettes : `Podfile.lock` non versionné ; `open_filex` sans support Swift Package Manager
+(warning aujourd'hui, erreur demain) alors qu'il ne sert qu'au chemin d'update Android.
