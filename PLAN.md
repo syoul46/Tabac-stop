@@ -584,20 +584,38 @@ l'heure) ; **bonus de durée** — si l'utilisateur tient au-delà des 10 min sa
 Réserve d'idées discutées avec le user. **Rien n'est verrouillé** : chaque item liste ce qui reste
 à décider avant d'en faire une spec.
 
-### 16.1 « Ce que tu as évité » (dérivé) — *combo recommandé*
-- À partir du **rythme observé** (médiane / moyenne d'avant le mode), estimer les cigarettes évitées.
-- Affichage **factuel, jamais culpabilisant** : *« à ton rythme d'avant, ~X aujourd'hui — tu en es à Y »* ;
-  cumul *« ~N évitées ce mois-ci »*. Pur / dérivé du journal.
-- À trancher : **baseline** = fenêtre d'observation figée au choix du mode, ou moyenne glissante ? ·
-  où l'afficher (stats + écran de mode) · formulation exacte.
+### 16.1 « Ce que tu as évité » (dérivé) — ✅ **codé** (`domain/metrics/avoided.dart`)
+- **Référence figée au choix du mode** (tranché) : la moyenne/jour de la phase d'observation, gelée
+  une fois pour toutes. Une **moyenne glissante a été écartée** — elle rejouerait le piège qui rendait
+  les Boss imbattables : comparé en permanence à son moi récent, quelqu'un qui progresse ne verrait
+  jamais rien monter. Ici, plus tu réduis, plus le chiffre grandit.
+- `baselinePerDay` se **tait** sous `kAvoidedMinBaselineDays = 3` jours observés : pas de chiffre
+  fragile. Fumer plus que son rythme d'avant ne crée **pas de dette** (plancher à 0).
+- Cumul sur les jours logiques **terminés** seulement, et les jours déclarés non tapés sont exclus —
+  pas de preuve, pas de mérite. 9 tests.
+- Affiché dans **les stats** (`~aujourd'hui` · `~depuis ton choix` · `ton rythme d'avant`), pas sur
+  l'écran de mode : celui-ci doit rester un bouton.
 
-### 16.2 Compagnon de délai (respiration) — *combo recommandé*
-- Pendant le compte à rebours 10 min, une **respiration guidée minérale** (le cairn « respire »),
-  pour surfer l'envie au lieu d'attendre. Dans le mode réduction (combat de Boss).
-- À trancher : **automatique ou opt-in** · cycle (4-7-8 ?) · désactivable · discrétion.
+### 16.2 Compagnon de délai (respiration) — ✅ **codé** (`features/reduction/breathing.dart`)
+- **Automatique et muet** (tranché) : dès qu'un délai tourne, le galet enfle et redescend. Aucun
+  texte, aucune consigne, aucun son. Ce n'est pas l'app qui s'invite — c'est l'utilisateur qui a
+  lancé le délai, on lui donne juste autre chose à faire que fixer un compte à rebours.
+- Cycle **4 s / 6 s**, pas 4-7-8 : une rétention de 7 s ne se transmet pas sans consigne écrite, et
+  l'app ne parle pas. Une expiration plus longue que l'inspiration suffit à faire redescendre le rythme.
+- Respecte « réduire les animations » du système (`MediaQuery.disableAnimationsOf`).
 
 ### 16.3 En réserve (à re-prioriser)
-Widget écran d'accueil (cairn / chrono / PV) · paysage de cairns au fil des mois · altitude en toile
+✅ **Widget écran d'accueil Android** codé (`CairnWidget.kt`) : chrono depuis la dernière + compte du
+jour, sur fond sable. **Aucun plugin** — tous les candidats déclarent une implémentation iOS et se
+seraient invités dans le build iOS (le problème qu'on venait de résoudre en retirant `open_filex`).
+Flutter pousse `lastSmokeAt` + `todayCount` par le canal natif existant → `SharedPreferences` → le
+widget relit. Un **`Chronometer`** fait avancer le temps tout seul : un texte figé serait périmé en
+quelques minutes, Android ne rafraîchissant les widgets qu'au mieux toutes les 30 min.
+*Vérifié : écriture des préférences par Flutter, provider enregistré par le système. **Le rendu sur
+un vrai écran d'accueil n'est pas vérifié** — il faut poser le widget à la main.* iOS : non fait
+(extension SwiftUI, sur un binaire déjà non signé).
+
+Reste : paysage de cairns au fil des mois · altitude en toile
 de fond (relief qui se révèle) · cairn **partageable** (rendu local, à l'initiative de l'user) ·
 galerie des Boss vaincus (trophées) · re-détection de nouveaux Boss · tendance des écarts (stats).
 *(iOS n'est plus « en réserve » : voir **§17**.)*

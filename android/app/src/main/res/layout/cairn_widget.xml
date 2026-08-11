@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Widget Cairn : le chrono depuis la dernière cigarette, et le compte du jour.
+     Un `Chronometer` plutôt qu'un texte figé : il avance tout seul, sans que
+     l'app tourne ni qu'Android nous réveille (les widgets ne se rafraîchissent
+     au mieux que toutes les 30 min). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:background="@drawable/widget_bg"
+    android:padding="12dp">
+
+    <Chronometer
+        android:id="@+id/widget_chrono"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="#241F19"
+        android:textSize="26sp"
+        android:fontFamily="sans-serif-light"
+        android:format="%s" />
+
+    <TextView
+        android:id="@+id/widget_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="depuis la dernière"
+        android:textColor="#8C241F19"
+        android:textSize="11sp" />
+
+    <TextView
+        android:id="@+id/widget_today"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:textColor="#B3241F19"
+        android:textSize="13sp"
+        android:text="" />
+</LinearLayout>

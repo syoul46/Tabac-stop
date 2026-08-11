@@ -36,6 +36,26 @@ class MainActivity : FlutterActivity() {
                             result.error("open_failed", e.message, null)
                         }
                     }
+                    // Alimente le widget d'écran d'accueil. On range les
+                    // données brutes (instant + compte) et non un texte : le
+                    // widget doit rester juste sans que l'app tourne.
+                    "updateWidget" -> {
+                        val prefs = getSharedPreferences(
+                            CairnWidget.PREFS, MODE_PRIVATE
+                        )
+                        prefs.edit()
+                            .putLong(
+                                CairnWidget.KEY_LAST_SMOKE,
+                                call.argument<Number>("lastSmokeAt")?.toLong() ?: -1L,
+                            )
+                            .putInt(
+                                CairnWidget.KEY_TODAY,
+                                call.argument<Number>("todayCount")?.toInt() ?: -1,
+                            )
+                            .apply()
+                        CairnWidget.refreshAll(this)
+                        result.success(null)
+                    }
                     else -> result.notImplemented()
                 }
             }

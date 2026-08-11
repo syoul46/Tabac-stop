@@ -9,6 +9,7 @@ import '../../domain/boss/boss.dart';
 import '../../domain/boss/victory.dart';
 import '../../domain/health/milestones.dart';
 import '../../domain/journey/not_logged.dart';
+import '../../domain/metrics/avoided.dart';
 import '../../domain/journey/delay.dart';
 import '../../domain/journey/reveal_gate.dart';
 import '../../domain/metrics/hourly.dart';
@@ -42,8 +43,9 @@ class StatsScreen extends ConsumerWidget {
     final current = milestoneAt(abstinence);
     final next = nextMilestoneAfter(abstinence);
     final stones = stonesPlaced(events);
-    final defeated = defeatedBossKeys(report, cigs, events,
-        since: ref.watch(currentModeSinceProvider).asData?.value);
+    final fightSince = ref.watch(currentModeSinceProvider).asData?.value;
+    final defeated = defeatedBossKeys(report, cigs, events, since: fightSince);
+    final baseline = baselinePerDay(cigs, fightSince);
     final currentMode = ref.watch(currentModeProvider).asData?.value;
     // Le retour à la révélation n'a de sens qu'une fois le portrait « mûr »
     // (assez de données) ou un mode déjà choisi (pour changer d'avis).
@@ -82,6 +84,34 @@ class StatsScreen extends ConsumerWidget {
                       unit: win == null ? '' : 'h',
                       label: 'créneau chargé'),
                 ]),
+                // « Ce que tu as évité » : seulement si une référence honnête
+                // existe (≥ 3 jours observés avant le choix du mode). Sinon on
+                // se tait plutôt que d'avancer un chiffre fragile.
+                if (baseline != null) ...[
+                  const SizedBox(height: 24),
+                  _Section(label: 'Ce que tu as évité'),
+                  _Tiles(children: [
+                    _Tile(
+                        value: '~${avoidedOn(cigs, baseline, now)}',
+                        label: 'aujourd’hui'),
+                    _Tile(
+                        value:
+                            '~${avoidedSince(cigs, fightSince, now, notLogged: skipped)}',
+                        label: 'depuis ton choix'),
+                    _Tile(
+                        value: baseline.toStringAsFixed(baseline < 10 ? 1 : 0),
+                        unit: '/j',
+                        label: 'ton rythme d’avant'),
+                  ]),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Estimation : ton rythme de la semaine d’observation, '
+                    'comparé à ce que tu fumes depuis. Il ne bouge plus.',
+                    style: TextStyle(
+                        fontSize: 11.5,
+                        color: c.onSurface.withValues(alpha: 0.5)),
+                  ),
+                ],
                 const SizedBox(height: 24),
                 _Section(label: 'Ce que rien n’efface'),
                 _Tiles(children: [

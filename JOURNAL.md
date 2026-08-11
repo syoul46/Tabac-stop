@@ -5,6 +5,41 @@
 
 ---
 
+## Point de reprise — 2026-08-11 (session 11 : le backlog §16)
+
+Trois items du backlog, avec leurs arbitrages tranchés par le user.
+
+### « Ce que tu as évité » — référence **figée**
+`domain/metrics/avoided.dart` : la moyenne/jour de la phase d'observation, gelée au choix du mode.
+La moyenne glissante a été **écartée sciemment** : elle rejouerait le piège du bug des Boss —
+comparé à son moi récent, celui qui progresse ne voit jamais rien monter. Se tait sous 3 jours
+observés, plancher à 0 (fumer plus que son rythme d'avant n'est pas une dette), cumul sur les jours
+**terminés**, jours non tapés exclus. Affiché dans les stats uniquement. 9 tests.
+
+**Piège rencontré** : `avoidedOn` prend un **instant**, mais la boucle de cumul itère sur des
+**clés** de jour logique (à minuit). Repasser une clé dans `LogicalDay.dayOf` renvoie la **veille**
+(bascule à 4 h) — tout était décalé d'un jour. D'où un `_avoidedOnDay(dayKey)` privé, distinct de
+l'API publique. À surveiller partout où une clé et un instant se ressemblent.
+
+### Respiration — **automatique et muette**
+`features/reduction/breathing.dart` : le galet enfle 4 s, redescend 6 s, tant qu'un délai tourne.
+Pas de 4-7-8 (la rétention ne se transmet pas sans consigne, et l'app ne parle pas). Respecte
+« réduire les animations ». Vérifié sur émulateur en mesurant les pixels du galet entre captures.
+
+### Widget Android — **sans aucun plugin**
+`CairnWidget.kt` + `WidgetSync`. Tous les plugins de widget déclarent une implémentation iOS et se
+seraient invités dans le build iOS : on réutilise le canal natif de `MainActivity`, Flutter pousse
+`lastSmokeAt` + `todayCount` dans `SharedPreferences`, le widget relit. Le temps avance via un
+**`Chronometer`** (Android ne rafraîchit les widgets qu'au mieux toutes les 30 min).
+
+**Vérifié** : préférences écrites par Flutter (`today_count=2`, `last_smoke_at`), provider enregistré
+(`dumpsys appwidget`). **Non vérifié** : le rendu sur un vrai écran d'accueil — poser un widget ne
+se scripte pas en adb. iOS : non fait.
+
+**130 tests verts.** Non publié.
+
+---
+
 ## Point de reprise — 2026-08-11 (session 10 : audit — 4 correctifs)
 
 Audit demandé par le user. Quatre points, du plus grave au plus bénin.

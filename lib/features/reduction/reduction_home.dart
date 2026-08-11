@@ -13,6 +13,7 @@ import '../../domain/boss/victory.dart';
 import '../../domain/journey/delay.dart';
 import '../boss/boss_face.dart';
 import '../cairn/cairn_view.dart';
+import 'breathing.dart';
 import '../tap/tap_stone.dart';
 import '../tap/corrections_row.dart';
 
@@ -158,12 +159,17 @@ class _ReductionHomeState extends ConsumerState<ReductionHome> {
                   children: [
                     _Header(delay: delay, since: since, now: now),
                     const SizedBox(height: 24),
-                    TapStone(
-                      onTap: () => _onTapStone(delay.status),
-                      child: Text('✦',
-                          style: TextStyle(
-                              fontSize: 40,
-                              color: c.onSurface.withValues(alpha: 0.5))),
+                    // Le galet respire tant que le délai tourne : de quoi
+                    // surfer l'envie au lieu de fixer un compte à rebours.
+                    Breathing(
+                      active: delay.status == DelayStatus.running,
+                      child: TapStone(
+                        onTap: () => _onTapStone(delay.status),
+                        child: Text('✦',
+                            style: TextStyle(
+                                fontSize: 40,
+                                color: c.onSurface.withValues(alpha: 0.5))),
+                      ),
                     ),
                     const SizedBox(height: 18),
                     _Action(delay: delay, onStart: _startDelay),
