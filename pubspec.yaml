@@ -78,6 +78,19 @@ dev_dependencies:
 # The following section is specific to Flutter packages.
 flutter:
 
+  # Depuis le retrait d'open_filex, **tous** les plugins iOS sont des Swift
+  # Packages — Flutter veut donc lâcher CocoaPods. Mais notre `ios/Podfile`
+  # versionné (jalon iOS-A) est « non standard » à ses yeux, la migration
+  # automatique refuse de se faire, et l'intégration CocoaPods résiduelle du
+  # projet Xcode casse le build (« sandbox is not in sync with the Podfile.lock »).
+  #
+  # On reste donc sur CocoaPods, la configuration qui a produit toutes les
+  # builds vertes jusqu'ici. La migration SPM est désormais **possible** — plus
+  # aucun plugin ne la bloque — mais elle demande de retirer l'intégration
+  # CocoaPods du projet Xcode, ce qui ne se teste pas hors macOS. Cf. PLAN §17.4.
+  config:
+    enable-swift-package-manager: false
+
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
