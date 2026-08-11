@@ -226,6 +226,11 @@ Guard central : **on ne bloque jamais** sur la question du mode — la 3ᵉ port
   - **record d'écart max** → intact ;
   - proposition douce de repasser en réduction quelques jours.
 - **Notifications** : uniquement pour le délai du Boss (une locale à T+10 min). Sinon, silence.
+- **« Annuler »** (bouton discret) : supprime la **dernière** cigarette — un mis-tap se remarque
+  parfois tard. Présent sur **les trois écrans de tap** (observation, réduction, arrêt net) :
+  composant unique `features/tap/undo_last_button.dart`. Ne défait **que** la cigarette — les
+  événements déjà journalisés (délai rompu…) restent : faire ressusciter un délai interrompu
+  ouvrirait une porte pour gagner un Boss sans l'avoir tenu.
 - **« Recommencer l'observation »** (bouton discret, `tap_screen`) : efface toutes les cigarettes
   et repart de zéro. Raison d'être : des premiers jours **mal tapés** (on découvre l'app, on oublie)
   produisent un **faux portrait**, et c'est sur ce portrait que l'app nommera un Boss. Mieux vaut une

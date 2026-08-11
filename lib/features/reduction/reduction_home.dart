@@ -14,6 +14,7 @@ import '../../domain/journey/delay.dart';
 import '../boss/boss_face.dart';
 import '../cairn/cairn_view.dart';
 import '../tap/tap_stone.dart';
+import '../tap/undo_last_button.dart';
 
 /// Mode réduction — **combat de Boss (spec §15)**. On attaque le plus fragile ;
 /// chaque **délai de 10 min tenu** lui enlève 1 PV (+ une pierre), chaque
@@ -162,6 +163,10 @@ class _ReductionHomeState extends ConsumerState<ReductionHome> {
                       todayCount: todays.length,
                       onStart: _startDelay,
                     ),
+                    // Un mis-tap coûte cher ici : la cigarette resoigne le Boss
+                    // (+1 PV). Il manquait la même sortie qu'en observation.
+                    const SizedBox(height: 2),
+                    const UndoLastButton(),
                   ],
                 ),
               ),

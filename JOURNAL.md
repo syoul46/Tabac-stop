@@ -22,6 +22,12 @@ le portrait est faux → le Boss nommé serait faux. Spec : **`PLAN.md` §4**.
 - **107 tests verts** (2 nouveaux sur `resetObservation`), `flutter analyze` propre.
   **Non vérifié sur émulateur/appareil** à ce stade.
 
+**Aussi : « Annuler » manquait dans les modes.** Il n'existait que sur l'écran d'observation —
+absent en **réduction** (où la cigarette resoigne le Boss de +1 PV) et en **arrêt net** (où un
+mis-tap remet le streak à 0, le plus coûteux des trois). Extrait en composant partagé
+`features/tap/undo_last_button.dart`, câblé en observation + réduction. **Arrêt net reste à faire**
+— même défaut, une ligne, mais hors de la demande.
+
 ---
 
 ## Point de reprise — 2026-08-10 (session 5 : **iOS**, le dernier écart au plan)

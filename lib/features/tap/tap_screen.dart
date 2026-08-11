@@ -15,6 +15,7 @@ import '../observation/hourly_curve.dart';
 import '../observation/observation_banner.dart';
 import 'context_picker.dart';
 import 'tap_stone.dart';
+import 'undo_last_button.dart';
 
 /// Fenêtre pendant laquelle les icônes de contexte restent proposées après un tap.
 const _contextWindow = Duration(seconds: 6);
@@ -50,31 +51,6 @@ class _TapScreenState extends ConsumerState<TapScreen> {
     // Retour franc, puis on enregistre. Rien d'autre — aucune consolation.
     unawaited(HapticFeedback.mediumImpact());
     await ref.read(cigaretteRepositoryProvider).logSmoke();
-  }
-
-  /// Annule le dernier tap (mis-tap) — persistant (un tap par erreur peut se
-  /// remarquer bien plus tard), avec une confirmation pour éviter une
-  /// suppression accidentelle.
-  Future<void> _undo() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        content: const Text('Veux-tu supprimer cette cigarette ?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Non'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Supprimer'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true || !mounted) return;
-    unawaited(HapticFeedback.selectionClick());
-    await ref.read(cigaretteRepositoryProvider).undoLastCigarette();
   }
 
   /// Remet la fenêtre d'observation à zéro (premiers jours mal tapés → portrait
@@ -190,17 +166,8 @@ class _TapScreenState extends ConsumerState<TapScreen> {
                               .read(cigaretteRepositoryProvider)
                               .setContext(last.id, ctx),
                         ),
-                        // « Annuler » discret, toujours disponible (un mis-tap peut
-                        // se remarquer tard) — avec confirmation avant suppression.
                         const SizedBox(height: 6),
-                        TextButton.icon(
-                          onPressed: _undo,
-                          icon: const Icon(Icons.undo, size: 16),
-                          label: const Text('Annuler'),
-                          style: TextButton.styleFrom(
-                            foregroundColor: onSurface.withValues(alpha: 0.5),
-                          ),
-                        ),
+                        const UndoLastButton(),
                         // Sortie de secours quand les premiers jours n'ont pas
                         // été tapés fidèlement : plus discrète qu'« Annuler »,
                         // et jamais proposée par l'app d'elle-même.
