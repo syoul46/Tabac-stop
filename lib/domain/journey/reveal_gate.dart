@@ -11,6 +11,12 @@ const int kObservationDays = 7;
 /// de calendrier — commencer à 23 h ne doit pas « tricher » de deux bascules).
 const Duration kRevealMinObservation = Duration(days: kObservationDays);
 
+/// Délai avant de **reproposer** la révélation à qui a répondu « je ne sais pas
+/// encore ». La 3ᵉ porte reste ouverte, mais elle ne doit pas être un cul-de-sac :
+/// au bout de quelques jours de plus, les données se sont étoffées et la question
+/// mérite d'être reposée — une fois, calmement, jamais en boucle.
+const Duration kUndecidedRevealAgain = Duration(days: 5);
+
 /// La révélation ne se déclenche que quand l'app a de quoi parler juste :
 /// **≥ 30 taps ET ≥ 7 jours d'observation réelle** (`now − 1ʳᵉ cigarette`).
 /// En dessous, on prolonge l'observation en silence — jamais de portrait maigre.

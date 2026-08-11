@@ -205,6 +205,14 @@ Fonction pure `List<Cigarette> → BossReport`. Testée avec des **fixtures de f
 Guard central : **on ne bloque jamais** sur la question du mode — la 3ᵉ porte
 « je ne sais pas encore » est toujours ouverte.
 
+**La 3ᵉ porte n'est pas un cul-de-sac** (v1.6.1) : `MODE_UNDECIDED` repasse en `REVEAL_READY`
+au bout de **`kUndecidedRevealAgain` = 5 jours** (`domain/journey/reveal_gate.dart`), à condition
+que le seuil de révélation soit toujours tenu. Les données se sont étoffées entre-temps, la question
+mérite d'être reposée **une fois** — et répondre « je ne sais pas » à nouveau ne fait que réarmer le
+même délai. `resolvePhase` reçoit pour cela `modeSince` (date du dernier `modeChanged`) ; sans cette
+date, le comportement reste muet. Ça ne contredit pas le guard : la porte reste ouverte, elle ne se
+referme simplement plus sur un silence définitif.
+
 ---
 
 ## 4. Les règles de comportement (non-négociables)
@@ -227,7 +235,8 @@ Guard central : **on ne bloque jamais** sur la question du mode — la 3ᵉ port
   - proposition douce de repasser en réduction quelques jours.
 - **Notifications** : uniquement pour le délai du Boss (une locale à T+10 min). Sinon, silence.
 - **« Annuler »** (bouton discret) : supprime la **dernière** cigarette — un mis-tap se remarque
-  parfois tard. Présent sur **les trois écrans de tap** (observation, réduction, arrêt net) :
+  parfois tard. Présent sur **les trois écrans de tap** (observation, réduction, arrêt net — c'est
+  en arrêt net qu'il coûte le plus cher : le mis-tap remet le streak à 0) :
   composant unique `features/tap/undo_last_button.dart`. Ne défait **que** la cigarette — les
   événements déjà journalisés (délai rompu…) restent : faire ressusciter un délai interrompu
   ouvrirait une porte pour gagner un Boss sans l'avoir tenu.

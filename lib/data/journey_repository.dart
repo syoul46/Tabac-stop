@@ -37,6 +37,16 @@ class JourneyRepository {
     return q.watchSingleOrNull().map(_modeFromEvent);
   }
 
+  /// Quand le mode courant a été choisi (dernier `modeChanged`), ou null si
+  /// aucun mode ne l'a jamais été.
+  Stream<DateTime?> watchCurrentModeSince() {
+    final q = _db.select(_db.journeyEvents)
+      ..where((t) => t.kind.equals(JourneyEventKind.modeChanged.name))
+      ..orderBy([(t) => OrderingTerm.desc(t.occurredAtUtc)])
+      ..limit(1);
+    return q.watchSingleOrNull().map((e) => e?.occurredAtUtc);
+  }
+
   static JourneyMode? _modeFromEvent(JourneyEvent? e) {
     if (e?.payload == null) return null;
     final name = (jsonDecode(e!.payload!) as Map)['mode'] as String?;
@@ -145,6 +155,10 @@ final currentModeProvider = StreamProvider<JourneyMode?>((ref) {
 });
 
 /// Tout le journal de parcours (pour l'état du délai et le compte de pierres).
+final currentModeSinceProvider = StreamProvider<DateTime?>((ref) {
+  return ref.watch(journeyRepositoryProvider).watchCurrentModeSince();
+});
+
 final journeyEventsProvider = StreamProvider<List<JourneyEvent>>((ref) {
   return ref.watch(journeyRepositoryProvider).watchAll();
 });

@@ -1,4 +1,5 @@
 import 'package:cairn/domain/journey/journey_state.dart';
+import 'package:cairn/domain/journey/reveal_gate.dart';
 import 'package:cairn/domain/models/enums.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -41,8 +42,49 @@ void main() {
         JourneyPhase.reduction);
   });
 
-  test('undecided → on continue d\'observer (pas de re-révélation)', () {
+  test('undecided sans date de choix → on continue d\'observer', () {
     expect(resolvePhase(cigs: manyCigs, mode: JourneyMode.undecided, now: now),
         JourneyPhase.undecided);
+  });
+
+  test('undecided → silence tant que le délai de re-révélation court', () {
+    final chosen = now.subtract(kUndecidedRevealAgain - const Duration(hours: 1));
+    expect(
+      resolvePhase(
+        cigs: manyCigs,
+        mode: JourneyMode.undecided,
+        now: now,
+        modeSince: chosen,
+      ),
+      JourneyPhase.undecided,
+    );
+  });
+
+  test('undecided → la question est reposée après le délai', () {
+    final chosen = now.subtract(kUndecidedRevealAgain + const Duration(hours: 1));
+    expect(
+      resolvePhase(
+        cigs: manyCigs,
+        mode: JourneyMode.undecided,
+        now: now,
+        modeSince: chosen,
+      ),
+      JourneyPhase.revealReady,
+    );
+  });
+
+  test('undecided → jamais reposée si le seuil de révélation n\'est plus tenu',
+      () {
+    // Trop peu de taps (observation redémarrée) → on ne repropose rien.
+    final chosen = now.subtract(kUndecidedRevealAgain + const Duration(days: 1));
+    expect(
+      resolvePhase(
+        cigs: fewCigs,
+        mode: JourneyMode.undecided,
+        now: now,
+        modeSince: chosen,
+      ),
+      JourneyPhase.undecided,
+    );
   });
 }

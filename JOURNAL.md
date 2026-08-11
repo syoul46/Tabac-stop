@@ -25,8 +25,15 @@ le portrait est faux → le Boss nommé serait faux. Spec : **`PLAN.md` §4**.
 **Aussi : « Annuler » manquait dans les modes.** Il n'existait que sur l'écran d'observation —
 absent en **réduction** (où la cigarette resoigne le Boss de +1 PV) et en **arrêt net** (où un
 mis-tap remet le streak à 0, le plus coûteux des trois). Extrait en composant partagé
-`features/tap/undo_last_button.dart`, câblé en observation + réduction. **Arrêt net reste à faire**
-— même défaut, une ligne, mais hors de la demande.
+`features/tap/undo_last_button.dart`, câblé sur **les trois** écrans de tap.
+
+**Et : la 3ᵉ porte n'est plus un cul-de-sac.** Répondre « je ne sais pas encore » laissait
+l'utilisateur en observation muette **pour toujours**. `resolvePhase` repose la question une fois
+après `kUndecidedRevealAgain` = **5 jours**, si le seuil de révélation est toujours tenu ; répondre
+« je ne sais pas » à nouveau réarme le même délai. Nécessite `modeSince` (date du dernier
+`modeChanged`) → `JourneyRepository.watchCurrentModeSince()` + `currentModeSinceProvider`.
+⚠️ **Changement de règle assumé** : le test `undecided → pas de re-révélation` a été remplacé.
+**110 tests verts.**
 
 ---
 
