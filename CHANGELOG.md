@@ -3,6 +3,15 @@
 Toutes les versions notables. App de sevrage tabagique, **local-first**.
 Format des dates : AAAA-MM-JJ.
 
+## v1.8.2 — 2026-08-11
+
+### Corrigé
+- **« Recommencer l'observation » réapparaît si tu as répondu « Je ne sais pas encore ».** Le bouton
+  se cachait dès qu'un mode existait — or cette réponse en enregistre un. Il disparaissait donc pour
+  exactement les gens qui observent encore, c'est-à-dire son public. Il reste masqué en réduction et
+  en arrêt net, où le journal porte des compteurs auxquels aucune correction ne doit toucher.
+- Le bandeau **« Sauvegarde tes X jours »** recouvrait le numéro de version en bas d'écran.
+
 ## v1.8.1 — 2026-08-11
 
 ### Corrigé
