@@ -129,4 +129,36 @@ void main() {
     expect(engagedToday(b, [heldAt(4, 7, 0)], today), isFalse); // hier
     expect(engagedToday(b, [heldAt(5, 12, 0)], today), isFalse); // hors fenêtre
   });
+
+  group('le combat ne compte qu\'à partir de son début (régression)', () {
+    final b = _boss(hour: 14, minute: 0); // fragile → 3 PV
+    // 8 jours d'observation : on fume à 14 h chaque jour, comme l'app l'invite
+    // explicitement à le faire. Le combat ne commence qu'après.
+    final observation = [for (var d = 1; d <= 8; d++) cigAt(d, 14, 0)];
+    final fightStart = DateTime(2026, 1, 9, 0, 0).toUtc();
+
+    test('sans borne, les jours d\'observation rendaient le Boss imbattable', () {
+      // Le bug d'origine : 8 jours « craqués » hérités de l'observation.
+      expect(daysCracked(b, observation), 8);
+      final troisJoursParfaits = [for (var d = 9; d <= 11; d++) heldAt(d, 14, 0)];
+      expect(bossHp(b, observation, troisJoursParfaits), 3); // aucun mouvement
+    });
+
+    test('borné au début du combat, l\'observation ne compte plus', () {
+      expect(daysCracked(b, observation, since: fightStart), 0);
+      expect(bossHp(b, observation, const [], since: fightStart), 3);
+    });
+
+    test('3 jours parfaits suffisent à abattre un Boss fragile', () {
+      final held = [for (var d = 9; d <= 11; d++) heldAt(d, 14, 0)];
+      expect(bossHp(b, observation, held, since: fightStart), 0);
+      expect(isBossDefeated(b, observation, held, since: fightStart), isTrue);
+    });
+
+    test('craquer pendant le combat resoigne bien le Boss', () {
+      final held = [for (var d = 9; d <= 11; d++) heldAt(d, 14, 0)];
+      final cigs = [...observation, cigAt(10, 14, 5)]; // craqué le 2ᵉ jour
+      expect(bossHp(b, cigs, held, since: fightStart), 1);
+    });
+  });
 }

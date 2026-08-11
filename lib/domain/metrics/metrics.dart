@@ -116,9 +116,14 @@ int? busiestHour(List<int> counts) {
 }
 
 /// **Jours-propres cumulés** : nombre de jours logiques *terminés* (avant
-/// aujourd'hui) sans aucune cigarette, depuis le tout premier tap. Ne décroît
-/// JAMAIS avec le temps — c'est le compteur qui empêche l'effondrement « tout
-/// est foutu » après une rechute (le cairn ne perd pas ses pierres).
+/// aujourd'hui) sans aucune cigarette, depuis le tout premier tap.
+///
+/// **Ne décroît jamais avec le temps** — c'est le compteur qui empêche
+/// l'effondrement « tout est foutu » après une rechute (le cairn ne perd pas ses
+/// pierres). Il peut en revanche baisser sur une **correction explicite de
+/// l'utilisateur** — déclarer un jour non tapé, ou recommencer l'observation :
+/// on retire alors une victoire qui n'avait jamais eu lieu. C'est l'inverse
+/// d'une érosion, et ça reste à son initiative.
 ///
 /// [notLogged] = jours logiques que l'utilisateur a déclarés « pas tapés ». Ils
 /// sont **neutres** : ni propres, ni fumés. Sans eux, une journée oubliée serait
@@ -151,8 +156,12 @@ int cumulativeCleanDays(
 }
 
 /// **Record d'écart max** : le plus long intervalle jamais atteint entre deux
-/// cigarettes, en incluant l'abstinence en cours ([now] − dernière). Ne décroît
-/// jamais : une rechute remet le streak à zéro mais laisse ce record intact.
+/// cigarettes, en incluant l'abstinence en cours ([now] − dernière).
+///
+/// Ne décroît jamais **par le temps ni par une rechute** : celle-ci remet le
+/// streak à zéro mais laisse ce record intact. Seule une correction explicite
+/// de l'utilisateur peut le réduire (un jour déclaré non tapé disqualifie
+/// l'écart qui l'enjambe — on ne garde pas un trophée sans preuve).
 /// [notLogged] : un écart qui **enjambe** un jour déclaré « pas tapé » ne peut
 /// pas devenir un record — on ne sait simplement pas ce qui s'y est passé.
 /// C'est la contrepartie du silence : pas de preuve, pas de trophée.

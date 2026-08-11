@@ -44,7 +44,8 @@ class _BossVictoryRevealState extends ConsumerState<BossVictoryReveal> {
     final cigs =
         ref.watch(allCigarettesProvider).asData?.value ?? const <Cigarette>[];
     final report = ref.watch(bossReportProvider);
-    final key = pendingBossVictory(report, cigs, events);
+    final key = pendingBossVictory(report, cigs, events,
+        since: ref.watch(currentModeSinceProvider).asData?.value);
     if (key == null) {
       // Réinitialise pour la prochaine victoire.
       _armed = false;

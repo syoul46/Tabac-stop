@@ -41,10 +41,13 @@ bool bossWindowContains(Boss b, DateTime wall) {
 
 /// Nombre de **jours logiques distincts** où au moins un délai a été tenu dans la
 /// fenêtre du Boss (les dégâts). Un délai tenu ailleurs ne compte pas ici.
-int daysEngaged(Boss b, List<JourneyEvent> events) {
+///
+/// [since] borne le combat à son début (cf. [bossHp]).
+int daysEngaged(Boss b, List<JourneyEvent> events, {DateTime? since}) {
   final days = <DateTime>{};
   for (final e in events) {
     if (e.kind != JourneyEventKind.delayHeld.name) continue;
+    if (since != null && e.occurredAtUtc.isBefore(since)) continue;
     final w = e.occurredAtUtc.toLocal();
     if (bossWindowContains(b, w)) days.add(LogicalDay.dayOf(w));
   }
@@ -53,9 +56,14 @@ int daysEngaged(Boss b, List<JourneyEvent> events) {
 
 /// Nombre de **jours logiques distincts** où au moins une cigarette a été fumée
 /// dans la fenêtre du Boss (les soins — le Boss regagne 1 PV/jour craqué).
-int daysCracked(Boss b, List<Cigarette> cigs) {
+///
+/// [since] est **capital** ici : sans lui, la semaine d'observation — celle où
+/// l'app dit explicitement de fumer normalement — compterait comme autant de
+/// jours craqués. Cf. [bossHp].
+int daysCracked(Boss b, List<Cigarette> cigs, {DateTime? since}) {
   final days = <DateTime>{};
   for (final c in cigs) {
+    if (since != null && c.occurredAtUtc.isBefore(since)) continue;
     final w = wallTimeOf(c);
     if (bossWindowContains(b, w)) days.add(LogicalDay.dayOf(w));
   }
@@ -76,25 +84,45 @@ bool engagedToday(Boss b, List<JourneyEvent> events, DateTime now) {
 }
 
 /// PV courants du Boss, bornés [0, PVmax].
-int bossHp(Boss b, List<Cigarette> cigs, List<JourneyEvent> events) {
-  final hp = bossMaxHp(b) - daysEngaged(b, events) + daysCracked(b, cigs);
+///
+/// [since] = **début du combat** (le dernier `modeChanged`). Sans cette borne,
+/// les cigarettes de la phase d'observation comptent comme des jours craqués :
+/// un Boss « fragile » (3 PV) fumé pendant 8 jours d'observation exigeait alors
+/// **11 jours parfaits** pour tomber, barre de PV immobile pendant les 8
+/// premiers. L'app ne montrait rien à quelqu'un qui faisait tout juste — le
+/// contraire exact de sa promesse.
+int bossHp(
+  Boss b,
+  List<Cigarette> cigs,
+  List<JourneyEvent> events, {
+  DateTime? since,
+}) {
+  final hp = bossMaxHp(b) -
+      daysEngaged(b, events, since: since) +
+      daysCracked(b, cigs, since: since);
   return hp.clamp(0, bossMaxHp(b));
 }
 
 /// Vaincu quand ses PV tombent à 0.
-bool isBossDefeated(Boss b, List<Cigarette> cigs, List<JourneyEvent> events) =>
-    bossHp(b, cigs, events) == 0;
+bool isBossDefeated(
+  Boss b,
+  List<Cigarette> cigs,
+  List<JourneyEvent> events, {
+  DateTime? since,
+}) =>
+    bossHp(b, cigs, events, since: since) == 0;
 
 /// Les Boss **vaincus** = PV à 0, OU dont la victoire a déjà été célébrée (le
 /// rocher ne retombe jamais).
 Set<String> defeatedBossKeys(
   BossReport report,
   List<Cigarette> cigs,
-  List<JourneyEvent> events,
-) {
+  List<JourneyEvent> events, {
+  DateTime? since,
+}) {
   final out = revealedVictoryKeys(events).toSet();
   for (final b in report.bosses) {
-    if (bossHp(b, cigs, events) == 0) out.add(bossKey(b));
+    if (bossHp(b, cigs, events, since: since) == 0) out.add(bossKey(b));
   }
   return out;
 }
@@ -111,12 +139,15 @@ Set<String> revealedVictoryKeys(List<JourneyEvent> events) => {
 String? pendingBossVictory(
   BossReport report,
   List<Cigarette> cigs,
-  List<JourneyEvent> events,
-) {
+  List<JourneyEvent> events, {
+  DateTime? since,
+}) {
   final revealed = revealedVictoryKeys(events);
   for (final b in report.bosses) {
     final k = bossKey(b);
-    if (bossHp(b, cigs, events) == 0 && !revealed.contains(k)) return k;
+    if (bossHp(b, cigs, events, since: since) == 0 && !revealed.contains(k)) {
+      return k;
+    }
   }
   return null;
 }

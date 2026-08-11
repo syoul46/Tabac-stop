@@ -449,7 +449,7 @@ Révélation, Arrêt net (+ rechute), Réduction (+ délai/notif), Sauvegarde (+
 ## Décisions verrouillées (rappel)
 - Stack : Flutter · Riverpod · drift · flutter_local_notifications · export chiffré (à venir).
 - **100 % local, aucun serveur.** Jour logique = **04:00**. Contexte : ☕ café · 🍽️ repas · 🍷 alcool.
-- Révélation : **≥30 taps ET ≥3 jours**. Boss : **nommer le + ancré, attaquer le + facile**.
+- Révélation : **≥30 taps ET ≥7 jours réels** (`kObservationDays`). Boss : **nommer le + ancré, attaquer le + facile**.
 - Design : palette minérale (sable/basalte/ocre), **lagon = voix de l'app** (rare), **zéro rouge**.
   Le **cairn** est la métaphore centrale (invariant « le compteur cumulé ne bouge pas » = pierres
   qui ne tombent jamais). Cf. `CLAUDE.md` et les maquettes `design/*.html`.
@@ -481,7 +481,7 @@ adb wait-for-device && adb shell getprop sys.boot_completed   # attendre "1"
 ```bash
 cd /home/syoul/Tabac-stop
 flutter run -d emulator-5554                        # normal
-flutter run -d emulator-5554 --dart-define=SEED=true  # injecte 3 j de faux historique → révélation
+flutter run -d emulator-5554 --dart-define=SEED=true  # injecte 8 j de faux historique → révélation
 ```
 **Capturer un écran** : `adb exec-out screencap -p > screen.png`
 **Réinitialiser les données** : `adb shell pm clear com.syoul.cairn`

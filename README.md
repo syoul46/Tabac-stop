@@ -26,8 +26,8 @@ ne tousse pas, ne meurt pas, ne fait pas la morale.
 ## Comment ça marche
 
 1. **Écran 1 = le bouton.** Pas de compte, pas de date d'arrêt, pas de « combien par jour ». Tu tapes quand tu fumes. C'est tout.
-2. **Jours 1 à 3 : silence total.** L'app observe et enregistre, ne propose rien. Elle te laisse fumer normalement — donc pas de culpabilité, pas de mensonge, des données vraies.
-3. **La révélation.** Après ≥ 3 jours et assez de données, l'app te **nomme ton « Boss »** — la cigarette la plus ancrée (ex. *« le Café de 7 h 10 »*) — et te propose une première cible atteignable.
+2. **La première semaine : silence total.** L'app observe et enregistre, ne propose rien. Elle te laisse fumer normalement — donc pas de culpabilité, pas de mensonge, des données vraies. Une semaine entière, pour capter aussi le week-end.
+3. **La révélation.** Après **7 jours** et **au moins 30 cigarettes enregistrées**, l'app te **nomme ton « Boss »** — la cigarette la plus ancrée (ex. *« le Café de 7 h 10 »*) — et te propose une première cible atteignable. Moins de données que ça, elle se tait et continue d'observer : un Boss tiré de trois jours serait un chiffre au hasard.
 4. **Le parcours.** Réduction en douceur (un délai à tenir avant chaque cigarette) ou arrêt net, au choix — et une 3ᵉ porte « je ne sais pas » toujours ouverte.
 5. **La rechute ne casse rien.** Le streak retombe, mais les jours propres cumulés et ton plus haut cairn **ne bougent jamais**.
 

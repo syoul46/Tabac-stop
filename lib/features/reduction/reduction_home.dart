@@ -86,10 +86,13 @@ class _ReductionHomeState extends ConsumerState<ReductionHome> {
     await ref
         .read(cigaretteRepositoryProvider)
         .logSmoke(wasBoss: true, duringDelay: running);
+    // Ne clore une manche QUE s'il y en avait une : sinon on écrivait un
+    // « délai rompu » fantôme au journal — la source de vérité — et l'UI
+    // masquait le bouton pendant la fenêtre de feedback.
     if (running) {
       await ref.read(notificationServiceProvider).cancelDelayEnd();
+      await ref.read(journeyRepositoryProvider).markDelayBroken();
     }
-    await ref.read(journeyRepositoryProvider).markDelayBroken();
   }
 
   /// Lance le délai du jour et planifie le rappel de fin à T+10.
@@ -99,7 +102,9 @@ class _ReductionHomeState extends ConsumerState<ReductionHome> {
     final report = ref.read(bossReportProvider);
     final events = ref.read(journeyEventsProvider).asData?.value ?? const [];
     final cigs = ref.read(allCigarettesProvider).asData?.value ?? const [];
-    final target = nextTarget(report, defeatedBossKeys(report, cigs, events));
+    final since = ref.read(currentModeSinceProvider).asData?.value;
+    final target =
+        nextTarget(report, defeatedBossKeys(report, cigs, events, since: since));
     final bossName = target?.name ?? 'le Boss';
     await ref.read(notificationServiceProvider).scheduleDelayEnd(
           DateTime.now().add(kDelayLength),
@@ -119,7 +124,10 @@ class _ReductionHomeState extends ConsumerState<ReductionHome> {
     final cigs = ref.watch(allCigarettesProvider).asData?.value ?? const [];
 
     final report = ref.watch(bossReportProvider);
-    final defeated = defeatedBossKeys(report, cigs, events);
+    // Le combat commence au choix du mode : sans cette borne, les cigarettes de
+    // la semaine d'observation compteraient comme des jours craqués.
+    final fightSince = ref.watch(currentModeSinceProvider).asData?.value;
+    final defeated = defeatedBossKeys(report, cigs, events, since: fightSince);
     // La cible = le Boss le plus fragile pas encore vaincu.
     final target = nextTarget(report, defeated);
     final delay = resolveDelay(events, now);
@@ -138,7 +146,7 @@ class _ReductionHomeState extends ConsumerState<ReductionHome> {
             if (target != null)
               _TargetBanner(
                 boss: target,
-                hp: bossHp(target, cigs, events),
+                hp: bossHp(target, cigs, events, since: fightSince),
                 maxHp: bossMaxHp(target),
                 engagedToday: engagedToday(target, events, now),
                 inWindow: bossWindowContains(target, now),
