@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/time/day_rollover.dart';
 import '../../data/cigarette_repository.dart';
 import '../../data/database.dart';
 import '../../data/journey_repository.dart';
@@ -30,6 +31,11 @@ class RootScreen extends ConsumerWidget {
         ref.watch(allCigarettesProvider).asData?.value ?? const <Cigarette>[];
     final mode = ref.watch(currentModeProvider).asData?.value;
     final modeSince = ref.watch(currentModeSinceProvider).asData?.value;
+    // La bascule undecided → re-révélation (J+5) est purement temporelle : rien
+    // ne change en base à cet instant. On s'abonne au tick d'horloge murale pour
+    // que la phase se recalcule au retour au premier plan et à 04:00, sinon la
+    // révélation n'apparaîtrait qu'au prochain tap ou démarrage à froid.
+    ref.watch(wallClockTickProvider);
 
     final phase = resolvePhase(
       cigs: cigs,

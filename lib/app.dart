@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'core/theme/cairn_theme.dart';
+import 'core/time/day_rollover.dart';
 import 'core/update/update_on_resume.dart';
 import 'core/widget/widget_sync.dart';
 import 'features/root/root_screen.dart';
@@ -17,7 +18,9 @@ class CairnApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: buildCairnLightTheme(),
       darkTheme: buildCairnDarkTheme(),
-      home: const UpdateOnResume(child: WidgetSync(child: RootScreen())),
+      home: const DayRollover(
+        child: UpdateOnResume(child: WidgetSync(child: RootScreen())),
+      ),
     );
   }
 }

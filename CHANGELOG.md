@@ -3,6 +3,21 @@
 Toutes les versions notables. App de sevrage tabagique, **local-first**.
 Format des dates : AAAA-MM-JJ.
 
+## v1.9.1 — 2026-08-19
+
+### Corrigé
+- **Le compteur du jour restait parfois bloqué sur la veille.** Au réveil, l'app pouvait afficher
+  « 15 » au lieu de « 0 » : la borne du jour (04:00) était calculée **une seule fois** à l'ouverture
+  et jamais recalculée tant que l'app survivait en arrière-plan. Selon qu'Android avait recyclé l'app
+  dans la nuit ou non, le compte repartait à zéro… ou pas — d'où l'aléatoire. La borne est maintenant
+  recalculée au retour au premier plan et à chaque passage de 04:00. *(Même correction pour la courbe
+  horaire du jour et le widget d'accueil.)*
+- **La re-révélation « tous les 5 jours » pouvait ne pas apparaître.** Qui répond « je ne sais pas
+  encore » se voit reposer la question 5 jours plus tard — mais cette bascule est purement
+  temporelle, et l'écran d'accueil ne se recalculait qu'au moment d'un tap ou d'un démarrage à froid.
+  Si l'app était restée ouverte en arrière-plan, la révélation n'apparaissait qu'au tap suivant. Elle
+  remonte désormais dès la reprise de l'app (ou au plus tard à 04:00).
+
 ## v1.9.0 — 2026-08-11
 
 ### Nouveautés
