@@ -5,6 +5,46 @@
 
 ---
 
+## Point de reprise — 2026-08-19 (session 12 : deux affichages figés dans le temps)
+
+Deux bugs signalés par le user, **même cause racine** : une décision d'UI dépend de l'heure, mais
+rien ne change en base à l'instant du basculement — or nos écrans (flux drift, `ConsumerWidget`) ne
+se recalculent **que sur émission d'un provider**, jamais au seul passage du temps. Publié en
+**v1.9.1**.
+
+### 🔴 Le compteur du jour restait bloqué sur la veille
+« Parfois 15 au réveil, parfois 0. » `watchTodayCount` construit sa requête avec
+`startUtc = LogicalDay.startOf(now)` **une seule fois, à l'abonnement** ; drift ne réémet que sur
+changement de table, jamais au passage de 04:00. Tant qu'Android gardait l'app en vie la nuit, la
+borne restait celle de la veille → le compte additionnait encore la journée d'avant. Un démarrage à
+froid recalculait → « 0 ». D'où l'aléatoire (la théorie « 24 h depuis la 1ʳᵉ cigarette » du user
+était fausse).
+
+**Correctif** : garde `DayRollover` (`core/time/day_rollover.dart`), monté à la racine à côté de
+`UpdateOnResume`. Il recalcule la borne à chaque bascule de jour logique — au retour au premier plan
+(`didChangeAppLifecycleState → resumed`) et via un `Timer` armé sur le prochain 04:00 — puis invalide
+`todayCountProvider` + `todaysCigarettesProvider` (donc aussi la courbe du jour et le widget).
+
+### 🟠 La re-révélation « tous les 5 jours » pouvait ne pas apparaître
+Le domaine était **déjà** bon et testé (v1.7.0, `journey_state_test.dart`) : `undecided` +
+5 jours → `revealReady`. Mais `RootScreen` calcule `resolvePhase(now: DateTime.now())` et ne se
+rebâtit que sur émission d'un provider watché (tap, changement de mode, cold start). La bascule au
+5ᵉ jour étant purement temporelle, la révélation n'apparaissait qu'au tap suivant si l'app était
+restée chaude en arrière-plan.
+
+**Correctif** : `wallClockTickProvider` (un `Notifier<int>`, car `StateProvider` est passé en
+*legacy* dans Riverpod 3), incrémenté par `DayRollover` au premier plan **et** à 04:00. `RootScreen`
+s'y abonne → la phase se recalcule dans ces deux cas.
+
+**Leçon transverse** : tout `DateTime.now()` lu dans un `build` ou baké dans une requête drift est
+figé jusqu'à la prochaine émission de provider. Pour une décision d'UI qui bascule **avec le temps**
+(borne de jour, délai de re-révélation, futurs paliers horaires), prévoir un nudge explicite — c'est
+désormais le rôle de `DayRollover` / `wallClockTickProvider`.
+
+`flutter analyze` propre. Publié **v1.9.1** (arm64-v8a + armeabi-v7a).
+
+---
+
 ## Point de reprise — 2026-08-11 (session 11 : le backlog §16)
 
 Trois items du backlog, avec leurs arbitrages tranchés par le user.
