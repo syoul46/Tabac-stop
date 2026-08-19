@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'core/notifications/milestone_notifier.dart';
 import 'core/theme/cairn_theme.dart';
 import 'core/time/day_rollover.dart';
 import 'core/update/update_on_resume.dart';
@@ -19,7 +20,11 @@ class CairnApp extends StatelessWidget {
       theme: buildCairnLightTheme(),
       darkTheme: buildCairnDarkTheme(),
       home: const DayRollover(
-        child: UpdateOnResume(child: WidgetSync(child: RootScreen())),
+        child: UpdateOnResume(
+          child: WidgetSync(
+            child: MilestoneNotifier(child: RootScreen()),
+          ),
+        ),
       ),
     );
   }

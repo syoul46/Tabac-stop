@@ -3,6 +3,22 @@
 Toutes les versions notables. App de sevrage tabagique, **local-first**.
 Format des dates : AAAA-MM-JJ.
 
+## v1.10.0 — 2026-08-20
+
+### Nouveautés
+- **« Ton évolution »**, dans tes chiffres : une barre par jour depuis le début, pour voir ta
+  consommation baisser au fil des semaines. Une **courbe de tendance sur 7 jours** lisse le bruit du
+  quotidien, et une **ligne « ton rythme d’avant »** matérialise ta référence — tout ce qui passe
+  dessous, c’est du terrain gagné. Les jours que tu as déclarés « pas tapés » restent neutres et ne
+  faussent pas la tendance.
+- **« Tes déclencheurs »** : les icônes ☕ café · 🍽️ repas · 🍷 alcool que tu peux noter au moment du
+  tap étaient enregistrées mais jamais montrées. L’app te révèle désormais avec quoi tu fumes le plus
+  souvent — un angle d’attaque en plus des Boss horaires. Elle se tait tant qu’elle n’a pas assez de
+  contexte pour être honnête.
+- **Une notification quand tu franchis un palier santé** (« 8 heures — le monoxyde de carbone a
+  diminué de moitié »). Comme le rappel de fin de délai, elle ne tombe que sur un **succès**, jamais
+  pour te reprocher quoi que ce soit, et n’est jamais réclamée à l’Écran 1.
+
 ## v1.9.1 — 2026-08-19
 
 ### Corrigé

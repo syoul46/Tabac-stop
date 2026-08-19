@@ -12,10 +12,14 @@ import '../../domain/journey/not_logged.dart';
 import '../../domain/metrics/avoided.dart';
 import '../../domain/journey/delay.dart';
 import '../../domain/journey/reveal_gate.dart';
+import '../../domain/metrics/daily.dart';
 import '../../domain/metrics/hourly.dart';
 import '../../domain/metrics/metrics.dart';
+import '../../domain/metrics/triggers.dart';
+import '../../domain/models/enums.dart';
 import '../observation/hourly_curve.dart';
 import '../reveal/reveal_screen.dart';
+import 'daily_evolution.dart';
 
 /// Écran de statistiques — ouvert par l'utilisateur (donc l'app peut détailler,
 /// sans violer « elle se tait » qui ne vaut que pour la parole non sollicitée).
@@ -46,6 +50,9 @@ class StatsScreen extends ConsumerWidget {
     final fightSince = ref.watch(currentModeSinceProvider).asData?.value;
     final defeated = defeatedBossKeys(report, cigs, events, since: fightSince);
     final baseline = baselinePerDay(cigs, fightSince);
+    final daily = dailyCounts(cigs, now, notLogged: skipped);
+    final trend = rollingDailyAverage(daily);
+    final triggers = triggerBreakdown(cigs);
     final currentMode = ref.watch(currentModeProvider).asData?.value;
     // Le retour à la révélation n'a de sens qu'une fois le portrait « mûr »
     // (assez de données) ou un mode déjà choisi (pour changer d'avis).
@@ -84,6 +91,27 @@ class StatsScreen extends ConsumerWidget {
                       unit: win == null ? '' : 'h',
                       label: 'créneau chargé'),
                 ]),
+                // Évolution jour par jour depuis le début. On l'affiche dès qu'il
+                // y a au moins deux jours (un seul n'est pas une « évolution »).
+                if (daily.length >= 2) ...[
+                  const SizedBox(height: 24),
+                  _Section(label: 'Ton évolution'),
+                  const SizedBox(height: 8),
+                  DailyEvolutionCurve(
+                      days: daily, baseline: baseline, trend: trend),
+                  const SizedBox(height: 6),
+                  Text(
+                    baseline != null
+                        ? 'Une barre par jour, la courbe = ta tendance sur 7 '
+                            'jours. La ligne pointillée = ton rythme d’avant — '
+                            'tout ce qui passe dessous, c’est gagné.'
+                        : 'Une barre par jour ; la courbe lisse ta tendance sur '
+                            '7 jours.',
+                    style: TextStyle(
+                        fontSize: 11.5,
+                        color: c.onSurface.withValues(alpha: 0.5)),
+                  ),
+                ],
                 // « Ce que tu as évité » : seulement si une référence honnête
                 // existe (≥ 3 jours observés avant le choix du mode). Sinon on
                 // se tait plutôt que d'avancer un chiffre fragile.
@@ -136,6 +164,13 @@ class StatsScreen extends ConsumerWidget {
                 _Section(label: 'Tes heures'),
                 const SizedBox(height: 8),
                 HourlyCurve(counts: hourlyCounts(cigs)),
+                // « Tes déclencheurs » : exploite les icônes ☕🍽️🍷 notées au tap.
+                // On se tait sous le seuil (répartition trop fragile pour être juste).
+                if (triggers.tagged >= kTriggersMinTagged) ...[
+                  const SizedBox(height: 24),
+                  _Section(label: 'Tes déclencheurs'),
+                  _TriggersView(breakdown: triggers),
+                ],
                 if (report.bosses.isNotEmpty) ...[
                   const SizedBox(height: 24),
                   _Section(label: 'Tes Boss'),
@@ -281,6 +316,99 @@ class _AltitudeCard extends StatelessWidget {
                 style: TextStyle(
                     fontSize: 12, color: c.onSurface.withValues(alpha: 0.5))),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Libellés des contextes (emoji + nom court dans une tournure naturelle).
+({String emoji, String label}) _ctxLabel(CigContext c) => switch (c) {
+      CigContext.cafe => (emoji: '☕', label: 'un café'),
+      CigContext.repas => (emoji: '🍽️', label: 'un repas'),
+      CigContext.alcool => (emoji: '🍷', label: 'un verre'),
+    };
+
+class _TriggersView extends StatelessWidget {
+  const _TriggersView({required this.breakdown});
+  final TriggerBreakdown breakdown;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = Theme.of(context).colorScheme;
+    final dominant = breakdown.dominant;
+    // Contextes triés du plus fréquent au moins fréquent (ceux à zéro exclus).
+    final ordered = [...CigContext.values]
+      ..sort((a, b) =>
+          (breakdown.counts[b] ?? 0).compareTo(breakdown.counts[a] ?? 0));
+    final shown = ordered.where((x) => (breakdown.counts[x] ?? 0) > 0).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (dominant != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Text(
+              'Le plus souvent, quand tu fumes, il y a '
+              '${_ctxLabel(dominant).label} à côté.',
+              style: TextStyle(
+                  fontSize: 14,
+                  height: 1.3,
+                  color: c.onSurface.withValues(alpha: 0.9)),
+            ),
+          ),
+        for (final ctx in shown) _TriggerBar(breakdown: breakdown, ctx: ctx),
+        const SizedBox(height: 6),
+        Text(
+          'Parmi tes ${breakdown.tagged} cigarettes où tu as noté ☕ 🍽️ 🍷.',
+          style: TextStyle(fontSize: 11.5, color: c.onSurface.withValues(alpha: 0.5)),
+        ),
+      ],
+    );
+  }
+}
+
+class _TriggerBar extends StatelessWidget {
+  const _TriggerBar({required this.breakdown, required this.ctx});
+  final TriggerBreakdown breakdown;
+  final CigContext ctx;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = Theme.of(context).colorScheme;
+    final share = breakdown.share(ctx);
+    final l = _ctxLabel(ctx);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: Row(
+        children: [
+          SizedBox(width: 26, child: Text(l.emoji, style: const TextStyle(fontSize: 16))),
+          Expanded(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: Stack(
+                children: [
+                  Container(height: 10, color: c.tertiary.withValues(alpha: 0.12)),
+                  FractionallySizedBox(
+                    widthFactor: share.clamp(0.0, 1.0),
+                    child: Container(
+                        height: 10, color: c.tertiary.withValues(alpha: 0.72)),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          SizedBox(
+            width: 38,
+            child: Text('${(share * 100).round()} %',
+                textAlign: TextAlign.right,
+                style: TextStyle(
+                    fontSize: 12,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                    color: c.onSurface.withValues(alpha: 0.7))),
+          ),
         ],
       ),
     );

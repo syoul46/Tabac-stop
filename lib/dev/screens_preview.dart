@@ -35,14 +35,32 @@ void main() {
     );
   }
 
-  for (var day = 2; day >= 0; day--) {
-    cigs.add(c(day, 7, 10, CigContext.cafe.index));
-    cigs.add(c(day, 8, 0));
-    cigs.add(c(day, 12, 30, CigContext.repas.index));
-    cigs.add(c(day, 15, 0));
-    cigs.add(c(day, 18, 0));
-    cigs.add(c(day, 21, 0, CigContext.alcool.index));
+  // Historique de ~3 semaines pour montrer la courbe d'évolution : 7 jours
+  // d'observation (~6/j → rythme d'avant), puis réduction déclinante (~5 → 2).
+  const hours = [7, 12, 18, 21, 8, 15, 10, 14, 16, 20];
+  void addDay(int dayAgo, int count) {
+    for (var k = 0; k < count; k++) {
+      final h = hours[k % hours.length];
+      final ctx = switch (h) {
+        7 => CigContext.cafe.index,
+        12 => CigContext.repas.index,
+        21 => CigContext.alcool.index,
+        _ => null,
+      };
+      cigs.add(c(dayAgo, h, (k * 13) % 60, ctx));
+    }
   }
+
+  for (var day = 20; day >= 14; day--) {
+    addDay(day, 6); // observation
+  }
+  const reduction = [5, 5, 4, 5, 4, 4, 3, 4, 3, 2, 3, 2, 2, 2]; // jours 13 → 0
+  for (var i = 0; i < reduction.length; i++) {
+    addDay(13 - i, reduction[i]);
+  }
+  // Mode choisi au début du jour logique -13 → l'observation (jours 20..14)
+  // devient la référence figée (« rythme d'avant » ≈ 6/j).
+  final fightSince = DateTime.utc(now.year, now.month, now.day - 13, 4);
 
   JourneyEvent ev(String kind, {String? bossKey, int i = 0}) => JourneyEvent(
         id: 'e$kind$i',
@@ -68,6 +86,8 @@ void main() {
       journeyEventsProvider.overrideWith((ref) => Stream.value(events)),
       // Un mode choisi → le bouton « Revoir ma révélation » apparaît dans les stats.
       currentModeProvider.overrideWith((ref) => Stream.value(JourneyMode.reduction)),
+      // Date du choix → active « ce que tu as évité » + la ligne du rythme d'avant.
+      currentModeSinceProvider.overrideWith((ref) => Stream.value(fightSince)),
       // Force une fausse mise à jour dispo (pour le preview du bandeau).
       updateCheckProvider.overrideWith((ref) => const UpdateInfo(
             version: '1.6.0',
